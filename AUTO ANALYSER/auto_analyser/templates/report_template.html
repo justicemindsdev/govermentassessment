@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - Analysis Report</title>
+    <link rel="stylesheet" href="report_style.css">
+</head>
+<body>
+    <header>
+        <h1>Institutional Dynamics Analysis Report</h1>
+        <div class="report-meta">
+            <div class="meta-item">
+                <span class="meta-label">Transcript:</span>
+                <span class="meta-value">{{ title }}</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Date:</span>
+                <span class="meta-value">{{ date }}</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Analysis Date:</span>
+                <span class="meta-value">{{ analysis_date }}</span>
+            </div>
+        </div>
+    </header>
+    
+    <div class="summary-container">
+        <div class="summary-card">
+            <h2>Executive Summary</h2>
+            <div class="summary-content">
+                <p>This analysis identified <strong>{{ patterns_found|length }}</strong> instances of institutional dynamics patterns across <strong>{{ categories|length }}</strong> categories.</p>
+                
+                {% if overall_analysis.dominant_category_name %}
+                <p>The dominant pattern category is <strong>{{ overall_analysis.dominant_category_name }}</strong>, representing a significant aspect of the communication dynamics in this transcript.</p>
+                {% endif %}
+                
+                {% if overall_analysis.top_patterns %}
+                <p>The most prevalent patterns identified are:</p>
+                <ul class="top-patterns-list">
+                    {% for pattern in overall_analysis.top_patterns %}
+                    <li><strong>{{ pattern.name }}</strong> ({{ pattern.count }} instances)</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                
+                <p>This report provides a detailed analysis of the institutional dynamics present in the transcript, including evidence of system navigation knowledge, advocacy techniques, power dynamics management, metacognitive awareness, coercive control recognition, and causal link articulation.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="participants-container">
+        <h2>Participants</h2>
+        <div class="participants-grid">
+            {% for speaker, stats in speakers.items() %}
+            <div class="participant-card">
+                <h3>{{ speaker }}</h3>
+                <div class="participant-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Segments:</span>
+                        <span class="stat-value">{{ stats.segment_count }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Words:</span>
+                        <span class="stat-value">{{ stats.word_count }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Patterns:</span>
+                        <span class="stat-value">{{ stats.patterns.values()|sum }}</span>
+                    </div>
+                </div>
+                
+                <div class="sentiment-bar">
+                    <div class="sentiment-positive" style="width: {{ (stats.sentiment.positive * 100)|int }}%"></div>
+                    <div class="sentiment-negative" style="width: {{ (stats.sentiment.negative * 100)|int }}%"></div>
+                    <div class="sentiment-neutral" style="width: {{ (stats.sentiment.neutral * 100)|int }}%"></div>
+                </div>
+                <div class="sentiment-legend">
+                    <span class="legend-item positive">Positive: {{ (stats.sentiment.positive * 100)|round(1) }}%</span>
+                    <span class="legend-item negative">Negative: {{ (stats.sentiment.negative * 100)|round(1) }}%</span>
+                    <span class="legend-item neutral">Neutral: {{ (stats.sentiment.neutral * 100)|round(1) }}%</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="nav-buttons">
+        <button class="nav-button" onclick="showAllSegments()">Show All Patterns</button>
+        <button class="nav-button" onclick="showAllCategories()">Show All Categories</button>
+    </div>
+    
+    <div class="main-container">
+        <div class="categories">
+            <h2>Pattern Categories</h2>
+            
+            {% for category_id, category_info in categories.items() %}
+            <div class="category" onclick="filterByCategory('{{ category_id }}')">
+                <h3>{{ category_info.name }}</h3>
+                <p>{{ category_info.description }}</p>
+                <div class="pattern-count">{{ patterns_by_category[category_id]|length }} patterns found</div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="patterns">
+            <h2>Patterns Identified</h2>
+            
+            {% for category_id, category_patterns in patterns_by_category.items() %}
+                {% if category_patterns %}
+                    {% for pattern in category_patterns %}
+                    <div class="pattern {{ category_id }}" id="{{ pattern.pattern_id }}">
+                        {% if pattern.evidence_level >= 4 %}
+                        <div class="evidence-level">{{ pattern.evidence_level }}</div>
+                        {% endif %}
+                        
+                        <div class="pattern-header">
+                            <h3 class="pattern-title">{{ pattern.pattern_name }} ({{ pattern.timestamp }})</h3>
+                            <span class="expertise-tag">{{ categories[category_id].name }}</span>
+                        </div>
+                        
+                        <div class="transcript">
+                            <div class="speaker-label">{{ pattern.speaker }}:</div>
+                            {{ pattern.text }}
+                        </div>
+                        
+                        <p>{{ pattern.description }}</p>
+                        
+                        <div class="analysis-list">
+                            <h4>Evidence:</h4>
+                            <ul>
+                                {% for match in pattern.keyword_matches %}
+                                <li class="analysis-item">
+                                    <span class="match-highlight">{{ match.match_text }}</span> in context: "{{ match.context }}"
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        
+                        {% if pattern.frameworks %}
+                        <div class="expert-framework">
+                            <div class="expert-framework-header">
+                                EXPERT FRAMEWORK ALIGNMENT
+                            </div>
+                            <div class="framework-content">
+                                {% for framework_id in pattern.frameworks %}
+                                    {% if framework_id in frameworks %}
+                                    <div class="framework-item">
+                                        <div class="framework-name">{{ frameworks[framework_id].name }}</div>
+                                        <div class="framework-description">{{ frameworks[framework_id].description }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="evidence-form">
+                            <div class="evidence-form-header">EVIDENCE LEVEL: {{ pattern.evidence_level }} - {{ evidence_levels[pattern.evidence_level] }}</div>
+                            <div class="confidence">Confidence: {{ (pattern.confidence * 100)|round(1) }}%</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="transcript-container">
+        <h2>Full Transcript</h2>
+        <div class="transcript-segments">
+            {% for segment in transcript_segments %}
+            <div class="transcript-segment">
+                <div class="segment-header">
+                    <span class="segment-speaker">{{ segment.speaker }}</span>
+                    <span class="segment-timestamp">{{ segment.timestamp }}</span>
+                </div>
+                <div class="segment-text">{{ segment.text }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <footer>
+        <p>Generated by Institutional Dynamics Analyzer</p>
+        <p>Based on the Ben Mak expertise assessment framework</p>
+    </footer>
+    
+    <script src="report_script.js"></script>
+</body>
+</html>
