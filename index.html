@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com https://drive.google.com; media-src 'self' https://drive.google.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+<!DOCTYPE html><html lang="en"><head><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com https://drive.google.com https://*.cloudflarestream.com; media-src 'self' https://drive.google.com https://*.cloudflarestream.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self' blob:; upgrade-insecure-requests; block-all-mixed-content;">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ben Mak Claim Substantiation</title>
@@ -599,6 +599,8 @@
             }
         }
     </style>
+    <!-- Add HLS.js for streaming support -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 </head>
 <body>
     <div class="container">
@@ -885,10 +887,7 @@
                 
                 <div class="video-container">
                     <div id="loading-overlay" class="loading-overlay">Loading video...</div>
-                    <video id="evidence-video" controls="">
-                        <source src="https://drive.google.com/uc?export=download&id=1CyeQWqfGhnMCY1pxr_6LzCGy4BsCXsFm" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
+                    <video id="evidence-video" controls></video>
                     
                     <div class="clip-progress">
                         <div id="clip-progress-bar" class="clip-progress-bar"></div>
@@ -922,6 +921,24 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize HLS.js for Cloudflare Stream
+            const video = document.getElementById('evidence-video');
+            const videoSrc = 'https://customer-e5m1en7nnf9e7or4.cloudflarestream.com/f3358a71e83337a80867507a7ab15ff7/manifest/video.m3u8';
+            
+            if (Hls.isSupported()) {
+                const hls = new Hls();
+                hls.loadSource(videoSrc);
+                hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                    console.log('HLS manifest loaded');
+                });
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                // For Safari which has built-in HLS support
+                video.src = videoSrc;
+            } else {
+                console.error('HLS is not supported in this browser');
+            }
+            
             // Toggle categories
             const categoryHeaders = document.querySelectorAll('.category-header');
             categoryHeaders.forEach(header => {
@@ -959,7 +976,7 @@
             // Modal functionality
             const modal = document.getElementById('videoModal');
             const closeBtn = document.querySelector('.close-btn');
-            const video = document.getElementById('evidence-video');
+            // video element is already defined above
             const loadingOverlay = document.getElementById('loading-overlay');
             const modalTitle = document.getElementById('modal-title');
             const newsBanner = document.getElementById('news-banner');
