@@ -1177,12 +1177,13 @@
             
             // Position the modal content in the center of the current viewport
             const modalContent = document.querySelector('.modal-content');
-            const viewportHeight = window.innerHeight;
-            const modalHeight = modalContent.offsetHeight || 500; // Fallback height if not yet rendered
-            
-            // Calculate top position to center in viewport
-            const topPosition = Math.max(20, (viewportHeight - modalHeight) / 2);
-            modalContent.style.marginTop = topPosition + 'px';
+            modalContent.style.position = 'fixed';
+            modalContent.style.top = '50%';
+            modalContent.style.left = '50%';
+            modalContent.style.transform = 'translate(-50%, -50%)';
+            modalContent.style.margin = '0';
+            modalContent.style.maxHeight = '90vh';
+            modalContent.style.overflow = 'auto';
             
             loadingOverlay.style.display = 'flex';
                     
@@ -1214,7 +1215,9 @@
                     video.addEventListener('loadeddata', function onLoadedData() {
                         loadingOverlay.style.display = 'none';
                         video.removeEventListener('loadeddata', onLoadedData);
-                        video.play();
+                        video.play().catch(error => {
+                            console.error('Error playing video:', error);
+                        });
                         
                         // Update progress bar
                         updateInterval = setInterval(function() {
