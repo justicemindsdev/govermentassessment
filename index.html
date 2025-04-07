@@ -1,0 +1,807 @@
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ben Mak Claim Substantiation</title>
+    <style>
+        :root {
+            --primary-color: #1a1f36;
+            --secondary-color: #3a4a6d;
+            --accent-color: #4a6da7;
+            --light-color: #f0f4f8;
+            --dark-color: #0f172a;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --glass-bg: rgba(15, 23, 42, 0.8);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--light-color);
+            background-color: var(--dark-color);
+            padding: 20px;
+            background-image: linear-gradient(135deg, var(--dark-color) 0%, #1e293b 100%);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: var(--glass-bg);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            overflow: hidden;
+        }
+        
+        header {
+            background-color: rgba(26, 31, 54, 0.8);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        
+        h1 {
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+        }
+        
+        h2 {
+            color: var(--light-color);
+            margin: 20px 0 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        
+        h3 {
+            color: var(--light-color);
+            margin: 15px 0 10px;
+        }
+        
+        .intro {
+            padding: 20px;
+            background-color: rgba(58, 74, 109, 0.3);
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+        }
+        
+        .main-content {
+            display: flex;
+            min-height: 600px;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: rgba(26, 31, 54, 0.5);
+            padding: 20px;
+            border-right: 1px solid var(--glass-border);
+        }
+        
+        .content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .nav-list {
+            list-style: none;
+        }
+        
+        .nav-list li {
+            margin-bottom: 10px;
+        }
+        
+        .nav-list a {
+            color: var(--light-color);
+            text-decoration: none;
+            display: block;
+            padding: 10px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-list a:hover {
+            background-color: rgba(74, 109, 167, 0.2);
+            transform: translateX(5px);
+        }
+        
+        .nav-list a.active {
+            background-color: var(--accent-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(74, 109, 167, 0.3);
+        }
+        
+        .category {
+            margin-bottom: 30px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .category-header {
+            background-color: rgba(58, 74, 109, 0.7);
+            color: white;
+            padding: 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 6px 6px 0 0;
+            border: 1px solid var(--glass-border);
+            border-bottom: none;
+        }
+        
+        .category-content {
+            padding: 15px;
+            display: none;
+        }
+        
+        .category.active .category-content {
+            display: block;
+        }
+        
+        .claim {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: rgba(15, 23, 42, 0.5);
+            border-radius: 6px;
+            border-left: 4px solid var(--accent-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border: 1px solid var(--glass-border);
+            border-left: 4px solid var(--accent-color);
+        }
+        
+        .claim-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .claim-title {
+            font-weight: bold;
+            color: var(--light-color);
+        }
+        
+        .timestamp {
+            color: var(--accent-color);
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: underline;
+            position: relative;
+        }
+        
+        .timestamp:hover::after {
+            content: "Play clip";
+            position: absolute;
+            background-color: var(--dark-color);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
+        
+        .claim-quote {
+            font-style: italic;
+            margin: 10px 0;
+            padding: 10px;
+            background-color: rgba(26, 31, 54, 0.7);
+            border-left: 3px solid var(--accent-color);
+            border-radius: 0 6px 6px 0;
+        }
+        
+        .claim-analysis {
+            margin-top: 10px;
+        }
+        
+        .evidence-strength {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .strong {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .moderate {
+            background-color: var(--warning-color);
+            color: white;
+        }
+        
+        .weak {
+            background-color: var(--accent-color);
+            color: white;
+        }
+        
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            overflow: auto;
+        }
+        
+        .modal-content {
+            background-color: var(--glass-bg);
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 12px;
+            width: 80%;
+            max-width: 800px;
+            position: relative;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close-btn:hover {
+            color: black;
+        }
+        
+        .video-container {
+            width: 100%;
+            margin-top: 20px;
+            position: relative;
+        }
+        
+        .evidence-summary {
+            background-color: rgba(26, 31, 54, 0.7);
+            border-left: 4px solid var(--accent-color);
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 4px;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border: 1px solid var(--glass-border);
+            border-left: 4px solid var(--accent-color);
+        }
+        
+        .evidence-summary h4 {
+            margin-top: 0;
+            color: var(--light-color);
+        }
+        
+        .evidence-summary ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        .evidence-summary li {
+            margin-bottom: 5px;
+        }
+        
+        .evidence-tag {
+            display: inline-block;
+            background-color: rgba(58, 74, 109, 0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            border: 1px solid var(--glass-border);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .evidence-tag:hover {
+            background-color: var(--accent-color);
+            transform: translateY(-2px);
+        }
+        
+        video {
+            width: 100%;
+            max-height: 450px;
+        }
+        
+        /* Hide video controls timeline */
+        video::-webkit-media-controls-timeline {
+            display: none !important;
+        }
+        
+        video::-webkit-media-controls-time-remaining-display {
+            display: none !important;
+        }
+        
+        video::-webkit-media-controls-current-time-display {
+            display: none !important;
+        }
+        
+        .news-style-banner {
+            background-color: rgba(74, 109, 167, 0.7);
+            color: white;
+            padding: 10px 15px;
+            margin-top: 15px;
+            font-weight: bold;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            letter-spacing: 0.5px;
+        }
+        
+        .transcript-display {
+            background-color: rgba(15, 23, 42, 0.7);
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            line-height: 1.8;
+            max-height: 120px;
+            overflow-y: auto;
+            border: 1px solid var(--glass-border);
+            position: relative;
+        }
+        
+        .transcript-word {
+            display: inline-block;
+            margin-right: 4px;
+            position: relative;
+            color: rgba(240, 244, 248, 0.8);
+        }
+        
+        .transcript-word.active {
+            color: white;
+        }
+        
+        .transcript-word.active::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -2px;
+            width: 100%;
+            height: 2px;
+            background-color: var(--accent-color);
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+        
+        .evidence-point {
+            position: relative;
+            margin-bottom: 10px;
+            padding-left: 25px;
+        }
+        
+        .timestamp-link {
+            position: absolute;
+            left: 0;
+            color: var(--accent-color);
+            font-size: 0.8rem;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        
+        .timestamp-link:hover {
+            color: var(--light-color);
+        }
+        
+        .clip-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: rgba(26, 31, 54, 0.7);
+            border-radius: 4px;
+            border: 1px solid var(--glass-border);
+        }
+        
+        .clip-info {
+            font-size: 0.9rem;
+            color: var(--light-color);
+        }
+        
+        .clip-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .clip-button {
+            padding: 5px 10px;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .clip-button:hover {
+            background-color: var(--primary-color);
+        }
+        
+        .clip-progress {
+            height: 5px;
+            background-color: var(--light-color);
+            width: 100%;
+            position: relative;
+            margin-top: 10px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .clip-progress-bar {
+            height: 100%;
+            background-color: var(--secondary-color);
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+        
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.2rem;
+            z-index: 10;
+        }
+        
+        .search-container {
+            padding: 15px;
+            background-color: rgba(26, 31, 54, 0.5);
+            margin-bottom: 20px;
+            border-radius: 6px;
+            border: 1px solid var(--glass-border);
+        }
+        
+        #search-input {
+            width: 100%;
+            padding: 12px;
+            background-color: rgba(15, 23, 42, 0.7);
+            border: 1px solid var(--glass-border);
+            border-radius: 6px;
+            font-size: 1rem;
+            color: var(--light-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) inset;
+        }
+        
+        #search-input::placeholder {
+            color: rgba(240, 244, 248, 0.5);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            background-color: rgba(26, 31, 54, 0.8);
+            color: white;
+            border-top: 1px solid var(--glass-border);
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #ddd;
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+            }
+        }
+    </style>
+    <script src="ben_mak_claim_substantiation.js" defer=""></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Ben Mak Claim Substantiation</h1>
+            <p>A comprehensive analysis of claims with video evidence</p>
+        </header>
+        
+        <div class="intro">
+            <h2>Overview</h2>
+            <p>This document provides a comprehensive analysis of Ben Mak's expertise as demonstrated in his meeting with Mbalu (ICS). Each claim is substantiated with direct evidence from the transcript, including timestamps that link to the corresponding video segment.</p>
+            <p>Click on any timestamp to view the video evidence in a popup window.</p>
+        </div>
+        
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Search for claims or evidence...">
+        </div>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <h3>Categories</h3>
+                <ul class="nav-list">
+                    <li><a href="#system-navigation" class="active">System Navigation Knowledge</a></li>
+                    <li><a href="#advocacy-techniques">Advocacy Techniques</a></li>
+                    <li><a href="#power-dynamics">Power Dynamics Management</a></li>
+                    <li><a href="#metacognitive">Metacognitive Awareness</a></li>
+                    <li><a href="#coercive-control">Coercive Control Recognition</a></li>
+                    <li><a href="#causal-links">Causal Link Articulation</a></li>
+                </ul>
+            </div>
+            
+            <div class="content">
+                <!-- System Navigation Knowledge -->
+                <div id="system-navigation" class="category active">
+                    <div class="category-header">
+                        <h2>System Navigation Knowledge</h2>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="category-content">
+                        <!-- Professional Roles and Responsibilities -->
+                        <div class="claim">
+                            <div class="claim-header">
+                                <span class="claim-title">Understanding of Professional Roles and Responsibilities</span>
+                                <span class="timestamp" data-time="10:09" data-end-time="10:45">10:09</span>
+                                <span class="evidence-strength strong">Strong Evidence</span>
+                            </div>
+                            <div class="claim-quote">
+                                "I'd explained that I'd asked you for your work email and that you gave me the other one. And I said you shouldn't do that because that can get you into trouble because it's not a work one. I wasn't trying to get you into trouble and I didn't want to get you in trouble. I was actually raising it with integrity to see why they hadn't gave you one to stop you getting in trouble and also to stop Integrity getting in trouble because it's not proper process and it's not what you do in a setting a situation like this."
+                            </div>
+                            <div class="claim-analysis">
+                                <p>Ben demonstrates exceptional understanding of professional boundaries (work vs. personal email), organizational liability, process requirements, and how to raise concerns constructively rather than punitively.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Organizational Structures and Processes -->
+                        <div class="claim">
+                            <div class="claim-header">
+                                <span class="claim-title">Knowledge of Organizational Structures and Processes</span>
+                                <span class="timestamp" data-time="10:58" data-end-time="11:30">10:58</span>
+                                <span class="evidence-strength strong">Strong Evidence</span>
+                            </div>
+                            <div class="claim-quote">
+                                "And Jade was really nice and understanding and thanked me for letting them know. They also asked if I felt it would be best if you didn't. Be my worker. And I said, no, I want you to remain me worker. Because I didn't think it would be fair that if. And they weren't saying it, as in. As a. As a. As a punishment, orders or anything other than, did I want you to be moved from caring for me to someone else?"
+                            </div>
+                            <div class="claim-analysis">
+                                <p>Ben shows sophisticated understanding of management response protocols, recognition of how concerns can impact service provision, knowledge of service user rights regarding worker assignment, and ability to distinguish between punitive and supportive management responses.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Assessment Frameworks -->
+                        <div class="claim">
+                            <div class="claim-header">
+                                <span class="claim-title">Understanding of Assessment Frameworks</span>
+                                <span class="timestamp" data-time="14:36" data-end-time="15:10">14:36</span>
+                                <span class="evidence-strength strong">Strong Evidence</span>
+                            </div>
+                            <div class="claim-quote">
+                                "And Jane said it's standard procedure. All the support workers are very familiar with it. And that I don't. I have no qualms with, but I have qualms with not developing processes that could be more effective. So for me, this is not about scrutinizing you, this is just about looking at our engagement and the situation. I don't want you to be scrutinized."
+                            </div>
+                            <div class="claim-analysis">
+                                <p>Ben articulates a sophisticated critique of standard assessment approaches and proposes more effective alternatives, demonstrating knowledge of different assessment methodologies and understanding of the limitations of standard approaches.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="claim">
+                            <div class="claim-header">
+                                <span class="claim-title">Understanding of Assessment Frameworks (continued)</span>
+                                <span class="timestamp" data-time="13:21" data-end-time="13:55">13:21</span>
+                                <span class="evidence-strength strong">Strong Evidence</span>
+                            </div>
+                            <div class="claim-quote">
+                                "I said, I would like that not to happen because a spotlight observation is too scrutinous. And by that I mean it's too surgical and clinical and as though being looked to find fault. Yeah, I said, I don't. I wouldn't prefer that. I would rather have a complex case review where the general overview between us is observed, where it's not all limelight on you."
+                            </div>
+                            <div class="claim-analysis">
+                                <p>Ben demonstrates ability to propose alternative, more holistic assessment frameworks and recognition of how assessment approaches impact service delivery.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Advocacy Techniques -->
+                <div id="advocacy-techniques" class="category">
+                    <div class="category-header">
+                        <h2>Advocacy Techniques</h2>
+                        <span class="toggle-icon">▲</span>
+                    </div>
+                    <div class="category-content">
+                        <!-- Advocacy Without Triggering Defensive Responses -->
+                        <div class="claim">
+                            <div class="claim-header">
+                                <span class="claim-title">Advocacy Without Triggering Defensive Responses</span>
+                                <span class="timestamp" data-time="12:36" data-end-time="13:10">12:36</span>
+                                <span class="evidence-strength strong">Strong Evidence</span>
+                            </div>
+                            <div class="claim-quote">
+                                "I also raised with Jade that it's important to know I don't speak French and I don't speak Arabic, and. And I don't speak probably as many languages as you, so we can't have weight, per se, in a holistic view, because I did raise that. You. You didn't know a hostel was. Now, I defended you in that essence, because ask me to say it in French, I won't be able to."
+                            </div>
+                            <div class="claim-analysis">
+                                <p>Ben demonstrates ability to contextualize perceived shortcomings, skill in reframing potential criticism as systemic issues, technique of normalizing knowledge gaps through personal comparison, and advocacy that acknowledges cultural and linguistic differences.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Systemic Rather Than Individual Focus -->
+                        <div class="claim">
+                            <div class="claim-header">
+                                <span class="claim-title">Systemic Rather Than Individual Focus</span>
+                                <span class="timestamp" data-time="13:42" data-end-time="14:20">13:42</span>
+                                <span class="evidence-strength strong">Strong Evidence</span>
+                            </div>
+                            <div class="claim-quote">
+                                "I think it's better to not make it about you, make it about the situation. I think that's fairer and it doesn't make you feel you've got to get the answers right, because it's not about getting it right, it's about progress and not perfection. And I can assume that it's already a highly pressureful engagement because of how complex it is. And you've been expected, because I don't think people actually realize how little handover from the social workers Westminster have gave you."
+                            </div>
+                            <div class="claim-analysis">
+                                <p>Ben demonstrates sophisticated understanding of systemic vs. individual framing, recognition of how framing impacts psychological safety, ability to identify systemic failures without assigning individual blame, and knowledge of how inadequate handovers impact service quality.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Creating Accountability Structures -->
+                        <div class="claim">
+                            <div class="claim-header">
+                                <span class="claim-title">Creating Accountability Structures</span>
+                                <span class="timestamp" data-time="38:31" data-end-time="39:05">38:31</span>
+                                <span class="evidence-strength strong">Strong Evidence</span>
+                            </div>
+                            <div class="claim-quote">
+                                "What I would want because if you are being my care provider is I would want to really see from you confidence and exercising your authority. That would make me happy because then it's like if you're doing it for me, you're doing it for your next client. And if you can learn and know your surety of where you use your authority and that you can and have that remit, that makes me really happy."
+                            </div>
+                            <div class="claim-analysis">
+                                <p>Ben establishes clear accountability structures that protect both himself and Mbalu, demonstrating creation of clear, documented accountability trails and knowledge of remit boundaries and appropriate expectations.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="claim">
+                            <div class="claim-header">
+                                <span class="claim-title">Creating Accountability Structures (continued)</span>
+                                <span class="timestamp" data-time="31:36" data-end-time="32:00">31:36</span>
+                                <span class="evidence-strength strong">Strong Evidence</span>
+                            </div>
+                            <div class="claim-quote">
+                                "I'm just asking you to bear witness to. I am doing that. It's sort of like accountability for me. You're saying, yeah, he's done that. I've seen him do this, he is doing that. That's it. Because I know what your remit is and I know what you can and can't do."
+                            </div>
+                            <div class="claim-analysis">
+                                <p>Ben shows understanding of how to establish professional witnessing, knowledge of remit boundaries and appropriate expectations, and skill in creating mutual benefit scenarios.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Power Dynamics Management -->
+                <div id="power-dynamics" class="category">
+                    <div class="category-header">
+                        <h2>Power Dynamics Management</h2>
+                        <span class="toggle-icon">▲</span>
+                    </div>
+                    <div class="category-content">
+                        <!-- Reshaping Traditional Provider-User Dynamics -->
+                        <div class="claim">
+                            <div class="claim-header">
+                                <span class="claim-title">Reshaping Traditional Provider-User Dynamics</span>
+                                <span class="timestamp" data-time="34:34" data-end-time="34:50">34:34</span>
+                                <span class="evidence-strength strong">Strong Evidence</span>
+                            </div>
+                            <div class="claim-quote">
+                                "So from what I've said, where do you feel you're going to be most effective and what would help?"
+                            </div>
+                            <div class="claim-analysis">
+                                <p>By asking Mbalu where she feels she can be most effective, Ben inverts the typical dynamic where providers determine intervention, creates space for professional autonomy while maintaining guidance, demonstrates coaching rather than directing, and establishes collaborative rather than hierarchical relationship.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Empowerment Through Knowledge Transfer -->
+                        <div class="claim">
+                            <div class="claim-header">
+                                <span class="claim-title">Empowerment Through Knowledge Transfer</span>
+                                <span class="timestamp" data-time="35:23" data-end-time="36:00">35:23</span>
+                                <span class="evidence-strength strong">Strong Evidence</span>
+                            </div>
+                            <div class="claim-quote">
+                                "And that's what you said. That plan of action is perfect... And it gives you a good grasp of testing your authority because you do have authority. You're looking after someone who's vulnerable. So you need to be reminded of that you're not a robot and you're not just a piece in a mechanical machine. You're actually a human that has got authority and can use it for good things without fear."
+                            </div>
+                            <div class="claim-analysis">
+                                <p>Ben actively works to empower Mbalu within her professional role, demonstrating explicit acknowledgment and reinforcement of professional authority, humanizing approach to professional roles, transfer of knowledge about appropriate use of authority, and creation of psychological safety for exercising professional judgment.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Strategic Use of Vulnerability -->
+                        <div class="claim">
+                            <div class="claim-header">
+                                <span class="claim-title">Strategic Use of Vulnerability</span>
+                                <span class="timestamp" data-time="40:00" data-end-time="40:30">40:00</span>
+                                <span class="evidence-strength strong">Strong Evidence</span>
+                            </div>
+                            <div class="claim-quote">
+                                "I'm getting by as much as I can and this is progress. So I want to focus on this right now because this is what it's all about. If we can control this and we can have change on this, we're doing something because everything else is just being a circle of going in the same place."
+                            </div>
+                            <div class="claim-analysis">
+                                <p>Ben strategically shares his own vulnerability to create psychological safety and establish authenticity, demonstrating appropriate self-disclosure, showing vulnerability while maintaining boundaries, and using selective vulnerability as technique.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Video Modal -->
+        <div id="videoModal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn">×</span>
+                <h3 id="modal-title">Video Evidence</h3>
+                
+                <div class="news-style-banner" id="news-banner">
+                    SERVICE USER DEMONSTRATES EXPERT KNOWLEDGE OF PROFESSIONAL BOUNDARIES
+                </div>
+                
+                <div class="video-container">
+                    <div id="loading-overlay" class="loading-overlay">Loading video...</div>
+                    <video id="evidence-video" controls="">
+                        <source src="Meeting with Ben Mak, Mbalu (ICS) 5cfc7646-de55-490a-a377-97c1e196b199.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    
+                    <div class="clip-progress">
+                        <div id="clip-progress-bar" class="clip-progress-bar"></div>
+                    </div>
+                    
+                    <div class="clip-controls">
+                        <div class="clip-info">
+                            Clip duration: <span id="clip-time">0:30</span>
+                        </div>
+                        <div class="clip-buttons">
+                            <button id="replay-clip" class="clip-button">Replay Clip</button>
+                            <button id="full-context" class="clip-button">View Full Context</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="transcript-display" class="transcript-display">
+                    <!-- Transcript will be populated by JavaScript -->
+                </div>
+                
+                <div id="evidence-summary" class="evidence-summary">
+                    <!-- Evidence summary will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>Ben Mak Claim Substantiation Tool © 2025</p>
+    </footer>
+
+
+</body></html>
