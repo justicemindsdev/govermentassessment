@@ -288,16 +288,20 @@
         
         .modal-content {
             background-color: var(--glass-bg);
-            margin: 5% auto;
             padding: 20px;
             border-radius: 12px;
             width: 80%;
             max-width: 800px;
-            position: relative;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--glass-border);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            max-height: 90vh;
+            overflow-y: auto;
         }
         
         .close-btn {
