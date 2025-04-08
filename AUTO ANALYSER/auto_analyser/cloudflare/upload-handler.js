@@ -19,6 +19,9 @@ app.use(cors());
 // Parse JSON bodies
 app.use(express.json());
 
+// Serve static files from the root directory
+app.use(express.static(path.join(__dirname, '../../../')));
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
