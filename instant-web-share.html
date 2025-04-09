@@ -15,13 +15,13 @@
             height: 100vh;
             overflow: hidden;
         }
-        
+
         .editor-container {
             height: 100%;
             display: flex;
             flex-direction: column;
         }
-        
+
         .code-editor {
             flex: 1;
             font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
@@ -35,7 +35,7 @@
             outline: none;
             tab-size: 2;
         }
-        
+
         .preview-container {
             height: 100%;
             display: flex;
@@ -43,7 +43,7 @@
             background-color: white;
             border-left: 1px solid #e5e7eb;
         }
-        
+
         .preview-iframe {
             flex: 1;
             border: none;
@@ -51,7 +51,7 @@
             height: 100%;
             background-color: white;
         }
-        
+
         .toolbar {
             display: flex;
             align-items: center;
@@ -59,7 +59,7 @@
             background-color: #f3f4f6;
             border-bottom: 1px solid #e5e7eb;
         }
-        
+
         .toolbar-button {
             padding: 0.5rem 1rem;
             background-color: #2563eb;
@@ -69,17 +69,18 @@
             font-weight: 500;
             cursor: pointer;
             transition: background-color 0.2s;
+            margin-right: 0.5rem;
         }
-        
+
         .toolbar-button:hover {
             background-color: #1d4ed8;
         }
-        
+
         .toolbar-button:disabled {
             background-color: #93c5fd;
             cursor: not-allowed;
         }
-        
+
         .toolbar-select {
             padding: 0.5rem;
             border-radius: 0.375rem;
@@ -87,7 +88,7 @@
             margin-right: 0.5rem;
             background-color: white;
         }
-        
+
         .share-container {
             position: fixed;
             top: 0;
@@ -101,14 +102,15 @@
             z-index: 50;
             visibility: hidden;
             opacity: 0;
-            transition: visibility 0s, opacity 0.2s;
+            transition: visibility 0s linear 0.2s, opacity 0.2s;
         }
-        
+
         .share-container.visible {
             visibility: visible;
             opacity: 1;
+            transition-delay: 0s;
         }
-        
+
         .share-dialog {
             background-color: white;
             border-radius: 0.5rem;
@@ -117,7 +119,7 @@
             max-width: 32rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
-        
+
         .share-input {
             width: 100%;
             padding: 0.75rem;
@@ -127,32 +129,32 @@
             margin-bottom: 1rem;
             font-family: monospace;
         }
-        
+
         .share-buttons {
             display: flex;
             justify-content: flex-end;
             gap: 0.5rem;
         }
-        
+
         .share-button {
             padding: 0.5rem 1rem;
             border-radius: 0.375rem;
             font-weight: 500;
             cursor: pointer;
         }
-        
+
         .share-button.primary {
             background-color: #2563eb;
             color: white;
             border: none;
         }
-        
+
         .share-button.secondary {
             background-color: white;
             color: #4b5563;
             border: 1px solid #d1d5db;
         }
-        
+
         .toast {
             position: fixed;
             bottom: 1rem;
@@ -165,14 +167,15 @@
             z-index: 50;
             visibility: hidden;
             opacity: 0;
-            transition: visibility 0s, opacity 0.2s;
+            transition: visibility 0s linear 0.2s, opacity 0.2s;
         }
-        
+
         .toast.visible {
             visibility: visible;
             opacity: 1;
+            transition-delay: 0s;
         }
-        
+
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -186,14 +189,15 @@
             z-index: 100;
             visibility: hidden;
             opacity: 0;
-            transition: visibility 0s, opacity 0.2s;
+            transition: visibility 0s linear 0.2s, opacity 0.2s;
         }
-        
+
         .loading-overlay.visible {
             visibility: visible;
             opacity: 1;
+            transition-delay: 0s;
         }
-        
+
         .spinner {
             border: 4px solid rgba(0, 0, 0, 0.1);
             border-left-color: #2563eb;
@@ -202,11 +206,35 @@
             height: 2rem;
             animation: spin 1s linear infinite;
         }
-        
+
         @keyframes spin {
             to {
                 transform: rotate(360deg);
             }
+        }
+
+        /* Status indicator */
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            margin-left: auto;
+            margin-right: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .status-dot {
+            height: 0.5rem;
+            width: 0.5rem;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .status-dot.connected {
+            background-color: #10b981;
+        }
+
+        .status-dot.disconnected {
+            background-color: #ef4444;
         }
     </style>
 </head>
@@ -223,38 +251,42 @@
                     <option value="jsx">JSX</option>
                     <option value="tsx">TSX</option>
                 </select>
-                <button id="run-button" class="toolbar-button mr-2">
+                <button id="run-button" class="toolbar-button">
                     Run
                 </button>
                 <button id="share-button" class="toolbar-button bg-green-600 hover:bg-green-700">
                     Share
                 </button>
+                <div class="status-indicator">
+                    <div id="status-dot" class="status-dot disconnected"></div>
+                    <span id="status-text">Offline</span>
+                </div>
             </div>
-            <textarea id="code-editor" class="code-editor" spellcheck="false"><!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Web Page</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
-    <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl m-4">
-        <div class="md:flex">
-            <div class="p-8">
-                <div class="uppercase tracking-wide text-sm text-indigo-500 font-semibold">Welcome to</div>
-                <h1 class="block mt-1 text-lg leading-tight font-medium text-black">Instant Web Page Share</h1>
-                <p class="mt-2 text-gray-500">Edit this code, click Run to preview, and Share to make it live!</p>
-                <button class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
+            <textarea id="code-editor" class="code-editor" spellcheck="false">&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;My Web Page&lt;/title&gt;
+    &lt;script src="https://cdn.tailwindcss.com"&gt;&lt;/script&gt;
+&lt;/head&gt;
+&lt;body class="bg-gray-100 min-h-screen flex items-center justify-center"&gt;
+    &lt;div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl m-4"&gt;
+        &lt;div class="md:flex"&gt;
+            &lt;div class="p-8"&gt;
+                &lt;div class="uppercase tracking-wide text-sm text-indigo-500 font-semibold"&gt;Welcome to&lt;/div&gt;
+                &lt;h1 class="block mt-1 text-lg leading-tight font-medium text-black"&gt;Instant Web Page Share&lt;/h1&gt;
+                &lt;p class="mt-2 text-gray-500"&gt;Edit this code, click Run to preview, and Share to make it live!&lt;/p&gt;
+                &lt;button class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"&gt;
                     Click Me
-                </button>
-            </div>
+                &lt;/button&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;</textarea>
         </div>
-    </div>
-</body>
-</html></textarea>
-        </div>
-        
+
         <!-- Right panel: Preview -->
         <div class="w-1/2 preview-container">
             <div class="toolbar">
@@ -269,10 +301,10 @@
                     Refresh
                 </button>
             </div>
-            <iframe id="preview" class="preview-iframe" sandbox="allow-scripts allow-same-origin"></iframe>
+            <iframe id="preview" class="preview-iframe" sandbox="allow-scripts allow-same-origin allow-forms" style="width: 100%;"></iframe>
         </div>
     </div>
-    
+
     <!-- Share dialog -->
     <div id="share-container" class="share-container">
         <div class="share-dialog">
@@ -289,17 +321,17 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Toast notification -->
     <div id="toast" class="toast">
         Link copied to clipboard!
     </div>
-    
+
     <!-- Loading overlay -->
     <div id="loading-overlay" class="loading-overlay">
         <div class="spinner"></div>
     </div>
-    
+
     <script>
         // DOM elements
         const codeEditor = document.getElementById('code-editor');
@@ -315,25 +347,59 @@
         const closeButton = document.getElementById('close-button');
         const toast = document.getElementById('toast');
         const loadingOverlay = document.getElementById('loading-overlay');
-        
+        const statusDot = document.getElementById('status-dot');
+        const statusText = document.getElementById('status-text');
+
+        // Simulate online status for demo
+        setTimeout(() => {
+            statusDot.classList.remove('disconnected');
+            statusDot.classList.add('connected');
+            statusText.textContent = 'Connected';
+        }, 1000);
+
         // Update preview
         function updatePreview() {
             const code = codeEditor.value;
-            const previewDocument = preview.contentDocument;
-            previewDocument.open();
-            previewDocument.write(code);
-            previewDocument.close();
+            // Safely update the iframe content
+            try {
+                const previewDocument = preview.contentDocument;
+                previewDocument.open();
+                previewDocument.write(code);
+                previewDocument.close();
+            } catch (error) {
+                console.error('Error updating preview:', error);
+                // Show error in preview
+                try {
+                    const previewDocument = preview.contentDocument;
+                    previewDocument.open();
+                    previewDocument.write(`
+                        <html>
+                            <body style="font-family: sans-serif; color: red; padding: 20px;">
+                                <h2>Error Previewing Content</h2>
+                                <p>${error.message}</p>
+                            </body>
+                        </html>
+                    `);
+                    previewDocument.close();
+                } catch (e) {
+                    console.error('Could not display error in preview', e);
+                }
+            }
         }
-        
+
         // Run button
         runButton.addEventListener('click', updatePreview);
-        
+
         // Refresh button
         refreshButton.addEventListener('click', updatePreview);
-        
-        // Initial preview
-        setTimeout(updatePreview, 500);
-        
+
+        // Initial preview - with slight delay to ensure DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(updatePreview, 300);
+        });
+        // Also run updatePreview immediately in case DOMContentLoaded already fired
+        setTimeout(updatePreview, 300);
+
         // Device preview
         previewDevice.addEventListener('change', function() {
             switch(this.value) {
@@ -348,30 +414,30 @@
                     break;
             }
         });
-        
+
         // Share functionality
         shareButton.addEventListener('click', async function() {
             // Show loading overlay
             loadingOverlay.classList.add('visible');
-            
+
             try {
                 // Get the code
                 const code = codeEditor.value;
-                
+
                 // Create a unique ID for the page
                 const pageId = Date.now().toString(36) + Math.random().toString(36).substring(2);
-                
+
                 // In a real implementation, this would send the code to a server
                 // For this demo, we'll simulate a server response
                 await new Promise(resolve => setTimeout(resolve, 1500));
-                
+
                 // Generate a shareable URL
-                // In a real implementation, this would be a URL to your deployed site
-                const url = `https://govermentassessment.vercel.app/shared/${pageId}`;
-                
+                // Fixed the URL to use correct spelling
+                const url = `https://governmentassessment.vercel.app/shared/${pageId}`;
+
                 // Update the share dialog
                 shareUrl.value = url;
-                
+
                 // Show the share dialog
                 shareContainer.classList.add('visible');
             } catch (error) {
@@ -382,47 +448,136 @@
                 loadingOverlay.classList.remove('visible');
             }
         });
-        
+
         // Close share dialog
         closeButton.addEventListener('click', function() {
             shareContainer.classList.remove('visible');
         });
-        
+
         // Copy URL to clipboard
         copyButton.addEventListener('click', function() {
-            // Copy the URL to clipboard
-            shareUrl.select();
-            document.execCommand('copy');
-            
-            // Show toast notification
-            toast.classList.add('visible');
-            setTimeout(() => {
-                toast.classList.remove('visible');
-            }, 3000);
+            // Use modern clipboard API if available
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(shareUrl.value)
+                    .then(() => {
+                        // Show toast notification
+                        toast.classList.add('visible');
+                        setTimeout(() => {
+                            toast.classList.remove('visible');
+                        }, 3000);
+                    })
+                    .catch(err => {
+                        console.error('Failed to copy: ', err);
+                        // Fallback to older method
+                        fallbackCopy();
+                    });
+            } else {
+                // Fallback for browsers that don't support clipboard API
+                fallbackCopy();
+            }
+
+            function fallbackCopy() {
+                // Copy the URL to clipboard using older method
+                shareUrl.select();
+                try {
+                    const successful = document.execCommand('copy');
+                    if (successful) {
+                        // Show toast notification
+                        toast.classList.add('visible');
+                        setTimeout(() => {
+                            toast.classList.remove('visible');
+                        }, 3000);
+                    } else {
+                        console.error('Fallback: Copying text failed');
+                    }
+                } catch (err) {
+                    console.error('Fallback: Unable to copy', err);
+                }
+            }
         });
-        
+
         // Close share dialog when clicking outside
         shareContainer.addEventListener('click', function(event) {
+            // Check if the click is directly on the shareContainer (background)
+            // and not on any of its children
             if (event.target === shareContainer) {
                 shareContainer.classList.remove('visible');
             }
         });
-        
+
         // Tab key in code editor
         codeEditor.addEventListener('keydown', function(e) {
             if (e.key === 'Tab') {
                 e.preventDefault();
                 
-                // Insert tab at cursor position
+                // Get cursor position
                 const start = this.selectionStart;
                 const end = this.selectionEnd;
                 
-                this.value = this.value.substring(0, start) + '  ' + this.value.substring(end);
+                // Insert 2 spaces for tab
+                const spaces = '  ';
                 
-                // Move cursor after tab
-                this.selectionStart = this.selectionEnd = start + 2;
+                // If there's a selection, handle it differently
+                if (start !== end) {
+                    const lines = this.value.substring(start, end).split('\n');
+                    const indentedLines = lines.map(line => spaces + line);
+                    const indentedText = indentedLines.join('\n');
+                    
+                    // Replace the selection with indented text
+                    this.value = this.value.substring(0, start) + indentedText + this.value.substring(end);
+                    
+                    // Adjust selection to maintain the same text selected
+                    this.selectionStart = start;
+                    this.selectionEnd = start + indentedText.length;
+                } else {
+                    // No selection, just insert spaces at cursor
+                    this.value = this.value.substring(0, start) + spaces + this.value.substring(end);
+                    
+                    // Move cursor after inserted spaces
+                    this.selectionStart = this.selectionEnd = start + spaces.length;
+                }
             }
         });
+
+        // Auto-save functionality
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem('code-editor-content', codeEditor.value);
+                localStorage.setItem('language-select', languageSelect.value);
+            } catch (e) {
+                console.error('Failed to save to localStorage:', e);
+            }
+        }
+
+        // Load from localStorage
+        function loadFromLocalStorage() {
+            try {
+                const savedCode = localStorage.getItem('code-editor-content');
+                const savedLanguage = localStorage.getItem('language-select');
+                
+                if (savedCode) {
+                    codeEditor.value = savedCode;
+                }
+                
+                if (savedLanguage) {
+                    languageSelect.value = savedLanguage;
+                }
+            } catch (e) {
+                console.error('Failed to load from localStorage:', e);
+            }
+        }
+
+        // Set up auto-save
+        codeEditor.addEventListener('input', () => {
+            saveToLocalStorage();
+        });
+
+        languageSelect.addEventListener('change', () => {
+            saveToLocalStorage();
+        });
+
+        // Load saved content
+        loadFromLocalStorage();
     </script>
 </body>
 </html>
