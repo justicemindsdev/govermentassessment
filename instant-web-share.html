@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instant Web Page Share</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #f9fafb;
+            color: #111827;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .editor-container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .code-editor {
+            flex: 1;
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            padding: 1rem;
+            resize: none;
+            border: none;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            outline: none;
+            tab-size: 2;
+        }
+        
+        .preview-container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+            border-left: 1px solid #e5e7eb;
+        }
+        
+        .preview-iframe {
+            flex: 1;
+            border: none;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+        }
+        
+        .toolbar {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background-color: #f3f4f6;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .toolbar-button {
+            padding: 0.5rem 1rem;
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .toolbar-button:hover {
+            background-color: #1d4ed8;
+        }
+        
+        .toolbar-button:disabled {
+            background-color: #93c5fd;
+            cursor: not-allowed;
+        }
+        
+        .toolbar-select {
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            border: 1px solid #d1d5db;
+            margin-right: 0.5rem;
+            background-color: white;
+        }
+        
+        .share-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s, opacity 0.2s;
+        }
+        
+        .share-container.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .share-dialog {
+            background-color: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            width: 90%;
+            max-width: 32rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .share-input {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            border: 1px solid #d1d5db;
+            margin-top: 0.5rem;
+            margin-bottom: 1rem;
+            font-family: monospace;
+        }
+        
+        .share-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+        
+        .share-button {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        
+        .share-button.primary {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+        }
+        
+        .share-button.secondary {
+            background-color: white;
+            color: #4b5563;
+            border: 1px solid #d1d5db;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            padding: 1rem;
+            background-color: #10b981;
+            color: white;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            z-index: 50;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s, opacity 0.2s;
+        }
+        
+        .toast.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s, opacity 0.2s;
+        }
+        
+        .loading-overlay.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #2563eb;
+            border-radius: 50%;
+            width: 2rem;
+            height: 2rem;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="flex h-screen">
+        <!-- Left panel: Code editor -->
+        <div class="w-1/2 editor-container">
+            <div class="toolbar">
+                <select id="language-select" class="toolbar-select">
+                    <option value="html">HTML</option>
+                    <option value="css">CSS</option>
+                    <option value="javascript">JavaScript</option>
+                    <option value="typescript">TypeScript</option>
+                    <option value="jsx">JSX</option>
+                    <option value="tsx">TSX</option>
+                </select>
+                <button id="run-button" class="toolbar-button mr-2">
+                    Run
+                </button>
+                <button id="share-button" class="toolbar-button bg-green-600 hover:bg-green-700">
+                    Share
+                </button>
+            </div>
+            <textarea id="code-editor" class="code-editor" spellcheck="false"><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Web Page</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl m-4">
+        <div class="md:flex">
+            <div class="p-8">
+                <div class="uppercase tracking-wide text-sm text-indigo-500 font-semibold">Welcome to</div>
+                <h1 class="block mt-1 text-lg leading-tight font-medium text-black">Instant Web Page Share</h1>
+                <p class="mt-2 text-gray-500">Edit this code, click Run to preview, and Share to make it live!</p>
+                <button class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
+                    Click Me
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html></textarea>
+        </div>
+        
+        <!-- Right panel: Preview -->
+        <div class="w-1/2 preview-container">
+            <div class="toolbar">
+                <span class="font-medium">Preview</span>
+                <div class="flex-grow"></div>
+                <select id="preview-device" class="toolbar-select">
+                    <option value="desktop">Desktop</option>
+                    <option value="tablet">Tablet</option>
+                    <option value="mobile">Mobile</option>
+                </select>
+                <button id="refresh-button" class="toolbar-button">
+                    Refresh
+                </button>
+            </div>
+            <iframe id="preview" class="preview-iframe" sandbox="allow-scripts allow-same-origin"></iframe>
+        </div>
+    </div>
+    
+    <!-- Share dialog -->
+    <div id="share-container" class="share-container">
+        <div class="share-dialog">
+            <h2 class="text-xl font-bold mb-4">Share Your Page</h2>
+            <p class="mb-2">Your page is now live at:</p>
+            <input id="share-url" class="share-input" type="text" readonly>
+            <div class="share-buttons">
+                <button id="copy-button" class="share-button primary">
+                    Copy Link
+                </button>
+                <button id="close-button" class="share-button secondary">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast notification -->
+    <div id="toast" class="toast">
+        Link copied to clipboard!
+    </div>
+    
+    <!-- Loading overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+    
+    <script>
+        // DOM elements
+        const codeEditor = document.getElementById('code-editor');
+        const languageSelect = document.getElementById('language-select');
+        const runButton = document.getElementById('run-button');
+        const refreshButton = document.getElementById('refresh-button');
+        const preview = document.getElementById('preview');
+        const previewDevice = document.getElementById('preview-device');
+        const shareButton = document.getElementById('share-button');
+        const shareContainer = document.getElementById('share-container');
+        const shareUrl = document.getElementById('share-url');
+        const copyButton = document.getElementById('copy-button');
+        const closeButton = document.getElementById('close-button');
+        const toast = document.getElementById('toast');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        
+        // Update preview
+        function updatePreview() {
+            const code = codeEditor.value;
+            const previewDocument = preview.contentDocument;
+            previewDocument.open();
+            previewDocument.write(code);
+            previewDocument.close();
+        }
+        
+        // Run button
+        runButton.addEventListener('click', updatePreview);
+        
+        // Refresh button
+        refreshButton.addEventListener('click', updatePreview);
+        
+        // Initial preview
+        setTimeout(updatePreview, 500);
+        
+        // Device preview
+        previewDevice.addEventListener('change', function() {
+            switch(this.value) {
+                case 'desktop':
+                    preview.style.width = '100%';
+                    break;
+                case 'tablet':
+                    preview.style.width = '768px';
+                    break;
+                case 'mobile':
+                    preview.style.width = '375px';
+                    break;
+            }
+        });
+        
+        // Share functionality
+        shareButton.addEventListener('click', async function() {
+            // Show loading overlay
+            loadingOverlay.classList.add('visible');
+            
+            try {
+                // Get the code
+                const code = codeEditor.value;
+                
+                // Create a unique ID for the page
+                const pageId = Date.now().toString(36) + Math.random().toString(36).substring(2);
+                
+                // In a real implementation, this would send the code to a server
+                // For this demo, we'll simulate a server response
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                // Generate a shareable URL
+                // In a real implementation, this would be a URL to your deployed site
+                const url = `https://govermentassessment.vercel.app/shared/${pageId}`;
+                
+                // Update the share dialog
+                shareUrl.value = url;
+                
+                // Show the share dialog
+                shareContainer.classList.add('visible');
+            } catch (error) {
+                console.error('Error sharing page:', error);
+                alert('Failed to share page. Please try again.');
+            } finally {
+                // Hide loading overlay
+                loadingOverlay.classList.remove('visible');
+            }
+        });
+        
+        // Close share dialog
+        closeButton.addEventListener('click', function() {
+            shareContainer.classList.remove('visible');
+        });
+        
+        // Copy URL to clipboard
+        copyButton.addEventListener('click', function() {
+            // Copy the URL to clipboard
+            shareUrl.select();
+            document.execCommand('copy');
+            
+            // Show toast notification
+            toast.classList.add('visible');
+            setTimeout(() => {
+                toast.classList.remove('visible');
+            }, 3000);
+        });
+        
+        // Close share dialog when clicking outside
+        shareContainer.addEventListener('click', function(event) {
+            if (event.target === shareContainer) {
+                shareContainer.classList.remove('visible');
+            }
+        });
+        
+        // Tab key in code editor
+        codeEditor.addEventListener('keydown', function(e) {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                
+                // Insert tab at cursor position
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                
+                this.value = this.value.substring(0, start) + '  ' + this.value.substring(end);
+                
+                // Move cursor after tab
+                this.selectionStart = this.selectionEnd = start + 2;
+            }
+        });
+    </script>
+</body>
+</html>
