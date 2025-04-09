@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ben Mak Case Timeline (Simplified)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .timeline-item {
+            position: relative;
+            padding-left: 2rem;
+            padding-bottom: 2rem;
+            border-left: 2px solid #5D5CDE;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -0.5rem;
+            top: 0;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background-color: #5D5CDE;
+        }
+        
+        .timeline-item.violation::before {
+            background-color: #ef4444;
+        }
+        
+        .timeline-item.impact::before {
+            background-color: #0ea5e9;
+        }
+        
+        .duress-meter {
+            height: 1rem;
+            background: linear-gradient(to right, #facc15, #f97316, #ef4444);
+            border-radius: 0.5rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4">
+    <div class="container mx-auto max-w-4xl bg-white p-6 rounded-lg shadow-lg">
+        <h1 class="text-3xl font-bold mb-2 text-center">Ben Mak: Network of Oppression Timeline</h1>
+        <p class="text-center mb-6 text-gray-600">Interactive visualization of accumulated duress and institutional failures (2021-2024)</p>
+        
+        <div class="mb-8">
+            <h2 class="text-xl font-bold mb-2">Accumulated Duress</h2>
+            <div class="bg-gray-200 rounded-full h-4 mb-2">
+                <div class="duress-meter" style="width: 85%"></div>
+            </div>
+            <p class="text-sm text-gray-600">Current level: <span class="font-bold text-red-600">85%</span> (Critical Duress)</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-gray-50 p-4 rounded-lg shadow">
+                <h3 class="font-bold text-lg mb-2">Key Entities</h3>
+                <ul class="space-y-2">
+                    <li class="flex items-center">
+                        <span class="w-3 h-3 rounded-full bg-indigo-500 mr-2"></span>
+                        <span>Ben Mak (Victim)</span>
+                    </li>
+                    <li class="flex items-center">
+                        <span class="w-3 h-3 rounded-full bg-red-500 mr-2"></span>
+                        <span>Sussex Police</span>
+                    </li>
+                    <li class="flex items-center">
+                        <span class="w-3 h-3 rounded-full bg-amber-500 mr-2"></span>
+                        <span>Knight Frank</span>
+                    </li>
+                    <li class="flex items-center">
+                        <span class="w-3 h-3 rounded-full bg-red-500 mr-2"></span>
+                        <span>Social Services</span>
+                    </li>
+                    <li class="flex items-center">
+                        <span class="w-3 h-3 rounded-full bg-red-500 mr-2"></span>
+                        <span>Housing Authority</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded-lg shadow md:col-span-2">
+                <h3 class="font-bold text-lg mb-2">Current Status (2024)</h3>
+                <p class="mb-2">Ben Mak is experiencing critical levels of duress due to systematic institutional failures across multiple authorities.</p>
+                <div class="grid grid-cols-2 gap-2 text-sm">
+                    <div class="bg-red-50 p-2 rounded">
+                        <span class="font-bold">Active Violations:</span> 12
+                    </div>
+                    <div class="bg-blue-50 p-2 rounded">
+                        <span class="font-bold">Authorities Involved:</span> 5
+                    </div>
+                    <div class="bg-amber-50 p-2 rounded">
+                        <span class="font-bold">Housing Status:</span> Displaced
+                    </div>
+                    <div class="bg-purple-50 p-2 rounded">
+                        <span class="font-bold">Medical Impact:</span> PTSD, Autism
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <h2 class="text-xl font-bold mb-4">Timeline of Events</h2>
+        <div class="timeline space-y-0">
+            <!-- 2021 Events -->
+            <div class="timeline-item">
+                <div class="ml-2">
+                    <h3 class="font-bold">May 15, 2021</h3>
+                    <p class="text-gray-700">Social Services - Ignored Communications</p>
+                    <p class="text-sm text-gray-600">Initial emails ignored regarding accommodation needs</p>
+                    <p class="text-xs text-gray-500 mt-1">Email records dated 2021-05-15, Reference: E-28</p>
+                </div>
+            </div>
+            
+            <div class="timeline-item">
+                <div class="ml-2">
+                    <h3 class="font-bold">May 21, 2021</h3>
+                    <p class="text-gray-700">Caregiver Role</p>
+                    <p class="text-sm text-gray-600">Three months forced caregiver role for nephew's safety</p>
+                </div>
+            </div>
+            
+            <div class="timeline-item violation">
+                <div class="ml-2">
+                    <h3 class="font-bold">August 10, 2021</h3>
+                    <p class="text-gray-700">Social Services - Family Separation</p>
+                    <p class="text-sm text-gray-600">Forced separation from nephew without adequate justification</p>
+                    <p class="text-xs text-gray-500 mt-1">Family court documents dated 2021-08-10, Reference: F-21</p>
+                </div>
+            </div>
+            
+            <!-- 2022 Events -->
+            <div class="timeline-item impact">
+                <div class="ml-2">
+                    <h3 class="font-bold">March 18, 2022</h3>
+                    <p class="text-gray-700">Health Services - Autism Diagnosis</p>
+                    <p class="text-sm text-gray-600">Formal autism diagnosis confirmed</p>
+                    <p class="text-xs text-gray-500 mt-1">Medical assessment dated 2022-03-18, Reference: M-03</p>
+                </div>
+            </div>
+            
+            <div class="timeline-item violation">
+                <div class="ml-2">
+                    <h3 class="font-bold">August 15, 2022</h3>
+                    <p class="text-gray-700">Sussex Police - Knife Attack Ignored</p>
+                    <p class="text-sm text-gray-600">Reports of knife attack were not properly addressed or investigated despite formal documentation</p>
+                    <p class="text-xs text-gray-500 mt-1">Police Report documented on 2022-08-15, Reference ID: P-12, P-15</p>
+                </div>
+            </div>
+            
+            <div class="timeline-item impact">
+                <div class="ml-2">
+                    <h3 class="font-bold">September 5, 2022</h3>
+                    <p class="text-gray-700">Health Services - PTSD Diagnosis</p>
+                    <p class="text-sm text-gray-600">PTSD diagnosis documented following ongoing trauma</p>
+                    <p class="text-xs text-gray-500 mt-1">GP letter dated 2022-09-05, Reference: M-05</p>
+                </div>
+            </div>
+            
+            <div class="timeline-item impact">
+                <div class="ml-2">
+                    <h3 class="font-bold">October 12, 2022</h3>
+                    <p class="text-gray-700">DWP - Work Needs Award</p>
+                    <p class="text-sm text-gray-600">Access to Work award of £47,000 for workplace accommodations and support</p>
+                    <p class="text-xs text-gray-500 mt-1">DWP approval letter dated 2022-10-12, Assessment Reference: A-04</p>
+                </div>
+            </div>
+            
+            <div class="timeline-item">
+                <div class="ml-2">
+                    <h3 class="font-bold">December 18, 2022</h3>
+                    <p class="text-gray-700">Mental Health Crisis</p>
+                    <p class="text-sm text-gray-600">Mental health crisis intervention required</p>
+                </div>
+            </div>
+            
+            <!-- 2023 Events -->
+            <div class="timeline-item">
+                <div class="ml-2">
+                    <h3 class="font-bold">January 14, 2023</h3>
+                    <p class="text-gray-700">Mugged Due to Displacement</p>
+                    <p class="text-sm text-gray-600">Mugged due to displacement into unsafe environment</p>
+                </div>
+            </div>
+            
+            <div class="timeline-item violation">
+                <div class="ml-2">
+                    <h3 class="font-bold">February 28, 2023</h3>
+                    <p class="text-gray-700">Knight Frank - Studio Lockout</p>
+                    <p class="text-sm text-gray-600">First studio lockout incident despite having valid access rights</p>
+                    <p class="text-xs text-gray-500 mt-1">Email evidence and security log from 2023-02-28, Reference: E-17</p>
+                </div>
+            </div>
+            
+            <div class="timeline-item">
+                <div class="ml-2">
+                    <h3 class="font-bold">April 10, 2023</h3>
+                    <p class="text-gray-700">Business Closure</p>
+                    <p class="text-sm text-gray-600">Business closure due to safety issues and accommodation failures</p>
+                </div>
+            </div>
+            
+            <div class="timeline-item violation">
+                <div class="ml-2">
+                    <h3 class="font-bold">June 22, 2023</h3>
+                    <p class="text-gray-700">Housing Authority - Section 21 Notice</p>
+                    <p class="text-sm text-gray-600">Section 21 housing notice issued, threatening housing stability</p>
+                    <p class="text-xs text-gray-500 mt-1">Housing documentation dated 2023-06-22, Reference: H-20</p>
+                </div>
+            </div>
+            
+            <div class="timeline-item violation">
+                <div class="ml-2">
+                    <h3 class="font-bold">August 22, 2023</h3>
+                    <p class="text-gray-700">Sussex Police - Studio Burglary Response</p>
+                    <p class="text-sm text-gray-600">8-week delay in police response to studio burglary</p>
+                    <p class="text-xs text-gray-500 mt-1">Police report dated 2023-08-22, Reference: P-06</p>
+                </div>
+            </div>
+            
+            <div class="timeline-item violation">
+                <div class="ml-2">
+                    <h3 class="font-bold">September 9, 2023</h3>
+                    <p class="text-gray-700">Knight Frank - Corridor Lockout</p>
+                    <p class="text-sm text-gray-600">Slept in corridor due to lockout from studio for no good reason</p>
+                    <p class="text-xs text-gray-500 mt-1">Photographic evidence dated 2023-09-09, Reference: V-04</p>
+                </div>
+            </div>
+            
+            <!-- 2024 Events -->
+            <div class="timeline-item impact">
+                <div class="ml-2">
+                    <h3 class="font-bold">January 15, 2024</h3>
+                    <p class="text-gray-700">Secretary of State - Formal Complaint Filed</p>
+                    <p class="text-sm text-gray-600">Formal complaint to Secretary of State documenting systematic failures</p>
+                    <p class="text-xs text-gray-500 mt-1">Complaint submission dated 2024-01-15, Reference: A-07</p>
+                </div>
+            </div>
+            
+            <div class="timeline-item violation">
+                <div class="ml-2">
+                    <h3 class="font-bold">March 20, 2024</h3>
+                    <p class="text-gray-700">Housing Authority - Housing Displacement</p>
+                    <p class="text-sm text-gray-600">Final housing displacement without adequate support</p>
+                    <p class="text-xs text-gray-500 mt-1">Eviction notice dated 2024-03-20, Reference: H-21</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-8 p-4 bg-gray-50 rounded-lg">
+            <h2 class="text-xl font-bold mb-2">Conclusion</h2>
+            <p>This timeline demonstrates a pattern of systematic institutional failures that have compounded over time, leading to severe duress for Ben Mak. Multiple authorities have failed to provide adequate support or protection, resulting in housing displacement, professional disruption, and significant health impacts.</p>
+        </div>
+    </div>
+</body>
+</html>
