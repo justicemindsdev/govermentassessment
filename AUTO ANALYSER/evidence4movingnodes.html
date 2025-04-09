@@ -1,0 +1,1654 @@
+<!DOCTYPE html><html lang="en"><head><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ben Mak Case Network Timeline</title>
+    <!-- Load TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load FontAwesome -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.1/css/all.min.css">
+    <!-- Load D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: #1a1a1a;
+                --bg-secondary: #2a2a2a;
+                --bg-tertiary: #333333;
+                --text-primary: #e0e0e0;
+                --text-secondary: #b0b0b0;
+                --text-muted: #808080;
+                --border-color: #444444;
+                --highlight-color: rgba(93, 92, 222, 0.15);
+                --node-ben: #5D5CDE; 
+                --node-authority: #ef4444;
+                --node-org: #f59e0b;
+                --connection-default: rgba(150, 150, 150, 0.4);
+                --connection-highlight: rgba(255, 255, 255, 0.7);
+            }
+        }
+        
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg-primary: #ffffff;
+                --bg-secondary: #f5f5f5;
+                --bg-tertiary: #e5e5e5;
+                --text-primary: #1a1a1a;
+                --text-secondary: #555555;
+                --text-muted: #777777;
+                --border-color: #dddddd;
+                --highlight-color: rgba(93, 92, 222, 0.1);
+                --node-ben: #5D5CDE; 
+                --node-authority: #ef4444;
+                --node-org: #f59e0b;
+                --connection-default: rgba(80, 80, 80, 0.3);
+                --connection-highlight: rgba(40, 40, 40, 0.85);
+            }
+        }
+        
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .bg-card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+        }
+        
+        .graph-container {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* Timeline styles */
+        .timeline-track {
+            height: 4px;
+            background-color: var(--bg-tertiary);
+            position: relative;
+            border-radius: 2px;
+        }
+        
+        .timeline-slider {
+            position: absolute;
+            height: 100%;
+            background-color: var(--node-ben);
+            border-radius: 2px;
+        }
+        
+        .timeline-marker {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--text-primary);
+            border: 2px solid var(--node-ben);
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+        
+        .timeline-marker:hover {
+            transform: translateY(-50%) scale(1.2);
+        }
+        
+        .timeline-marker.active {
+            background-color: var(--node-ben);
+        }
+        
+        .timeline-label {
+            position: absolute;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            top: 20px;
+            white-space: nowrap;
+        }
+        
+        .timeline-event {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: var(--node-authority);
+            top: -6px;
+            transform: translateX(-50%);
+            cursor: pointer;
+            z-index: 5;
+        }
+        
+        .timeline-event:hover {
+            transform: translateX(-50%) scale(1.5);
+        }
+        
+        /* Network graph styles */
+        .node {
+            stroke: var(--bg-primary);
+            stroke-width: 2px;
+        }
+        
+        .node-ben {
+            fill: var(--node-ben);
+        }
+        
+        .node-authority {
+            fill: var(--node-authority);
+        }
+        
+        .node-org {
+            fill: var(--node-org);
+        }
+        
+        .link {
+            stroke: var(--connection-default);
+            stroke-width: 2;
+        }
+        
+        .link-impact {
+            stroke-dasharray: 5, 5;
+        }
+        
+        .link-violation {
+            stroke-width: 3;
+        }
+        
+        .link-arrow {
+            fill: var(--connection-default);
+        }
+        
+        .link-text {
+            fill: var(--text-secondary);
+            font-size: 10px;
+            text-anchor: middle;
+            pointer-events: none;
+            font-weight: 500;
+        }
+        
+        .node-label {
+            fill: var(--text-primary);
+            font-size: 12px;
+            text-anchor: middle;
+            pointer-events: none;
+            font-weight: 600;
+        }
+        
+        .node-sublabel {
+            fill: var(--text-secondary);
+            font-size: 10px;
+            text-anchor: middle;
+            pointer-events: none;
+        }
+        
+        /* Detail popup styles */
+        .detail-popup {
+            position: absolute;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            max-width: 300px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            color: var(--text-primary);
+        }
+        
+        .detail-popup.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .node.highlight {
+            stroke: var(--text-primary);
+            stroke-width: 3px;
+        }
+        
+        .link.highlight {
+            stroke: var(--connection-highlight);
+            stroke-width: 4;
+        }
+        
+        .link-text.highlight {
+            fill: var(--text-primary);
+            font-weight: bold;
+        }
+        
+        .duress-meter {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 8px;
+            padding: 10px;
+            color: white;
+            z-index: 10;
+        }
+        
+        /* Ripple effect */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple 1.5s linear infinite;
+            background-color: rgba(93, 92, 222, 0.3);
+        }
+        
+        @keyframes ripple {
+            to {
+                transform: scale(3);
+                opacity: 0;
+            }
+        }
+        
+        /* Legend styles */
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        /* Timeline display */
+        .timeline-display {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .timeline-entry {
+            padding: 10px;
+            border-left: 3px solid var(--node-ben);
+            margin-bottom: 10px;
+            background-color: var(--bg-tertiary);
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .timeline-entry.active {
+            border-left-color: var(--node-authority);
+            background-color: var(--highlight-color);
+        }
+        
+        .loading-message {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            width: 100%;
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 2rem;
+            height: 2rem;
+            border: 3px solid rgba(93, 92, 222, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--node-ben);
+            animation: spin 1s linear infinite;
+            margin-right: 1rem;
+        }
+        
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4">
+    <div class="container mx-auto">
+        <h1 class="text-3xl font-bold mb-4 text-center">Ben Mak: Network of Oppression Timeline</h1>
+        <p class="text-center mb-6 text-gray-600 dark:text-gray-400">Interactive visualization of accumulated duress and institutional failures (2021-2024)</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+            <div class="lg:col-span-3">
+                <div class="bg-card rounded-lg shadow-lg p-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold">Case Network Visualization</h2>
+                        <div class="flex space-x-2">
+                            <button id="reset-btn" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-md text-sm">
+                                <i class="fas fa-sync-alt mr-1"></i> Reset
+                            </button>
+                            <button id="play-btn" class="px-3 py-1 bg-indigo-600 text-white rounded-md text-sm">
+                                <i class="fas fa-play mr-1"></i> Play Timeline
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Graph visualization container -->
+                    <div id="graph-container" class="graph-container h-[500px] rounded-lg relative">
+                        <!-- Loading message -->
+                        <div class="loading-message" id="loading-message">
+                            <div class="loading-spinner"></div>
+                            <span>Building network visualization...</span>
+                        </div>
+                        
+                        <!-- Duress meter (will be shown after loading) -->
+                        <div class="duress-meter" style="display: none;">
+                            <div class="text-xs mb-1">Accumulated Duress</div>
+                            <div class="flex items-center">
+                                <div class="w-24 h-3 bg-gray-700 rounded-full mr-2">
+                                    <div id="duress-indicator" class="h-3 bg-gradient-to-r from-yellow-400 via-orange-500 to-red-600 rounded-full" style="width: 10%"></div>
+                                </div>
+                                <span id="duress-value" class="text-xs font-medium">10%</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Detail popup -->
+                        <div id="detail-popup" class="detail-popup">
+                            <div class="text-sm font-bold mb-1" id="popup-title"></div>
+                            <div class="text-xs mb-2" id="popup-date"></div>
+                            <div class="text-xs" id="popup-description"></div>
+                            <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700" id="popup-citation">
+                                <div class="text-xs font-medium mb-1">Citation:</div>
+                                <div class="text-xs text-gray-600 dark:text-gray-400" id="popup-citation-text"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Timeline navigation -->
+                    <div class="mt-6 px-8 relative">
+                        <div class="mb-8 timeline-track">
+                            <div class="timeline-slider" id="timeline-progress"></div>
+                            <!-- Timeline markers will be added dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="lg:col-span-1">
+                <div class="bg-card rounded-lg shadow-lg p-4">
+                    <h2 class="text-xl font-bold mb-4">Timeline Events</h2>
+                    
+                    <div class="mb-4">
+                        <label for="filter-type" class="block text-sm font-medium mb-1">Filter Events:</label>
+                        <select id="filter-type" class="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-sm">
+                            <option value="all">All Events</option>
+                            <option value="physical">Physical Harm</option>
+                            <option value="professional">Professional Impact</option>
+                            <option value="housing">Housing Issues</option>
+                            <option value="family">Family Separation</option>
+                            <option value="legal">Legal Violations</option>
+                            <option value="medical">Medical/Health</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h3 class="text-sm font-medium mb-2">Legend:</h3>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: var(--node-ben)"></div>
+                                <span class="text-xs">Ben Mak</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: var(--node-authority)"></div>
+                                <span class="text-xs">Authorities</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: var(--node-org)"></div>
+                                <span class="text-xs">Organizations</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="w-12 h-2 bg-gray-400 mr-2"></div>
+                                <span class="text-xs">Violations</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-display" id="timeline-display">
+                        <!-- Timeline entries will be added dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-card rounded-lg shadow-lg p-4 mb-6">
+            <h2 class="text-xl font-bold mb-4">Current Network State</h2>
+            <div id="current-state" class="space-y-2">
+                <p class="text-sm">Click play or drag the timeline marker to see Ben's network evolve over time.</p>
+                <p class="text-sm">The visualization shows how multiple authorities and organizations created compounding pressure on Ben Mak, systematically increasing his distress over time.</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Wait for DOM and D3.js to fully load before initializing
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if D3 has loaded correctly
+            if (typeof d3 === 'undefined') {
+                console.error("D3.js failed to load. Please check your internet connection and try again.");
+                document.getElementById('loading-message').innerHTML = `
+                    <div class="text-center">
+                        <div class="text-red-500 mb-2"><i class="fas fa-exclamation-triangle"></i> Error loading visualization library</div>
+                        <p class="text-sm">Please check your internet connection and refresh the page.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Initialize after a short delay to ensure D3 is fully available
+            setTimeout(initializeApplication, 300);
+        });
+        
+        function initializeApplication() {
+            // Main dataset for the network and timeline
+            const data = {
+                // Timeline periods - major time divisions
+                periods: [
+                    { id: "p1", label: "Q2 2021", date: "2021-04-01" },
+                    { id: "p2", label: "Q3 2021", date: "2021-07-01" },
+                    { id: "p3", label: "Q4 2021", date: "2021-10-01" },
+                    { id: "p4", label: "Q1 2022", date: "2022-01-01" },
+                    { id: "p5", label: "Q2 2022", date: "2022-04-01" },
+                    { id: "p6", label: "Q3 2022", date: "2022-07-01" },
+                    { id: "p7", label: "Q4 2022", date: "2022-10-01" },
+                    { id: "p8", label: "Q1 2023", date: "2023-01-01" },
+                    { id: "p9", label: "Q2 2023", date: "2023-04-01" },
+                    { id: "p10", label: "Q3 2023", date: "2023-07-01" },
+                    { id: "p11", label: "Q4 2023", date: "2023-10-01" },
+                    { id: "p12", label: "Q1 2024", date: "2024-01-01" }
+                ],
+                
+                // Nodes - people and organizations in the network
+                nodes: [
+                    { 
+                        id: "ben", 
+                        name: "Ben Mak", 
+                        type: "person", 
+                        subtype: "victim",
+                        description: "Autism diagnosis, victim of ongoing institutional failures",
+                        firstAppears: "2021-04-01"
+                    },
+                    { 
+                        id: "sussex-police", 
+                        name: "Sussex Police", 
+                        type: "authority", 
+                        subtype: "law-enforcement",
+                        description: "Local police department that failed to adequately respond to incidents",
+                        firstAppears: "2022-08-15"
+                    },
+                    { 
+                        id: "knight-frank", 
+                        name: "Knight Frank", 
+                        type: "organization", 
+                        subtype: "property-management",
+                        description: "Property management company responsible for studio access issues",
+                        firstAppears: "2023-02-28"
+                    },
+                    { 
+                        id: "dwp", 
+                        name: "DWP", 
+                        type: "authority", 
+                        subtype: "government-agency",
+                        description: "Department for Work and Pensions, handled Access to Work application",
+                        firstAppears: "2022-10-12"
+                    },
+                    { 
+                        id: "social-services", 
+                        name: "Social Services", 
+                        type: "authority", 
+                        subtype: "government-agency",
+                        description: "Local authority social services department",
+                        firstAppears: "2021-05-15"
+                    },
+                    { 
+                        id: "health-services", 
+                        name: "Health Services", 
+                        type: "authority", 
+                        subtype: "healthcare",
+                        description: "NHS and local health services",
+                        firstAppears: "2021-08-10"
+                    },
+                    { 
+                        id: "housing-authority", 
+                        name: "Housing Authority", 
+                        type: "authority", 
+                        subtype: "government-agency",
+                        description: "Local housing authority responsible for housing issues",
+                        firstAppears: "2023-06-22"
+                    },
+                    { 
+                        id: "secretary-state", 
+                        name: "Secretary of State", 
+                        type: "authority", 
+                        subtype: "government-official",
+                        description: "Senior government official who received formal complaint",
+                        firstAppears: "2024-01-15"
+                    }
+                ],
+                
+                // Connections - relationships and incidents between nodes
+                connections: [
+                    {
+                        id: "c1",
+                        source: "sussex-police",
+                        target: "ben",
+                        type: "violation",
+                        subtype: "physical",
+                        label: "Knife Attack Ignored",
+                        description: "Reports of knife attack were not properly addressed or investigated despite formal documentation",
+                        citation: "Police Report documented on 2022-08-15, Reference ID: P-12, P-15",
+                        date: "2022-08-15",
+                        strength: 97,
+                        duressImpact: 35
+                    },
+                    {
+                        id: "c2",
+                        source: "sussex-police",
+                        target: "ben",
+                        type: "violation",
+                        subtype: "physical",
+                        label: "Follow-up Ignored",
+                        description: "Follow-up on knife attack report ignored by authorities",
+                        citation: "Email correspondence dated 2022-09-05, Reference: E-23",
+                        date: "2022-09-05",
+                        strength: 95,
+                        duressImpact: 15
+                    },
+                    {
+                        id: "c3",
+                        source: "knight-frank",
+                        target: "ben",
+                        type: "violation",
+                        subtype: "professional",
+                        label: "Studio Lockout",
+                        description: "First studio lockout incident despite having valid access rights",
+                        citation: "Email evidence and security log from 2023-02-28, Reference: E-17",
+                        date: "2023-02-28",
+                        strength: 97,
+                        duressImpact: 30
+                    },
+                    {
+                        id: "c4",
+                        source: "knight-frank",
+                        target: "ben",
+                        type: "violation",
+                        subtype: "professional",
+                        label: "Second Lockout",
+                        description: "Second lockout despite formal complaint being filed",
+                        citation: "Formal complaint dated 2023-03-15, Reference: E-18",
+                        date: "2023-03-15",
+                        strength: 96,
+                        duressImpact: 20
+                    },
+                    {
+                        id: "c5",
+                        source: "knight-frank",
+                        target: "ben",
+                        type: "violation",
+                        subtype: "professional",
+                        label: "Third Lockout",
+                        description: "Third lockout with security log evidence contradicting management's claims",
+                        citation: "Security logs dated 2023-04-02, Reference: E-19",
+                        date: "2023-04-02",
+                        strength: 97,
+                        duressImpact: 25
+                    },
+                    {
+                        id: "c6",
+                        source: "dwp",
+                        target: "ben",
+                        type: "impact",
+                        subtype: "medical",
+                        label: "Work Needs Award",
+                        description: "Access to Work award of £47,000 for workplace accommodations and support",
+                        citation: "DWP approval letter dated 2022-10-12, Assessment Reference: A-04",
+                        date: "2022-10-12",
+                        strength: 99,
+                        duressImpact: -20 // Negative impact means it reduced duress
+                    },
+                    {
+                        id: "c7",
+                        source: "social-services",
+                        target: "ben",
+                        type: "violation",
+                        subtype: "family",
+                        label: "Family Separation",
+                        description: "Forced separation from nephew without adequate justification",
+                        citation: "Family court documents dated 2021-08-10, Reference: F-21",
+                        date: "2021-08-10",
+                        strength: 96,
+                        duressImpact: 45
+                    },
+                    {
+                        id: "c8",
+                        source: "social-services",
+                        target: "ben",
+                        type: "violation",
+                        subtype: "administrative",
+                        label: "Ignored Communications",
+                        description: "Initial emails ignored regarding accommodation needs",
+                        citation: "Email records dated 2021-05-15, Reference: E-28",
+                        date: "2021-05-15",
+                        strength: 99,
+                        duressImpact: 25
+                    },
+                    {
+                        id: "c9",
+                        source: "health-services",
+                        target: "ben",
+                        type: "impact",
+                        subtype: "medical",
+                        label: "Autism Diagnosis",
+                        description: "Formal autism diagnosis confirmed",
+                        citation: "Medical assessment dated 2022-03-18, Reference: M-03",
+                        date: "2022-03-18",
+                        strength: 99,
+                        duressImpact: -10 // Diagnosis itself helps by providing clarity
+                    },
+                    {
+                        id: "c10",
+                        source: "health-services",
+                        target: "ben",
+                        type: "impact",
+                        subtype: "medical",
+                        label: "PTSD Diagnosis",
+                        description: "PTSD diagnosis documented following ongoing trauma",
+                        citation: "GP letter dated 2022-09-05, Reference: M-05",
+                        date: "2022-09-05",
+                        strength: 98,
+                        duressImpact: 30 // The condition itself adds to duress
+                    },
+                    {
+                        id: "c11",
+                        source: "sussex-police",
+                        target: "ben",
+                        type: "violation",
+                        subtype: "professional",
+                        label: "Studio Burglary Response",
+                        description: "8-week delay in police response to studio burglary",
+                        citation: "Police report dated 2023-08-22, Reference: P-06",
+                        date: "2023-08-22",
+                        strength: 95,
+                        duressImpact: 35
+                    },
+                    {
+                        id: "c12",
+                        source: "housing-authority",
+                        target: "ben",
+                        type: "violation",
+                        subtype: "housing",
+                        label: "Section 21 Notice",
+                        description: "Section 21 housing notice issued, threatening housing stability",
+                        citation: "Housing documentation dated 2023-06-22, Reference: H-20",
+                        date: "2023-06-22",
+                        strength: 96,
+                        duressImpact: 40
+                    },
+                    {
+                        id: "c13",
+                        source: "housing-authority",
+                        target: "ben",
+                        type: "violation",
+                        subtype: "housing",
+                        label: "Housing Displacement",
+                        description: "Final housing displacement without adequate support",
+                        citation: "Eviction notice dated 2024-03-20, Reference: H-21",
+                        date: "2024-03-20",
+                        strength: 97,
+                        duressImpact: 50
+                    },
+                    {
+                        id: "c14",
+                        source: "knight-frank",
+                        target: "ben",
+                        type: "violation",
+                        subtype: "professional",
+                        label: "Corridor Lockout",
+                        description: "Slept in corridor due to lockout from studio for no good reason",
+                        citation: "Photographic evidence dated 2023-09-09, Reference: V-04",
+                        date: "2023-09-09",
+                        strength: 98,
+                        duressImpact: 45
+                    },
+                    {
+                        id: "c15",
+                        source: "secretary-state",
+                        target: "ben",
+                        type: "impact",
+                        subtype: "administrative",
+                        label: "Formal Complaint Filed",
+                        description: "Formal complaint to Secretary of State documenting systematic failures",
+                        citation: "Complaint submission dated 2024-01-15, Reference: A-07",
+                        date: "2024-01-15",
+                        strength: 96,
+                        duressImpact: -5 // Taking action slightly reduces duress
+                    }
+                ],
+                
+                // Events - significant timeline points that don't necessarily create a network connection
+                events: [
+                    {
+                        id: "e1",
+                        date: "2021-05-21",
+                        label: "Caregiver Role",
+                        description: "Three months forced caregiver role for nephew's safety",
+                        type: "family",
+                        duressImpact: 30
+                    },
+                    {
+                        id: "e2",
+                        date: "2022-12-18",
+                        label: "Mental Health Crisis",
+                        description: "Mental health crisis intervention required",
+                        type: "medical",
+                        duressImpact: 45
+                    },
+                    {
+                        id: "e3",
+                        date: "2023-01-14",
+                        label: "Mugged Due to Displacement",
+                        description: "Mugged due to displacement into unsafe environment",
+                        type: "physical",
+                        duressImpact: 35
+                    },
+                    {
+                        id: "e4",
+                        date: "2023-04-10",
+                        label: "Business Closure",
+                        description: "Business closure due to safety issues and accommodation failures",
+                        type: "professional",
+                        duressImpact: 50
+                    },
+                    {
+                        id: "e5",
+                        date: "2023-09-15",
+                        label: "MARAC Referral",
+                        description: "MARAC (Multi-Agency Risk Assessment Conference) referral made",
+                        type: "legal",
+                        duressImpact: -10 // Provides some support
+                    },
+                    {
+                        id: "e6",
+                        date: "2023-11-30",
+                        label: "Security Breach",
+                        description: "Police incident - security breach at residence",
+                        type: "physical",
+                        duressImpact: 40
+                    },
+                    {
+                        id: "e7",
+                        date: "2023-09-25",
+                        label: "Don't Disclose Autism",
+                        description: "Explicitly instructed not to tell anyone about autism diagnosis",
+                        type: "legal",
+                        duressImpact: 30
+                    }
+                ]
+            };
+            
+            // Declare visualization variables
+            let svg, simulation, links, nodes, linkTexts, nodeLabels;
+            let width, height;
+            let currentDate = new Date("2021-04-01");
+            const endDate = new Date("2024-03-20");
+            
+            // Initialize timeline variables
+            let timeScale;
+            let currentPeriodIndex = 0;
+            let animationInterval = null;
+            let duressLevel = 0;
+            
+            // Initialize the application
+            initializeTimeline();
+            initializeNetwork();
+            updateVisualization();
+            
+            // Event listeners
+            document.getElementById('reset-btn').addEventListener('click', resetVisualization);
+            document.getElementById('play-btn').addEventListener('click', toggleTimelineAnimation);
+            document.getElementById('filter-type').addEventListener('change', filterTimelineEvents);
+            
+            // Add window resize listener
+            window.addEventListener('resize', debounce(function() {
+                width = document.getElementById('graph-container').clientWidth;
+                height = document.getElementById('graph-container').clientHeight;
+                
+                if (svg) {
+                    svg.attr('width', width).attr('height', height);
+                    simulation.force('center', d3.forceCenter(width / 2, height / 2));
+                    simulation.alpha(0.3).restart();
+                }
+            }, 250));
+            
+            // Initialize the timeline component
+            function initializeTimeline() {
+                const timelineTrack = document.querySelector('.timeline-track');
+                const timelineWidth = timelineTrack.clientWidth;
+                
+                // Create a time scale
+                const startTimestamp = new Date(data.periods[0].date).getTime();
+                const endTimestamp = new Date(data.periods[data.periods.length - 1].date).getTime();
+                
+                timeScale = d3.scaleLinear()
+                    .domain([0, data.periods.length - 1])
+                    .range([0, timelineWidth])
+                    .clamp(true);
+                
+                // Add timeline period markers
+                data.periods.forEach((period, index) => {
+                    const marker = document.createElement('div');
+                    marker.className = 'timeline-marker';
+                    marker.id = `marker-${period.id}`;
+                    marker.style.left = `${timeScale(index)}px`;
+                    marker.dataset.index = index;
+                    marker.dataset.date = period.date;
+                    
+                    marker.addEventListener('click', function() {
+                        setTimelinePeriod(parseInt(this.dataset.index));
+                    });
+                    
+                    timelineTrack.appendChild(marker);
+                    
+                    // Add label
+                    const label = document.createElement('div');
+                    label.className = 'timeline-label';
+                    label.textContent = period.label;
+                    label.style.left = `${timeScale(index)}px`;
+                    timelineTrack.appendChild(label);
+                });
+                
+                // Add timeline events as small dots
+                data.connections.concat(data.events).sort((a, b) => {
+                    return new Date(a.date) - new Date(b.date);
+                }).forEach(event => {
+                    const eventDate = new Date(event.date);
+                    const eventPosition = getPositionForDate(eventDate);
+                    
+                    if (eventPosition >= 0) {
+                        const eventMarker = document.createElement('div');
+                        eventMarker.className = 'timeline-event';
+                        eventMarker.style.left = `${eventPosition}px`;
+                        eventMarker.style.backgroundColor = getColorForEventType(event.subtype || event.type);
+                        eventMarker.title = `${formatDate(event.date)}: ${event.label}`;
+                        eventMarker.dataset.date = event.date;
+                        eventMarker.dataset.id = event.id;
+                        
+                        eventMarker.addEventListener('click', function() {
+                            const date = new Date(this.dataset.date);
+                            setTimelineDate(date);
+                            highlightEvent(this.dataset.id);
+                        });
+                        
+                        timelineTrack.appendChild(eventMarker);
+                    }
+                });
+                
+                // Set initial timeline state
+                setTimelinePeriod(0);
+                populateTimelineDisplay();
+            }
+            
+            // Get position on timeline for a given date
+            function getPositionForDate(date) {
+                const startDate = new Date(data.periods[0].date);
+                const endDate = new Date(data.periods[data.periods.length - 1].date);
+                
+                // If date is outside the timeline range, return -1
+                if (date < startDate || date > endDate) return -1;
+                
+                // Find the periods the date falls between
+                let beforeIndex = 0;
+                let afterIndex = 0;
+                
+                for (let i = 0; i < data.periods.length; i++) {
+                    const periodDate = new Date(data.periods[i].date);
+                    if (date >= periodDate) {
+                        beforeIndex = i;
+                    } else {
+                        afterIndex = i;
+                        break;
+                    }
+                }
+                
+                // If date is after the last period
+                if (afterIndex === 0) {
+                    afterIndex = data.periods.length - 1;
+                }
+                
+                // Calculate position as fraction between two periods
+                const beforeDate = new Date(data.periods[beforeIndex].date);
+                const afterDate = new Date(data.periods[afterIndex].date);
+                
+                const totalDuration = afterDate - beforeDate;
+                const currentDuration = date - beforeDate;
+                const fraction = totalDuration > 0 ? currentDuration / totalDuration : 0;
+                
+                return timeScale(beforeIndex) + (fraction * (timeScale(afterIndex) - timeScale(beforeIndex)));
+            }
+            
+            // Initialize the network graph
+            function initializeNetwork() {
+                try {
+                    // Get the container dimensions
+                    const container = document.getElementById('graph-container');
+                    width = container.clientWidth;
+                    height = container.clientHeight;
+                    
+                    // Create SVG element
+                    svg = d3.select('#graph-container')
+                        .append('svg')
+                        .attr('width', width)
+                        .attr('height', height);
+                    
+                    // Add arrow marker definitions for directed links
+                    svg.append('defs').append('marker')
+                        .attr('id', 'arrowhead')
+                        .attr('viewBox', '-0 -5 10 10')
+                        .attr('refX', 20)
+                        .attr('refY', 0)
+                        .attr('orient', 'auto')
+                        .attr('markerWidth', 8)
+                        .attr('markerHeight', 8)
+                        .attr('xoverflow', 'visible')
+                        .append('path')
+                        .attr('d', 'M 0,-5 L 10 ,0 L 0,5')
+                        .attr('class', 'link-arrow');
+                    
+                    // Create link group
+                    svg.append('g')
+                        .attr('class', 'links');
+                    
+                    // Create node group
+                    svg.append('g')
+                        .attr('class', 'nodes');
+                    
+                    // Create forces for simulation
+                    simulation = d3.forceSimulation()
+                        .force('link', d3.forceLink().id(d => d.id).distance(150))
+                        .force('charge', d3.forceManyBody().strength(-500))
+                        .force('center', d3.forceCenter(width / 2, height / 2))
+                        .force('collide', d3.forceCollide().radius(60));
+                    
+                    // Set up interaction handlers
+                    setupHoverInteractions();
+                    
+                    // Hide loading message and show duress meter
+                    document.getElementById('loading-message').style.display = 'none';
+                    document.querySelector('.duress-meter').style.display = 'block';
+                    
+                } catch (error) {
+                    console.error("Error initializing network:", error);
+                    document.getElementById('loading-message').innerHTML = `
+                        <div class="text-center">
+                            <div class="text-red-500 mb-2"><i class="fas fa-exclamation-triangle"></i> Error initializing visualization</div>
+                            <p class="text-sm">${error.message}</p>
+                            <button class="mt-3 px-4 py-2 bg-indigo-600 text-white rounded-md" onclick="location.reload()">
+                                Reload Page
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+            
+            // Update the visualization based on current date
+            function updateVisualization() {
+                try {
+                    // Filter data based on current date
+                    const filteredNodes = data.nodes.filter(node => {
+                        return new Date(node.firstAppears) <= currentDate;
+                    });
+                    
+                    const filteredConnections = data.connections.filter(conn => {
+                        return new Date(conn.date) <= currentDate;
+                    }).map(conn => {
+                        // Make sure we use ID references for source and target
+                        return {
+                            ...conn,
+                            source: typeof conn.source === 'object' ? conn.source.id : conn.source,
+                            target: typeof conn.target === 'object' ? conn.target.id : conn.target
+                        };
+                    });
+                    
+                    // Calculate accumulated duress
+                    calculateDuress();
+                    
+                    // Update the network visualization
+                    updateNetwork(filteredNodes, filteredConnections);
+                    
+                    // Update current state description
+                    updateStateDescription();
+                    
+                    // Update the timeline display
+                    updateTimelineDisplay();
+                    
+                    // Add ripple effect to Ben node to show impact
+                    addRippleEffect();
+                    
+                } catch (error) {
+                    console.error("Error updating visualization:", error);
+                }
+            }
+            
+            // Calculate duress level based on current events
+            function calculateDuress() {
+                // Reset duress
+                duressLevel = 0;
+                
+                // Add duress from connections
+                data.connections.filter(conn => {
+                    return new Date(conn.date) <= currentDate;
+                }).forEach(conn => {
+                    duressLevel += conn.duressImpact;
+                });
+                
+                // Add duress from events
+                data.events.filter(event => {
+                    return new Date(event.date) <= currentDate;
+                }).forEach(event => {
+                    duressLevel += event.duressImpact;
+                });
+                
+                // Cap duress at 100
+                duressLevel = Math.min(Math.max(duressLevel, 0), 100);
+                
+                // Update duress meter
+                document.getElementById('duress-indicator').style.width = `${duressLevel}%`;
+                document.getElementById('duress-value').textContent = `${Math.round(duressLevel)}%`;
+            }
+            
+            // Update the network graph
+            function updateNetwork(nodes, connections) {
+                try {
+                    // Remove existing elements
+                    svg.selectAll('.link').remove();
+                    svg.selectAll('.link-text').remove();
+                    svg.selectAll('.node').remove();
+                    svg.selectAll('.node-label').remove();
+                    svg.selectAll('.node-sublabel').remove();
+                    
+                    // Create links
+                    links = svg.select('.links')
+                        .selectAll('.link')
+                        .data(connections)
+                        .enter()
+                        .append('line')
+                        .attr('class', d => `link link-${d.type}`)
+                        .attr('stroke-width', d => d.type === 'violation' ? 3 : 2)
+                        .attr('marker-end', d => d.type === 'violation' ? 'url(#arrowhead)' : '')
+                        .style('stroke-dasharray', d => d.type === 'impact' ? '5,5' : 'none');
+                    
+                    // Create link labels
+                    linkTexts = svg.select('.links')
+                        .selectAll('.link-text')
+                        .data(connections)
+                        .enter()
+                        .append('text')
+                        .attr('class', 'link-text')
+                        .attr('dy', -8)
+                        .text(d => d.label);
+                    
+                    // Create nodes
+                    nodeElements = svg.select('.nodes')
+                        .selectAll('.node')
+                        .data(nodes)
+                        .enter()
+                        .append('circle')
+                        .attr('class', d => {
+                            if (d.id === 'ben') return 'node node-ben';
+                            if (d.type === 'authority') return 'node node-authority';
+                            return 'node node-org';
+                        })
+                        .attr('r', d => d.id === 'ben' ? 25 : 20)
+                        .call(d3.drag()
+                            .on('start', dragstarted)
+                            .on('drag', dragged)
+                            .on('end', dragended));
+                    
+                    // Create node labels
+                    nodeLabels = svg.select('.nodes')
+                        .selectAll('.node-label')
+                        .data(nodes)
+                        .enter()
+                        .append('text')
+                        .attr('class', 'node-label')
+                        .attr('dy', d => d.id === 'ben' ? -30 : -22)
+                        .text(d => d.name);
+                    
+                    // Create node sublabels
+                    nodeSubLabels = svg.select('.nodes')
+                        .selectAll('.node-sublabel')
+                        .data(nodes)
+                        .enter()
+                        .append('text')
+                        .attr('class', 'node-sublabel')
+                        .attr('dy', d => d.id === 'ben' ? -15 : -8)
+                        .text(d => {
+                            if (d.id === 'ben') return 'Victim';
+                            return d.subtype.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                        });
+                    
+                    // Update simulation
+                    simulation.nodes(nodes).on('tick', ticked);
+                    simulation.force('link').links(connections);
+                    simulation.alpha(1).restart();
+                    
+                } catch (error) {
+                    console.error("Error updating network:", error);
+                }
+            }
+            
+            // Handle simulation tick
+            function ticked() {
+                try {
+                    // Update link positions
+                    links
+                        .attr('x1', d => d.source.x)
+                        .attr('y1', d => d.source.y)
+                        .attr('x2', d => d.target.x)
+                        .attr('y2', d => d.target.y);
+                    
+                    // Update link text positions
+                    linkTexts
+                        .attr('x', d => (d.source.x + d.target.x) / 2)
+                        .attr('y', d => (d.source.y + d.target.y) / 2);
+                    
+                    // Update node positions with boundary constraints
+                    nodeElements
+                        .attr('cx', d => {
+                            return d.x = Math.max(30, Math.min(width - 30, d.x));
+                        })
+                        .attr('cy', d => {
+                            return d.y = Math.max(30, Math.min(height - 30, d.y));
+                        });
+                    
+                    // Update node label positions
+                    nodeLabels
+                        .attr('x', d => d.x)
+                        .attr('y', d => d.y);
+                    
+                    // Update node sublabel positions
+                    nodeSubLabels
+                        .attr('x', d => d.x)
+                        .attr('y', d => d.y);
+                    
+                } catch (error) {
+                    console.error("Error in tick function:", error);
+                }
+            }
+            
+            // Setup hover interactions for nodes and links
+            function setupHoverInteractions() {
+                // Node hover
+                svg.on('mouseover', function(event) {
+                    const target = event.target;
+                    
+                    // Check if we're hovering over a node
+                    if (target.classList.contains('node')) {
+                        const nodeData = d3.select(target).datum();
+                        
+                        // Highlight the node
+                        d3.select(target).classed('highlight', true);
+                        
+                        // Find connected links and highlight them
+                        svg.selectAll('.link')
+                            .classed('highlight', d => {
+                                return (d.source.id === nodeData.id || d.source === nodeData.id) || 
+                                      (d.target.id === nodeData.id || d.target === nodeData.id);
+                            });
+                        
+                        // Highlight link texts
+                        svg.selectAll('.link-text')
+                            .classed('highlight', d => {
+                                return (d.source.id === nodeData.id || d.source === nodeData.id) || 
+                                      (d.target.id === nodeData.id || d.target === nodeData.id);
+                            });
+                        
+                        // Show popup with node info
+                        showDetailPopup(event.clientX, event.clientY, {
+                            title: nodeData.name,
+                            date: formatDate(nodeData.firstAppears),
+                            description: nodeData.description,
+                            citation: `${nodeData.type.charAt(0).toUpperCase() + nodeData.type.slice(1)} - ${nodeData.subtype.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}`
+                        });
+                    }
+                    
+                    // Check if we're hovering over a link
+                    else if (target.classList.contains('link')) {
+                        const linkData = d3.select(target).datum();
+                        
+                        // Highlight the link
+                        d3.select(target).classed('highlight', true);
+                        
+                        // Highlight the text
+                        svg.selectAll('.link-text')
+                            .classed('highlight', d => d.id === linkData.id);
+                        
+                        // Show popup with link info
+                        showDetailPopup(event.clientX, event.clientY, {
+                            title: linkData.label,
+                            date: formatDate(linkData.date),
+                            description: linkData.description,
+                            citation: linkData.citation
+                        });
+                    }
+                });
+                
+                // Mouse out - remove highlights
+                svg.on('mouseout', function(event) {
+                    if (!event.relatedTarget || event.relatedTarget.tagName === 'svg' || event.relatedTarget.tagName === 'BODY') {
+                        // Remove all highlights
+                        svg.selectAll('.highlight').classed('highlight', false);
+                        
+                        // Hide popup
+                        hideDetailPopup();
+                    }
+                });
+            }
+            
+            // Show detail popup
+            function showDetailPopup(x, y, data) {
+                const popup = document.getElementById('detail-popup');
+                
+                // Position popup near the mouse but ensure it stays within viewport
+                const rect = popup.getBoundingClientRect();
+                const container = document.getElementById('graph-container').getBoundingClientRect();
+                
+                // Calculate position relative to container
+                let left = x - container.left + 10;
+                let top = y - container.top + 10;
+                
+                // Adjust if popup would go outside container
+                if (left + rect.width > container.width) {
+                    left = left - rect.width - 20;
+                }
+                
+                if (top + rect.height > container.height) {
+                    top = top - rect.height - 20;
+                }
+                
+                // Set position
+                popup.style.left = `${left}px`;
+                popup.style.top = `${top}px`;
+                
+                // Fill popup content
+                document.getElementById('popup-title').textContent = data.title;
+                document.getElementById('popup-date').textContent = data.date;
+                document.getElementById('popup-description').textContent = data.description;
+                document.getElementById('popup-citation-text').textContent = data.citation;
+                
+                // Show popup
+                popup.classList.add('visible');
+            }
+            
+            // Hide detail popup
+            function hideDetailPopup() {
+                document.getElementById('detail-popup').classList.remove('visible');
+            }
+            
+            // Set timeline to specific period
+            function setTimelinePeriod(index) {
+                // Update markers
+                document.querySelectorAll('.timeline-marker').forEach((marker, i) => {
+                    if (i <= index) {
+                        marker.classList.add('active');
+                    } else {
+                        marker.classList.remove('active');
+                    }
+                });
+                
+                // Update progress bar
+                const maxWidth = timeScale(data.periods.length - 1);
+                const progress = timeScale(index);
+                document.getElementById('timeline-progress').style.width = `${progress}px`;
+                
+                // Update current date
+                currentDate = new Date(data.periods[index].date);
+                currentPeriodIndex = index;
+                
+                // Update visualization
+                updateVisualization();
+            }
+            
+            // Set timeline to specific date
+            function setTimelineDate(date) {
+                // Find closest period
+                let closestIndex = 0;
+                let minDiff = Infinity;
+                
+                data.periods.forEach((period, index) => {
+                    const periodDate = new Date(period.date);
+                    const diff = Math.abs(date - periodDate);
+                    
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        closestIndex = index;
+                    }
+                });
+                
+                // Set to that period
+                setTimelinePeriod(closestIndex);
+                
+                // Update current date to exact date
+                currentDate = new Date(date);
+                
+                // Update visualization
+                updateVisualization();
+            }
+            
+            // Toggle timeline animation
+            function toggleTimelineAnimation() {
+                const button = document.getElementById('play-btn');
+                
+                if (animationInterval) {
+                    // Stop animation
+                    clearInterval(animationInterval);
+                    animationInterval = null;
+                    button.innerHTML = '<i class="fas fa-play mr-1"></i> Play Timeline';
+                } else {
+                    // Start animation
+                    button.innerHTML = '<i class="fas fa-pause mr-1"></i> Pause Timeline';
+                    
+                    animationInterval = setInterval(() => {
+                        try {
+                            // Advance date by 1 month
+                            const nextDate = new Date(currentDate);
+                            nextDate.setMonth(nextDate.getMonth() + 1);
+                            
+                            // Check if we've reached the end
+                            if (nextDate > endDate) {
+                                clearInterval(animationInterval);
+                                animationInterval = null;
+                                button.innerHTML = '<i class="fas fa-play mr-1"></i> Play Timeline';
+                                return;
+                            }
+                            
+                            // Set the new date
+                            setTimelineDate(nextDate);
+                        } catch (error) {
+                            console.error("Error in animation:", error);
+                            clearInterval(animationInterval);
+                            animationInterval = null;
+                            button.innerHTML = '<i class="fas fa-play mr-1"></i> Play Timeline';
+                        }
+                    }, 1500);
+                }
+            }
+            
+            // Reset visualization to initial state
+            function resetVisualization() {
+                // Stop animation if running
+                if (animationInterval) {
+                    clearInterval(animationInterval);
+                    animationInterval = null;
+                    document.getElementById('play-btn').innerHTML = '<i class="fas fa-play mr-1"></i> Play Timeline';
+                }
+                
+                // Reset timeline to first period
+                setTimelinePeriod(0);
+            }
+            
+            // Format date helper function
+            function formatDate(dateStr) {
+                const date = new Date(dateStr);
+                return date.toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                });
+            }
+            
+            // Update state description based on current date
+            function updateStateDescription() {
+                const stateContainer = document.getElementById('current-state');
+                
+                // Count active entities
+                const activeNodes = data.nodes.filter(node => {
+                    return new Date(node.firstAppears) <= currentDate;
+                });
+                
+                const activeConnections = data.connections.filter(conn => {
+                    return new Date(conn.date) <= currentDate;
+                });
+                
+                const activeEvents = data.events.filter(event => {
+                    return new Date(event.date) <= currentDate;
+                });
+                
+                // Get the latest events (last 2)
+                const latestConnections = [...activeConnections].sort((a, b) => {
+                    return new Date(b.date) - new Date(a.date);
+                }).slice(0, 2);
+                
+                const latestEvents = [...activeEvents].sort((a, b) => {
+                    return new Date(b.date) - new Date(a.date);
+                }).slice(0, 1);
+                
+                // Build description
+                let description = `
+                    <p class="text-sm mb-2"><strong>Current Date:</strong> ${formatDate(currentDate)}</p>
+                    <p class="text-sm mb-2"><strong>Accumulated Duress:</strong> ${Math.round(duressLevel)}% (${getDuressDescription(duressLevel)})</p>
+                    <p class="text-sm mb-2"><strong>Active Entities:</strong> ${activeNodes.length - 1} authorities/organizations affecting Ben</p>
+                    <p class="text-sm mb-2"><strong>Active Violations:</strong> ${activeConnections.filter(c => c.type === 'violation').length} documented incidents</p>
+                `;
+                
+                // Add recent activities
+                if (latestConnections.length > 0 || latestEvents.length > 0) {
+                    description += `<p class="text-sm mt-4"><strong>Recent Activities:</strong></p>`;
+                    description += `<ul class="text-sm list-disc pl-5 mt-1">`;
+                    
+                    latestConnections.forEach(conn => {
+                        description += `<li>${formatDate(conn.date)}: ${conn.label} (${conn.duressImpact > 0 ? '+' : ''}${conn.duressImpact} duress)</li>`;
+                    });
+                    
+                    latestEvents.forEach(event => {
+                        description += `<li>${formatDate(event.date)}: ${event.label} (${event.duressImpact > 0 ? '+' : ''}${event.duressImpact} duress)</li>`;
+                    });
+                    
+                    description += `</ul>`;
+                }
+                
+                stateContainer.innerHTML = description;
+            }
+            
+            // Get a descriptive text for duress level
+            function getDuressDescription(level) {
+                if (level < 20) return 'Manageable Stress';
+                if (level < 40) return 'Significant Pressure';
+                if (level < 60) return 'Severe Distress';
+                if (level < 80) return 'Critical Duress';
+                return 'Overwhelming & Life-Threatening';
+            }
+            
+            // Populate timeline display
+            function populateTimelineDisplay() {
+                const container = document.getElementById('timeline-display');
+                
+                // Combine and sort all events by date
+                const allEvents = [...data.connections, ...data.events].sort((a, b) => {
+                    return new Date(a.date) - new Date(b.date);
+                });
+                
+                // Create entries
+                allEvents.forEach(event => {
+                    const entry = document.createElement('div');
+                    entry.className = 'timeline-entry';
+                    entry.id = `timeline-entry-${event.id}`;
+                    entry.dataset.date = event.date;
+                    entry.dataset.type = event.subtype || event.type;
+                    
+                    // Create content
+                    entry.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <strong class="text-sm">${event.label}</strong>
+                            <span class="text-xs px-2 py-0.5 rounded-full" style="background-color: ${getColorForEventType(event.subtype || event.type)}20; color: ${getColorForEventType(event.subtype || event.type)}">
+                                ${formatDate(event.date)}
+                            </span>
+                        </div>
+                        <p class="text-xs mt-1">${event.description}</p>
+                        ${event.citation ? `<p class="text-xs mt-1 text-gray-500 dark:text-gray-400">${event.citation}</p>` : ''}
+                    `;
+                    
+                    // Add click handler
+                    entry.addEventListener('click', function() {
+                        // Set timeline to this date
+                        setTimelineDate(new Date(event.date));
+                        
+                        // Highlight this event
+                        highlightEvent(event.id);
+                    });
+                    
+                    container.appendChild(entry);
+                });
+            }
+            
+            // Filter timeline events
+            function filterTimelineEvents() {
+                const filterType = document.getElementById('filter-type').value;
+                const entries = document.querySelectorAll('.timeline-entry');
+                
+                entries.forEach(entry => {
+                    if (filterType === 'all' || entry.dataset.type === filterType) {
+                        entry.style.display = 'block';
+                    } else {
+                        entry.style.display = 'none';
+                    }
+                });
+            }
+            
+            // Update timeline display to highlight current events
+            function updateTimelineDisplay() {
+                const entries = document.querySelectorAll('.timeline-entry');
+                
+                entries.forEach(entry => {
+                    const entryDate = new Date(entry.dataset.date);
+                    
+                    if (entryDate <= currentDate) {
+                        entry.classList.add('active');
+                    } else {
+                        entry.classList.remove('active');
+                    }
+                });
+            }
+            
+            // Highlight a specific event
+            function highlightEvent(eventId) {
+                try {
+                    // Remove previous highlights
+                    svg.selectAll('.highlight').classed('highlight', false);
+                    
+                    // Find the event
+                    const isConnection = data.connections.some(conn => conn.id === eventId);
+                    
+                    if (isConnection) {
+                        // Highlight the connection
+                        svg.selectAll('.link')
+                            .classed('highlight', d => d.id === eventId);
+                        
+                        // Highlight the text
+                        svg.selectAll('.link-text')
+                            .classed('highlight', d => d.id === eventId);
+                        
+                        // Highlight connected nodes
+                        const connection = data.connections.find(conn => conn.id === eventId);
+                        if (connection) {
+                            svg.selectAll('.node')
+                                .classed('highlight', d => {
+                                    return d.id === connection.source || 
+                                          (connection.source.id && d.id === connection.source.id) || 
+                                          d.id === connection.target ||
+                                          (connection.target.id && d.id === connection.target.id);
+                                });
+                        }
+                    }
+                    
+                    // Scroll the timeline entry into view
+                    const entry = document.getElementById(`timeline-entry-${eventId}`);
+                    if (entry) {
+                        entry.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                } catch (error) {
+                    console.error("Error highlighting event:", error);
+                }
+            }
+            
+            // Add ripple effect to Ben node to visualize impact
+            function addRippleEffect() {
+                try {
+                    // Find Ben's node position
+                    const benNode = svg.select('.node-ben');
+                    if (!benNode.empty()) {
+                        const x = parseFloat(benNode.attr('cx'));
+                        const y = parseFloat(benNode.attr('cy'));
+                        const r = parseFloat(benNode.attr('r'));
+                        
+                        // Remove old ripples
+                        svg.selectAll('.ripple').remove();
+                        
+                        // Only add ripple if duress is above threshold
+                        if (duressLevel > 30) {
+                            // Add ripple
+                            const ripple = svg.append('circle')
+                                .attr('class', 'ripple')
+                                .attr('cx', x)
+                                .attr('cy', y)
+                                .attr('r', r)
+                                .style('opacity', duressLevel / 100);
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error adding ripple effect:", error);
+                }
+            }
+            
+            // Get color for event type
+            function getColorForEventType(type) {
+                const colors = {
+                    'physical': '#ef4444',
+                    'professional': '#0ea5e9',
+                    'housing': '#f59e0b',
+                    'family': '#8b5cf6',
+                    'legal': '#10b981',
+                    'medical': '#ec4899',
+                    'administrative': '#6366f1',
+                    'violation': '#ef4444',
+                    'impact': '#0ea5e9'
+                };
+                
+                return colors[type] || '#6b7280';
+            }
+            
+            // Drag functions for network nodes
+            function dragstarted(event, d) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+            
+            function dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+            
+            function dragended(event, d) {
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+            
+            // Debounce function for window resize
+            function debounce(func, wait) {
+                let timeout;
+                return function() {
+                    const context = this;
+                    const args = arguments;
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(context, args), wait);
+                };
+            }
+        }
+    </script>
+
+
+</body></html>
