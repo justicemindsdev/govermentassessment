@@ -220,26 +220,135 @@
         .progress-container {
             margin-top: 20px;
             display: none;
+            text-align: center;
+            padding: 20px;
+            position: relative;
+            height: 200px;
         }
         
-        .progress-bar {
-            height: 10px;
-            background-color: rgba(240, 244, 248, 0.2);
-            border-radius: 5px;
-            overflow: hidden;
-            margin-bottom: 10px;
+        .brain-animation {
+            width: 100%;
+            height: 150px;
+            position: relative;
+            margin-bottom: 20px;
         }
         
-        .progress-fill {
-            height: 100%;
-            background-color: var(--success-color);
-            width: 0%;
-            transition: width 0.3s ease;
+        .brain {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            background-color: var(--accent-color);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            box-shadow: 0 0 20px rgba(56, 84, 122, 0.5);
+            animation: pulse 2s infinite ease-in-out;
+        }
+        
+        .brain:before, .brain:after {
+            content: '';
+            position: absolute;
+            background-color: var(--accent-color);
+            border-radius: 50%;
+        }
+        
+        .brain:before {
+            width: 40px;
+            height: 40px;
+            top: -10px;
+            left: 15px;
+        }
+        
+        .brain:after {
+            width: 40px;
+            height: 40px;
+            top: -10px;
+            right: 15px;
+        }
+        
+        .book {
+            position: absolute;
+            width: 30px;
+            height: 40px;
+            background-color: var(--government-blue);
+            border-radius: 3px;
+            opacity: 0;
+        }
+        
+        .book1 {
+            left: 20%;
+            top: 50%;
+            animation: moveBook1 4s infinite;
+        }
+        
+        .book2 {
+            left: 20%;
+            top: 30%;
+            animation: moveBook2 4s infinite 1s;
+        }
+        
+        .book3 {
+            left: 20%;
+            top: 70%;
+            animation: moveBook3 4s infinite 2s;
+        }
+        
+        .knowledge {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background-color: var(--light-color);
+            border-radius: 50%;
+            right: 20%;
+            top: 50%;
+            opacity: 0;
+            animation: moveKnowledge 3s infinite 2s;
+        }
+        
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+        
+        @keyframes moveBook1 {
+            0% { left: 20%; opacity: 0; }
+            20% { opacity: 1; }
+            40% { left: 50%; opacity: 1; }
+            45% { opacity: 0; }
+            100% { left: 50%; opacity: 0; }
+        }
+        
+        @keyframes moveBook2 {
+            0% { left: 20%; opacity: 0; }
+            20% { opacity: 1; }
+            40% { left: 50%; opacity: 1; }
+            45% { opacity: 0; }
+            100% { left: 50%; opacity: 0; }
+        }
+        
+        @keyframes moveBook3 {
+            0% { left: 20%; opacity: 0; }
+            20% { opacity: 1; }
+            40% { left: 50%; opacity: 1; }
+            45% { opacity: 0; }
+            100% { left: 50%; opacity: 0; }
+        }
+        
+        @keyframes moveKnowledge {
+            0% { right: 20%; opacity: 0; }
+            20% { opacity: 1; }
+            40% { right: 50%; opacity: 1; }
+            45% { opacity: 0; }
+            100% { right: 50%; opacity: 0; }
         }
         
         .progress-text {
-            font-size: 0.9rem;
+            font-size: 1.2rem;
             color: var(--light-color);
+            margin-top: 20px;
+            font-weight: bold;
         }
         
         .status-message {
@@ -428,6 +537,67 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Password protection
+            const mainContent = document.querySelector('.main-content');
+            const uploadSection = document.querySelector('.upload-section');
+            const previewSection = document.querySelector('.preview-section');
+            
+            // Create password protection elements
+            const passwordContainer = document.createElement('div');
+            passwordContainer.className = 'upload-section';
+            passwordContainer.id = 'password-container';
+            passwordContainer.innerHTML = `
+                <h3>Secure Access Required</h3>
+                <p>Please enter the password to access the upload functionality.</p>
+                <div class="form-group">
+                    <label for="access-password">Password</label>
+                    <input type="password" id="access-password" placeholder="Enter password">
+                </div>
+                <button id="password-submit" class="button button-primary">Submit</button>
+                <div class="status-message status-error" id="password-error" style="display: none;">
+                    Incorrect password. Please try again.
+                </div>
+            `;
+            
+            // Insert password container before main content
+            mainContent.insertBefore(passwordContainer, uploadSection);
+            
+            // Hide upload and preview sections initially
+            uploadSection.style.display = 'none';
+            previewSection.style.display = 'none';
+            
+            // Password verification
+            const passwordSubmit = document.getElementById('password-submit');
+            const accessPassword = document.getElementById('access-password');
+            const passwordError = document.getElementById('password-error');
+            
+            // The password is "BenMak2025" - this should be changed to a more secure password
+            const correctPassword = "BenMak2025";
+            
+            passwordSubmit.addEventListener('click', function() {
+                if (accessPassword.value === correctPassword) {
+                    // Show upload and preview sections
+                    uploadSection.style.display = 'block';
+                    previewSection.style.display = 'block';
+                    
+                    // Hide password container
+                    passwordContainer.style.display = 'none';
+                } else {
+                    // Show error message
+                    passwordError.style.display = 'block';
+                    
+                    // Clear password field
+                    accessPassword.value = '';
+                }
+            });
+            
+            // Allow Enter key to submit password
+            accessPassword.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    passwordSubmit.click();
+                }
+            });
+            
             // Video upload handling
             const videoUploadBtn = document.getElementById('video-upload-btn');
             const videoUpload = document.getElementById('video-upload');
@@ -529,7 +699,17 @@
                     return;
                 }
                 
-                // Show progress container
+                // Show progress container with brain animation
+                progressContainer.innerHTML = `
+                    <div class="brain-animation">
+                        <div class="brain"></div>
+                        <div class="book book1"></div>
+                        <div class="book book2"></div>
+                        <div class="book book3"></div>
+                        <div class="knowledge"></div>
+                    </div>
+                    <div class="progress-text">Analyzing and processing your evidence...</div>
+                `;
                 progressContainer.style.display = 'block';
                 uploadBtn.disabled = true;
                 statusSuccess.style.display = 'none';
@@ -602,8 +782,18 @@
                     xhr.upload.addEventListener('progress', function(e) {
                         if (e.lengthComputable) {
                             const percentComplete = (e.loaded / e.total) * 100;
-                            progressFill.style.width = percentComplete + '%';
-                            progressText.textContent = `Uploading: ${Math.round(percentComplete)}%`;
+                            const progressText = progressContainer.querySelector('.progress-text');
+                            
+                            // Update progress text with different messages based on progress
+                            if (percentComplete < 25) {
+                                progressText.textContent = `Analyzing video content... ${Math.round(percentComplete)}%`;
+                            } else if (percentComplete < 50) {
+                                progressText.textContent = `Processing evidence markers... ${Math.round(percentComplete)}%`;
+                            } else if (percentComplete < 75) {
+                                progressText.textContent = `Extracting key insights... ${Math.round(percentComplete)}%`;
+                            } else {
+                                progressText.textContent = `Finalizing evidence documentation... ${Math.round(percentComplete)}%`;
+                            }
                         }
                     });
                     
@@ -640,7 +830,7 @@
                     };
                     
                     // Open connection and send data
-                    xhr.open('POST', 'http://localhost:3000/api/upload', true);
+                    xhr.open('POST', 'http://localhost:3001/api/upload', true);
                     xhr.send(formData);
                     
                 } catch (error) {

@@ -1099,21 +1099,68 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize HLS.js for Cloudflare Stream
             const video = document.getElementById('evidence-video');
-            const videoSrc = 'https://customer-e5m1en7nnf9e7or4.cloudflarestream.com/4eb277917d1f8d96cbd31c18aafd7cd8/manifest/video.m3u8';
+            let videoSrc = 'https://customer-e5m1en7nnf9e7or4.cloudflarestream.com/4eb277917d1f8d96cbd31c18aafd7cd8/manifest/video.m3u8';
+            let hls = null;
             
-            if (Hls.isSupported()) {
-                const hls = new Hls();
-                hls.loadSource(videoSrc);
-                hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                    console.log('HLS manifest loaded');
-                });
-            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                // For Safari which has built-in HLS support
-                video.src = videoSrc;
-            } else {
-                console.error('HLS is not supported in this browser');
+            // Function to load video by ID
+            function loadVideoById(videoId, customerCode) {
+                if (!videoId) return;
+                
+                // If customerCode is not provided, use the default one
+                const customer = customerCode || 'e5m1en7nnf9e7or4';
+                videoSrc = `https://customer-${customer}.cloudflarestream.com/${videoId}/manifest/video.m3u8`;
+                
+                if (hls) {
+                    hls.destroy();
+                }
+                
+                if (Hls.isSupported()) {
+                    hls = new Hls();
+                    hls.loadSource(videoSrc);
+                    hls.attachMedia(video);
+                    hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                        console.log('HLS manifest loaded for video ID:', videoId);
+                    });
+                    
+                    hls.on(Hls.Events.ERROR, function(event, data) {
+                        console.error('HLS error:', data);
+                        if (data.fatal) {
+                            switch(data.type) {
+                                case Hls.ErrorTypes.NETWORK_ERROR:
+                                    console.error('Network error loading video');
+                                    break;
+                                case Hls.ErrorTypes.MEDIA_ERROR:
+                                    console.error('Media error loading video');
+                                    break;
+                                default:
+                                    console.error('Unknown error loading video');
+                                    break;
+                            }
+                        }
+                    });
+                } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                    // For Safari which has built-in HLS support
+                    video.src = videoSrc;
+                } else {
+                    console.error('HLS is not supported in this browser');
+                }
             }
+            
+            // Load the default video
+            loadVideoById('4eb277917d1f8d96cbd31c18aafd7cd8');
+            
+            // Fetch available videos from the server
+            fetch('http://localhost:3001/api/videos')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.videos && data.videos.length > 0) {
+                        console.log('Available videos:', data.videos);
+                        // You can add code here to display a list of available videos
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching videos:', error);
+                });
             
             // Toggle categories
             const categoryHeaders = document.querySelectorAll('.category-header');
