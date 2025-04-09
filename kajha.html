@@ -17,42 +17,113 @@
                         primary: '#5D5CDE',
                         secondary: '#3F3F46',
                         accent: '#4F46E5',
+                        executive: {
+                            100: '#E6E6F8',
+                            200: '#C2C1F0',
+                            300: '#9E9DE8',
+                            400: '#7A79E0',
+                            500: '#5D5CDE',
+                            600: '#3938D6',
+                            700: '#2726B0',
+                            800: '#1F1F85',
+                            900: '#17175A'
+                        }
+                    },
+                    boxShadow: {
+                        'elegant': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 -2px 10px -5px rgba(93, 92, 222, 0.2)',
+                        'inner-glow': 'inset 0 2px 4px 0 rgba(93, 92, 222, 0.06)',
+                        'executive': '0 10px 25px -5px rgba(93, 92, 222, 0.3), 0 8px 10px -6px rgba(93, 92, 222, 0.2)'
                     }
                 }
             }
         }
     </script>
     <style>
+        /* Base styles */
         .tab-content {
             display: none;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
         }
         .tab-content.active {
             display: block;
+            opacity: 1;
+            transform: translateY(0);
         }
+        
+        /* Matrix styles */
         .matrix-row:nth-child(odd) {
             background-color: rgba(93, 92, 222, 0.05);
         }
         .matrix-row.dark:nth-child(odd) {
             background-color: rgba(93, 92, 222, 0.1);
         }
+        .matrix-row {
+            transition: all 0.3s ease;
+        }
+        .matrix-row:hover {
+            background-color: rgba(93, 92, 222, 0.15);
+            transform: translateX(5px);
+        }
+        .dark .matrix-row:hover {
+            background-color: rgba(93, 92, 222, 0.25);
+        }
+        
+        /* Highlight styles */
         .highlight {
             background-color: rgba(93, 92, 222, 0.2);
             border-left: 4px solid #5D5CDE;
             padding-left: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(93, 92, 222, 0.1), 0 2px 4px -1px rgba(93, 92, 222, 0.06);
+            transition: all 0.3s ease;
+        }
+        .highlight:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(93, 92, 222, 0.2), 0 4px 6px -2px rgba(93, 92, 222, 0.1);
         }
         .dark .highlight {
             background-color: rgba(93, 92, 222, 0.3);
         }
+        
+        /* Quote styles */
         .quote {
             border-left: 3px solid #5D5CDE;
             padding-left: 1rem;
             margin: 1rem 0;
             font-style: italic;
+            position: relative;
+            background: linear-gradient(to right, rgba(93, 92, 222, 0.1), transparent);
+            padding: 1rem 1rem 1rem 1.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
         }
+        .quote:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 6px -1px rgba(93, 92, 222, 0.1), 0 2px 4px -1px rgba(93, 92, 222, 0.06);
+        }
+        .dark .quote {
+            background: linear-gradient(to right, rgba(93, 92, 222, 0.2), rgba(93, 92, 222, 0.05));
+        }
+        .quote::before {
+            content: '"';
+            position: absolute;
+            left: 0.5rem;
+            top: 0.5rem;
+            font-size: 2rem;
+            color: rgba(93, 92, 222, 0.3);
+            font-family: Georgia, serif;
+        }
+        
+        /* Timeline styles */
         .timeline-item {
             position: relative;
             padding-left: 2rem;
             padding-bottom: 2rem;
+            transition: all 0.3s ease;
+        }
+        .timeline-item:hover {
+            transform: translateX(5px);
         }
         .timeline-item::before {
             content: '';
@@ -61,7 +132,7 @@
             top: 0;
             bottom: 0;
             width: 2px;
-            background-color: #5D5CDE;
+            background: linear-gradient(to bottom, #5D5CDE, rgba(93, 92, 222, 0.5));
         }
         .timeline-item::after {
             content: '';
@@ -72,81 +143,240 @@
             height: 0.75rem;
             border-radius: 50%;
             background-color: #5D5CDE;
+            box-shadow: 0 0 0 4px rgba(93, 92, 222, 0.2);
+            transition: all 0.3s ease;
         }
+        .timeline-item:hover::after {
+            transform: scale(1.2);
+            box-shadow: 0 0 0 6px rgba(93, 92, 222, 0.2), 0 0 10px rgba(93, 92, 222, 0.4);
+        }
+        
+        /* Framework card styles */
         .framework-card {
             transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background: linear-gradient(145deg, #ffffff, #f5f5f5);
+            border: 1px solid rgba(93, 92, 222, 0.1);
+        }
+        .dark .framework-card {
+            background: linear-gradient(145deg, #2d2d3a, #1f1f2c);
+            border: 1px solid rgba(93, 92, 222, 0.2);
         }
         .framework-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 20px 25px -5px rgba(93, 92, 222, 0.2), 0 10px 10px -5px rgba(93, 92, 222, 0.1);
         }
         .dark .framework-card:hover {
-            box-shadow: 0 10px 15px -3px rgba(255, 255, 255, 0.1), 0 4px 6px -2px rgba(255, 255, 255, 0.05);
+            box-shadow: 0 20px 25px -5px rgba(93, 92, 222, 0.3), 0 10px 10px -5px rgba(93, 92, 222, 0.2);
         }
+        
+        /* Chart styles */
         .spider-chart-container {
             position: relative;
             margin: auto;
             height: 350px;
             width: 100%;
+            transition: all 0.5s ease;
+        }
+        .spider-chart-container:hover {
+            transform: scale(1.02);
+        }
+        
+        /* Card styles */
+        .card-gradient {
+            background: linear-gradient(135deg, #ffffff, #f8f8ff);
+            border: 1px solid rgba(93, 92, 222, 0.1);
+            transition: all 0.3s ease;
+        }
+        .dark .card-gradient {
+            background: linear-gradient(135deg, #2d2d3a, #1f1f2c);
+            border: 1px solid rgba(93, 92, 222, 0.2);
+        }
+        .card-gradient:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(93, 92, 222, 0.2), 0 10px 10px -5px rgba(93, 92, 222, 0.1);
+        }
+        
+        /* Progress bar animation */
+        @keyframes progressAnimation {
+            0% { width: 0; }
+            100% { width: 100%; }
+        }
+        .animate-progress {
+            animation: progressAnimation 1.5s ease-out forwards;
+        }
+        
+        /* 3D button effect */
+        .btn-3d {
+            position: relative;
+            transition: all 0.3s ease;
+            transform-style: preserve-3d;
+            transform: perspective(1000px);
+        }
+        .btn-3d:hover {
+            transform: perspective(1000px) translateZ(10px);
+        }
+        .btn-3d:active {
+            transform: perspective(1000px) translateZ(5px);
+        }
+        
+        /* Pulse animation */
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(93, 92, 222, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(93, 92, 222, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(93, 92, 222, 0); }
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        /* Floating animation */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        /* Glass morphism effect */
+        .glass {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        .dark .glass {
+            background: rgba(30, 30, 46, 0.7);
+            border: 1px solid rgba(93, 92, 222, 0.18);
         }
     </style>
 </head>
-<body class="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-200">
+<body class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-gray-900 dark:from-gray-900 dark:to-gray-800 dark:text-gray-100 transition-all duration-500">
+    <!-- Background pattern -->
+    <div class="fixed inset-0 z-0 opacity-5 dark:opacity-10 pointer-events-none">
+        <div class="absolute inset-0" style="background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%235D5CDE\' fill-opacity=\'0.2\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')"></div>
+    </div>
+
     <!-- Dark mode toggle -->
     <div class="fixed top-4 right-4 z-10">
-        <button id="darkModeToggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none">
+        <button id="darkModeToggle" class="p-3 rounded-full bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none shadow-elegant hover:shadow-executive transition-all duration-300 transform hover:scale-110">
             <i class="fas fa-moon dark:hidden"></i>
             <i class="fas fa-sun hidden dark:block"></i>
         </button>
     </div>
 
-    <div class="container mx-auto p-4 md:p-6 max-w-7xl">
-        <header class="mb-8 text-center">
-            <h1 class="text-3xl md:text-4xl font-bold text-primary mb-2">Ben-Kajha Interaction Analysis</h1>
-            <p class="text-lg text-gray-600 dark:text-gray-400">Psychoanalytical Assessment of Communication & Transformation</p>
+    <div class="container mx-auto p-4 md:p-6 max-w-7xl relative z-10">
+        <header class="mb-12 text-center">
+            <div class="inline-block relative mb-4">
+                <div class="absolute -inset-1 bg-gradient-to-r from-primary to-accent opacity-75 blur rounded-lg"></div>
+                <h1 class="relative text-3xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent py-2 px-4">Ben-Kajha Interaction Analysis</h1>
+            </div>
+            <p class="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
+                <span class="font-semibold">Psychoanalytical Assessment</span> of Communication & Transformation
+            </p>
+            <div class="w-24 h-1 bg-gradient-to-r from-primary to-accent rounded-full mx-auto mt-4"></div>
         </header>
 
         <!-- Tabs navigation -->
-        <div class="flex overflow-x-auto mb-6 border-b border-gray-200 dark:border-gray-700 -mx-4 px-4">
-            <button class="tab-btn px-4 py-2 mr-2 font-medium border-b-2 border-primary text-primary" data-tab="overview">Overview</button>
-            <button class="tab-btn px-4 py-2 mr-2 font-medium border-b-2 border-transparent hover:text-primary" data-tab="expertise">Ben's Expertise</button>
-            <button class="tab-btn px-4 py-2 mr-2 font-medium border-b-2 border-transparent hover:text-primary" data-tab="transformation">Kajha's Transformation</button>
-            <button class="tab-btn px-4 py-2 mr-2 font-medium border-b-2 border-transparent hover:text-primary" data-tab="frameworks">Frameworks</button>
-            <button class="tab-btn px-4 py-2 mr-2 font-medium border-b-2 border-transparent hover:text-primary" data-tab="clinical">Clinical Assessment</button>
+        <div class="flex overflow-x-auto mb-8 -mx-4 px-4 justify-center">
+            <div class="inline-flex bg-white dark:bg-gray-800 rounded-xl p-1 shadow-elegant">
+                <button class="tab-btn px-6 py-3 mr-1 font-medium rounded-lg bg-primary text-white shadow-md transform transition-all duration-300" data-tab="overview">
+                    <i class="fas fa-chart-pie mr-2"></i>Overview
+                </button>
+                <button class="tab-btn px-6 py-3 mr-1 font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300" data-tab="expertise">
+                    <i class="fas fa-brain mr-2"></i>Ben's Expertise
+                </button>
+                <button class="tab-btn px-6 py-3 mr-1 font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300" data-tab="transformation">
+                    <i class="fas fa-exchange-alt mr-2"></i>Kajha's Transformation
+                </button>
+                <button class="tab-btn px-6 py-3 mr-1 font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300" data-tab="frameworks">
+                    <i class="fas fa-sitemap mr-2"></i>Frameworks
+                </button>
+                <button class="tab-btn px-6 py-3 font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300" data-tab="clinical">
+                    <i class="fas fa-stethoscope mr-2"></i>Clinical Assessment
+                </button>
+            </div>
         </div>
 
         <!-- Tab content -->
         <div id="overview" class="tab-content active">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div class="lg:col-span-2">
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-                        <h2 class="text-2xl font-bold mb-4 text-primary">Multifaceted Expertise Analysis</h2>
-                        <p class="mb-4">This dashboard presents a comprehensive analysis of the interaction between Ben Mak and Kajha, demonstrating Ben's exceptional abilities in cross-cultural communication, psychological intervention, and transformational coaching.</p>
+                    <div class="card-gradient rounded-xl shadow-executive p-8 mb-8 transform transition-all duration-500">
+                        <div class="flex items-center mb-6">
+                            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white shadow-lg mr-4">
+                                <i class="fas fa-chart-network text-xl"></i>
+                            </div>
+                            <h2 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">Multifaceted Expertise Analysis</h2>
+                        </div>
                         
-                        <div class="highlight p-4 rounded-md mb-6">
-                            <h3 class="font-bold text-lg mb-2">Key Findings:</h3>
-                            <ul class="list-disc pl-5 space-y-2">
-                                <li>Ben demonstrates expertise across multiple psychological domains at an advanced practitioner level</li>
-                                <li>Kajha undergoes significant transformation in self-perception, cultural adaptation, and agency development</li>
-                                <li>The interaction reveals Ben's rare integration of clinical psychology, cross-cultural expertise, and systems navigation</li>
-                                <li>Immediate behavioral and cognitive shifts are documented throughout the conversation</li>
+                        <p class="mb-6 text-lg leading-relaxed">This executive dashboard presents a comprehensive analysis of the interaction between Ben Mak and Kajha, demonstrating Ben's exceptional abilities in cross-cultural communication, psychological intervention, and transformational coaching.</p>
+                        
+                        <div class="highlight p-6 rounded-xl mb-8 border-l-4 border-primary bg-gradient-to-r from-executive-100 to-white dark:from-executive-900 dark:to-gray-800 shadow-md">
+                            <h3 class="font-bold text-xl mb-4 text-primary flex items-center">
+                                <i class="fas fa-key mr-2"></i>Key Findings:
+                            </h3>
+                            <ul class="list-none pl-0 space-y-4">
+                                <li class="flex items-start">
+                                    <div class="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center mr-3 mt-0.5">
+                                        <i class="fas fa-check text-xs"></i>
+                                    </div>
+                                    <span>Ben demonstrates expertise across multiple psychological domains at an advanced practitioner level</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <div class="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center mr-3 mt-0.5">
+                                        <i class="fas fa-check text-xs"></i>
+                                    </div>
+                                    <span>Kajha undergoes significant transformation in self-perception, cultural adaptation, and agency development</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <div class="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center mr-3 mt-0.5">
+                                        <i class="fas fa-check text-xs"></i>
+                                    </div>
+                                    <span>The interaction reveals Ben's rare integration of clinical psychology, cross-cultural expertise, and systems navigation</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <div class="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center mr-3 mt-0.5">
+                                        <i class="fas fa-check text-xs"></i>
+                                    </div>
+                                    <span>Immediate behavioral and cognitive shifts are documented throughout the conversation</span>
+                                </li>
                             </ul>
                         </div>
                         
-                        <p>Navigate through the tabs to explore detailed analyses of Ben's expertise, Kajha's transformation journey, the psychological frameworks employed, and a clinical assessment of Ben's professional competencies.</p>
+                        <p class="text-lg leading-relaxed">Navigate through the tabs to explore detailed analyses of Ben's expertise, Kajha's transformation journey, the psychological frameworks employed, and a clinical assessment of Ben's professional competencies.</p>
                     </div>
                     
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                        <h2 class="text-2xl font-bold mb-4 text-primary">Interactive Skills Assessment</h2>
-                        <div class="spider-chart-container">
+                    <div class="card-gradient rounded-xl shadow-executive p-8 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-primary/10 to-accent/5 rounded-bl-full -z-10"></div>
+                        
+                        <div class="flex items-center mb-6">
+                            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white shadow-lg mr-4">
+                                <i class="fas fa-chart-radar text-xl"></i>
+                            </div>
+                            <h2 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">Interactive Skills Assessment</h2>
+                        </div>
+                        <div class="spider-chart-container floating">
                             <canvas id="skillsChart"></canvas>
+                        </div>
+                        
+                        <div class="absolute bottom-4 right-4">
+                            <button id="rotateChartBtn" class="bg-primary hover:bg-primary-600 text-white rounded-full w-10 h-10 flex items-center justify-center shadow-lg transition-all duration-300 transform hover:scale-110">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
                 
                 <div class="lg:col-span-1">
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-                        <h2 class="text-xl font-bold mb-4 text-primary">Key Competency Areas</h2>
+                    <div class="card-gradient rounded-xl shadow-executive p-8 mb-8">
+                        <div class="flex items-center mb-6">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white shadow-lg mr-3">
+                                <i class="fas fa-award text-lg"></i>
+                            </div>
+                            <h2 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">Key Competency Areas</h2>
+                        </div>
                         <div class="space-y-4">
                             <div class="relative pt-1">
                                 <div class="flex mb-2 items-center justify-between">
@@ -236,24 +466,57 @@
                         </div>
                     </div>
                     
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                        <h2 class="text-xl font-bold mb-4 text-primary">Professional Classification</h2>
-                        <div class="space-y-3">
-                            <div class="p-3 rounded-lg bg-gray-100 dark:bg-gray-700">
-                                <span class="block font-semibold">Domain:</span>
-                                <span>Cultural Clinical Psychology</span>
+                    <div class="card-gradient rounded-xl shadow-executive p-8">
+                        <div class="flex items-center mb-6">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white shadow-lg mr-3">
+                                <i class="fas fa-user-graduate text-lg"></i>
                             </div>
-                            <div class="p-3 rounded-lg bg-gray-100 dark:bg-gray-700">
-                                <span class="block font-semibold">Expertise Level:</span>
-                                <span>Expert+ (Dreyfus Model)</span>
+                            <h2 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">Professional Classification</h2>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="p-4 rounded-lg bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-700 shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-102 border-l-4 border-primary">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">
+                                        <i class="fas fa-globe text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <span class="block font-semibold text-gray-700 dark:text-gray-300">Domain:</span>
+                                        <span class="text-lg">Cultural Clinical Psychology</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="p-3 rounded-lg bg-gray-100 dark:bg-gray-700">
-                                <span class="block font-semibold">Rarity Classification:</span>
-                                <span>Top 0.1% of practitioners</span>
+                            <div class="p-4 rounded-lg bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-700 shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-102 border-l-4 border-primary">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">
+                                        <i class="fas fa-star text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <span class="block font-semibold text-gray-700 dark:text-gray-300">Expertise Level:</span>
+                                        <span class="text-lg">Expert+ (Dreyfus Model)</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="p-3 rounded-lg bg-gray-100 dark:bg-gray-700">
-                                <span class="block font-semibold">Equivalent Qualification:</span>
-                                <span>Doctorate-level with specialized post-doctoral training</span>
+                            <div class="p-4 rounded-lg bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-700 shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-102 border-l-4 border-primary">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">
+                                        <i class="fas fa-gem text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <span class="block font-semibold text-gray-700 dark:text-gray-300">Rarity Classification:</span>
+                                        <span class="text-lg">Top 0.1% of practitioners</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4 rounded-lg bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-700 shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-102 border-l-4 border-primary">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">
+                                        <i class="fas fa-graduation-cap text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <span class="block font-semibold text-gray-700 dark:text-gray-300">Equivalent Qualification:</span>
+                                        <span class="text-lg">Doctorate-level with specialized post-doctoral training</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -262,8 +525,15 @@
         </div>
 
         <div id="expertise" class="tab-content">
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-                <h2 class="text-2xl font-bold mb-4 text-primary">Ben's Multifaceted Expertise</h2>
+            <div class="card-gradient rounded-xl shadow-executive p-8 mb-8 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-primary/5 to-accent/5 rounded-bl-full -z-10"></div>
+                
+                <div class="flex items-center mb-6">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white shadow-lg mr-4 pulse">
+                        <i class="fas fa-brain text-xl"></i>
+                    </div>
+                    <h2 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">Ben's Multifaceted Expertise</h2>
+                </div>
                 
                 <div class="space-y-6">
                     <div>
@@ -313,9 +583,16 @@
                 </div>
             </div>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                    <h3 class="text-xl font-semibold mb-4 text-primary">Psychological Intervention Methodology</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="card-gradient rounded-xl shadow-executive p-6 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-accent/5 rounded-bl-full -z-10"></div>
+                    
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white shadow-md mr-3">
+                            <i class="fas fa-hand-holding-medical text-lg"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">Psychological Intervention Methodology</h3>
+                    </div>
                     <p class="mb-4">Ben employs a sophisticated psychological intervention methodology with multiple components:</p>
                     <ul class="list-disc pl-5 space-y-3">
                         <li><span class="font-semibold">Identity reframing at critical moments</span> - Ben intervenes at precisely the right psychological moments to challenge Kajha's self-perception</li>
@@ -325,8 +602,15 @@
                     </ul>
                 </div>
                 
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                    <h3 class="text-xl font-semibold mb-4 text-primary">Business Model Innovation</h3>
+                <div class="card-gradient rounded-xl shadow-executive p-6 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-accent/5 rounded-bl-full -z-10"></div>
+                    
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white shadow-md mr-3">
+                            <i class="fas fa-lightbulb text-lg"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">Business Model Innovation</h3>
+                    </div>
                     <p class="mb-4">Ben's business approach shows remarkable innovation:</p>
                     <ul class="list-disc pl-5 space-y-3">
                         <li><span class="font-semibold">Integration of social advocacy and business models</span> - Ben has created a business model that blends social justice advocacy with practical service provision</li>
@@ -336,20 +620,36 @@
                 </div>
             </div>
             
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mt-6">
-                <h3 class="text-xl font-semibold mb-4 text-primary">Meta-Level Analysis</h3>
-                <p class="mb-4">At the meta-level, Ben demonstrates:</p>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                        <h4 class="font-semibold mb-2">Calibrated Intervention Intensity</h4>
+            <div class="card-gradient rounded-xl shadow-executive p-8 mt-8 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-primary/5 to-accent/5 rounded-bl-full -z-10"></div>
+                
+                <div class="flex items-center mb-6">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white shadow-md mr-3">
+                        <i class="fas fa-chess text-lg"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">Meta-Level Analysis</h3>
+                </div>
+                <p class="mb-6 text-lg">At the meta-level, Ben demonstrates:</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:translateY(-5px) border-t-4 border-primary">
+                        <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                            <i class="fas fa-sliders-h text-primary text-xl"></i>
+                        </div>
+                        <h4 class="font-semibold text-lg mb-3 text-primary">Calibrated Intervention Intensity</h4>
                         <p>Ben carefully calibrates the intensity of his interventions based on Kajha's receptivity, pushing boundaries at precisely the right moments while backing off when resistance appears.</p>
                     </div>
-                    <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                        <h4 class="font-semibold mb-2">Parallel Processing</h4>
+                    <div class="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:translateY(-5px) border-t-4 border-primary">
+                        <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                            <i class="fas fa-network-wired text-primary text-xl"></i>
+                        </div>
+                        <h4 class="font-semibold text-lg mb-3 text-primary">Parallel Processing</h4>
                         <p>Ben simultaneously manages immediate rapport-building while advancing long-term strategic objectives (integrating Kajha into his business model, establishing a foundation for the visa application).</p>
                     </div>
-                    <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                        <h4 class="font-semibold mb-2">Dynamic Mental Modeling</h4>
+                    <div class="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:translateY(-5px) border-t-4 border-primary">
+                        <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                            <i class="fas fa-project-diagram text-primary text-xl"></i>
+                        </div>
+                        <h4 class="font-semibold text-lg mb-3 text-primary">Dynamic Mental Modeling</h4>
                         <p>Ben continuously updates his mental model of Kajha's understanding, cultural framework, and psychological state throughout the conversation, making real-time adjustments to his approach.</p>
                     </div>
                 </div>
@@ -430,7 +730,10 @@
                         </table>
                     </div>
                     
-                    <button id="showMoreMatrices" class="px-4 py-2 bg-primary text-white rounded hover:bg-opacity-90 transition-colors">Show More Transformation Matrices</button>
+                    <button id="showMoreMatrices" class="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:translateY(-2px) flex items-center justify-center">
+                        <i class="fas fa-chevron-down mr-2"></i>
+                        <span>Show More Transformation Matrices</span>
+                    </button>
                     
                     <div id="extraMatrices" class="hidden mt-6">
                         <h3 class="text-xl font-semibold mb-4">Cultural Adaptation and Rights Recognition</h3>
@@ -575,9 +878,16 @@
         </div>
 
         <div id="frameworks" class="tab-content">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div class="framework-card bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                    <h3 class="text-xl font-semibold mb-3 text-primary">Cognitive Behavioral Therapy</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                <div class="framework-card rounded-xl shadow-executive p-6 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary/10 to-accent/5 rounded-bl-full -z-10"></div>
+                    
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white shadow-md mr-3">
+                            <i class="fas fa-brain text-lg"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">Cognitive Behavioral Therapy</h3>
+                    </div>
                     <p class="mb-4">Ben displays advanced application of cognitive restructuring techniques consistent with Beck's CBT model.</p>
                     <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-md">
                         <p class="text-sm font-medium">Evidence (26:27-27:51):</p>
@@ -586,8 +896,15 @@
                     <p class="mt-3 text-sm text-gray-600 dark:text-gray-400">This intervention directly challenges cognitive distortions (minimization of accomplishments) and demonstrates the CBT principle of identifying unhelpful thinking patterns.</p>
                 </div>
                 
-                <div class="framework-card bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                    <h3 class="text-xl font-semibold mb-3 text-primary">Existential Therapy</h3>
+                <div class="framework-card rounded-xl shadow-executive p-6 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary/10 to-accent/5 rounded-bl-full -z-10"></div>
+                    
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white shadow-md mr-3">
+                            <i class="fas fa-mountain text-lg"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">Existential Therapy</h3>
+                    </div>
                     <p class="mb-4">Ben incorporates existential therapy approaches focused on meaning-making and authentic living.</p>
                     <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-md">
                         <p class="text-sm font-medium">Evidence (56:03-56:15):</p>
@@ -596,8 +913,15 @@
                     <p class="mt-3 text-sm text-gray-600 dark:text-gray-400">This reflects Yalom's existential therapeutic focus on authenticity and meaningful existence versus conformity.</p>
                 </div>
                 
-                <div class="framework-card bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                    <h3 class="text-xl font-semibold mb-3 text-primary">Narrative Therapy</h3>
+                <div class="framework-card rounded-xl shadow-executive p-6 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary/10 to-accent/5 rounded-bl-full -z-10"></div>
+                    
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white shadow-md mr-3">
+                            <i class="fas fa-book-open text-lg"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">Narrative Therapy</h3>
+                    </div>
                     <p class="mb-4">Ben demonstrates advanced narrative therapy techniques as conceptualized by White and Epston.</p>
                     <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-md">
                         <p class="text-sm font-medium">Evidence (30:18-30:39):</p>
@@ -607,9 +931,16 @@
                 </div>
             </div>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div class="framework-card bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                    <h3 class="text-xl font-semibold mb-3 text-primary">Cultural Formulation Interview</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                <div class="framework-card rounded-xl shadow-executive p-6 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary/10 to-accent/5 rounded-bl-full -z-10"></div>
+                    
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white shadow-md mr-3">
+                            <i class="fas fa-globe-americas text-lg"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">Cultural Formulation Interview</h3>
+                    </div>
                     <p class="mb-4">Ben applies principles consistent with the DSM-5 Cultural Formulation Interview (CFI).</p>
                     <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-md">
                         <p class="text-sm font-medium">Evidence (15:22-16:22):</p>
@@ -618,8 +949,15 @@
                     <p class="mt-3 text-sm text-gray-600 dark:text-gray-400">This demonstrates culturally-informed assessment, examining how cultural factors shape both personal identity and symptom presentation.</p>
                 </div>
                 
-                <div class="framework-card bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                    <h3 class="text-xl font-semibold mb-3 text-primary">Schema Therapy</h3>
+                <div class="framework-card rounded-xl shadow-executive p-6 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary/10 to-accent/5 rounded-bl-full -z-10"></div>
+                    
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white shadow-md mr-3">
+                            <i class="fas fa-sitemap text-lg"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">Schema Therapy</h3>
+                    </div>
                     <p class="mb-4">Ben identifies and addresses early maladaptive schemas as conceptualized in Young's Schema Therapy.</p>
                     <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-md">
                         <p class="text-sm font-medium">Evidence (28:24-29:14):</p>
@@ -628,8 +966,15 @@
                     <p class="mt-3 text-sm text-gray-600 dark:text-gray-400">This reflects sophisticated identification of unrelenting standards schema and subjugation schema typically developed in demanding childhood environments.</p>
                 </div>
                 
-                <div class="framework-card bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                    <h3 class="text-xl font-semibold mb-3 text-primary">Cultural Intelligence</h3>
+                <div class="framework-card rounded-xl shadow-executive p-6 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary/10 to-accent/5 rounded-bl-full -z-10"></div>
+                    
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white shadow-md mr-3">
+                            <i class="fas fa-universal-access text-lg"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">Cultural Intelligence</h3>
+                    </div>
                     <p class="mb-4">Ben demonstrates advanced Cultural Intelligence as defined by Earley and Ang's four-factor model.</p>
                     <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-md">
                         <p class="text-sm font-medium">Evidence (37:51-38:31):</p>
@@ -639,9 +984,16 @@
                 </div>
             </div>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="framework-card bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                    <h3 class="text-xl font-semibold mb-3 text-primary">Dreyfus Model of Skill Acquisition</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="framework-card rounded-xl shadow-executive p-6 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary/10 to-accent/5 rounded-bl-full -z-10"></div>
+                    
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white shadow-md mr-3">
+                            <i class="fas fa-chart-line text-lg"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">Dreyfus Model of Skill Acquisition</h3>
+                    </div>
                     <p class="mb-4">Based on the Dreyfus Model, Ben operates at the "Expert" level (Level 5), characterized by:</p>
                     <ul class="list-disc pl-5 space-y-2 mb-4">
                         <li>Intuitive grasp of situations without relying on rules</li>
@@ -655,8 +1007,15 @@
                     <p class="mt-3 text-sm text-gray-600 dark:text-gray-400">Ben intuitively identifies emotional suppression as a therapeutic target and shifts into exploration without applying a formulaic approach.</p>
                 </div>
                 
-                <div class="framework-card bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                    <h3 class="text-xl font-semibold mb-3 text-primary">Berry's Acculturation Framework</h3>
+                <div class="framework-card rounded-xl shadow-executive p-6 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary/10 to-accent/5 rounded-bl-full -z-10"></div>
+                    
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white shadow-md mr-3">
+                            <i class="fas fa-people-arrows text-lg"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">Berry's Acculturation Framework</h3>
+                    </div>
                     <p class="mb-4">Ben applies concepts from Berry's acculturation framework in guiding Kajha's adaptation to the UK.</p>
                     <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-md">
                         <p class="text-sm font-medium">Evidence (52:04-52:26):</p>
@@ -861,51 +1220,494 @@
             }
         });
 
-        // Skills spider chart
-        const ctx = document.getElementById('skillsChart').getContext('2d');
-        const skillsChart = new Chart(ctx, {
-            type: 'radar',
-            data: {
-                labels: [
-                    'Cross-Cultural Intelligence',
-                    'Psychological Intervention',
-                    'Systemic Navigation',
-                    'Metacognitive Awareness',
-                    'Business Model Innovation',
-                    'Strategic Communication'
-                ],
-                datasets: [{
-                    label: 'Ben\'s Skills (percentile)',
-                    data: [95, 90, 85, 93, 80, 92],
-                    fill: true,
-                    backgroundColor: 'rgba(93, 92, 222, 0.2)',
-                    borderColor: '#5D5CDE',
-                    pointBackgroundColor: '#5D5CDE',
-                    pointBorderColor: '#fff',
-                    pointHoverBackgroundColor: '#fff',
-                    pointHoverBorderColor: '#5D5CDE'
-                }]
-            },
-            options: {
-                elements: {
-                    line: {
-                        borderWidth: 3
-                    }
+        // Initialize skills chart with animation
+        let skillsChart;
+        let chartRotation = 0;
+        
+        function initSkillsChart() {
+            const ctx = document.getElementById('skillsChart').getContext('2d');
+            
+            // Create gradient
+            const gradientFill = ctx.createLinearGradient(0, 0, 0, 400);
+            gradientFill.addColorStop(0, 'rgba(93, 92, 222, 0.3)');
+            gradientFill.addColorStop(1, 'rgba(79, 70, 229, 0.1)');
+            
+            skillsChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: [
+                        'Cross-Cultural Intelligence',
+                        'Psychological Intervention',
+                        'Systemic Navigation',
+                        'Metacognitive Awareness',
+                        'Business Model Innovation',
+                        'Strategic Communication'
+                    ],
+                    datasets: [{
+                        label: 'Ben\'s Skills (percentile)',
+                        data: [95, 90, 85, 93, 80, 92],
+                        fill: true,
+                        backgroundColor: gradientFill,
+                        borderColor: '#5D5CDE',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#5D5CDE',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#5D5CDE',
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
                 },
-                scales: {
-                    r: {
-                        angleLines: {
-                            display: true
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                font: {
+                                    size: 14
+                                }
+                            }
                         },
-                        suggestedMin: 0,
-                        suggestedMax: 100
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                            titleColor: '#5D5CDE',
+                            bodyColor: '#333',
+                            borderColor: '#5D5CDE',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false,
+                            titleFont: {
+                                size: 16,
+                                weight: 'bold'
+                            },
+                            bodyFont: {
+                                size: 14
+                            },
+                            callbacks: {
+                                title: function(tooltipItems) {
+                                    return tooltipItems[0].label;
+                                },
+                                label: function(context) {
+                                    return `Score: ${context.raw}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        r: {
+                            angleLines: {
+                                display: true,
+                                color: 'rgba(93, 92, 222, 0.2)'
+                            },
+                            grid: {
+                                color: 'rgba(93, 92, 222, 0.1)'
+                            },
+                            pointLabels: {
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 100,
+                            ticks: {
+                                backdropColor: 'transparent',
+                                color: '#666',
+                                z: 100
+                            }
+                        }
+                    },
+                    elements: {
+                        line: {
+                            tension: 0.1
+                        }
+                    },
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeOutQuart'
                     }
                 }
+            });
+        }
+        
+        // Rotate chart function
+        function rotateChart() {
+            chartRotation += 60;
+            
+            // Update chart options
+            skillsChart.options.rotation = chartRotation * Math.PI / 180;
+            
+            // Update chart
+            skillsChart.update();
+        }
+        
+        // Initialize chart when tab is shown
+        document.querySelector('[data-tab="overview"]').addEventListener('click', () => {
+            setTimeout(() => {
+                if (!skillsChart) {
+                    initSkillsChart();
+                }
+            }, 300);
+        });
+        
+        // Rotate chart button
+        document.getElementById('rotateChart
+                    <p class="mb-4">Ben applies concepts from Berry's acculturation framework in guiding Kajha's adaptation to the UK.</p>
+                    <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-md">
+                        <p class="text-sm font-medium">Evidence (52:04-52:26):</p>
+                        <p class="text-sm mt-2">"You need to understand that. And it may feel foreign for you taking directions which are not Indian, because you're not in India... And if you don't listen, you're not going to get the affordment of. The rights of why people come here. You are afforded rights. We need to utilize them."</p>
+                    </div>
+                    <p class="mt-3 text-sm text-gray-600 dark:text-gray-400">This demonstrates understanding of acculturation stress and integration strategies necessary for successful cultural adaptation.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="clinical" class="tab-content">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-2xl font-bold mb-4 text-primary">Clinical and Professional Competency Analysis</h2>
+                <p class="mb-6">This section provides a framework-based evaluation of Ben Mak's clinical psychology proficiency and professional competency level based on the transcript evidence.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-xl font-semibold mb-3">Therapeutic Modalities Demonstrated</h3>
+                        <div class="space-y-4">
+                            <div class="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                                <h4 class="font-bold mb-2">Cognitive Behavioral Therapy (CBT)</h4>
+                                <p class="text-sm">Ben displays advanced application of cognitive restructuring techniques consistent with Beck's CBT model, challenging unhelpful thinking patterns and cognitive distortions.</p>
+                            </div>
+                            <div class="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                                <h4 class="font-bold mb-2">Existential Therapy</h4>
+                                <p class="text-sm">Ben incorporates existential approaches focused on meaning-making, authenticity, and confronting existential isolation, reflecting Yalom's therapeutic principles.</p>
+                            </div>
+                            <div class="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                                <h4 class="font-bold mb-2">Narrative Therapy</h4>
+                                <p class="text-sm">Ben demonstrates narrative techniques as conceptualized by White and Epston, helping Kajha externalize problems and reconstruct his identity narrative.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-xl font-semibold mb-3">Psychological Assessment Skills</h3>
+                        <div class="space-y-4">
+                            <div class="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                                <h4 class="font-bold mb-2">Cultural Formulation</h4>
+                                <p class="text-sm">Ben applies principles consistent with the DSM-5 Cultural Formulation Interview, examining how cultural factors shape identity and presentation.</p>
+                            </div>
+                            <div class="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                                <h4 class="font-bold mb-2">Schema Assessment</h4>
+                                <p class="text-sm">Ben identifies early maladaptive schemas as conceptualized in Young's Schema Therapy, particularly unrelenting standards and subjugation schemas.</p>
+                            </div>
+                            <div class="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                                <h4 class="font-bold mb-2">Systems Assessment</h4>
+                                <p class="text-sm">Ben demonstrates ability to assess systemic barriers and organizational dynamics impacting Kajha's situation, showing advanced organizational psychology skills.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6">
+                    <h3 class="text-xl font-semibold mb-3">Professional Level Evaluation</h3>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-100 dark:bg-gray-800">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Domain</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Proficiency Level</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Evidence</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
+                                <tr>
+                                    <td class="px-4 py-4 text-sm font-medium">Clinical Psychology</td>
+                                    <td class="px-4 py-4 text-sm">Advanced Practitioner to Specialist level<br>(Doctorate-equivalent expertise)</td>
+                                    <td class="px-4 py-4 text-sm">Complex case formulation, integration of multiple therapeutic modalities, cultural adaptation of interventions</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-4 text-sm font-medium">Cross-Cultural Psychology</td>
+                                    <td class="px-4 py-4 text-sm">Specialist/Expert level</td>
+                                    <td class="px-4 py-4 text-sm">Sophisticated understanding of cultural schema, bidirectional cultural translation, acculturation facilitation</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-4 text-sm font-medium">Organizational/Industrial Psychology</td>
+                                    <td class="px-4 py-4 text-sm">Advanced Practitioner</td>
+                                    <td class="px-4 py-4 text-sm">Systems-level intervention design, organizational culture assessment, workplace accommodation expertise</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-4 text-sm font-medium">Coaching Psychology</td>
+                                    <td class="px-4 py-4 text-sm">Expert/Master level</td>
+                                    <td class="px-4 py-4 text-sm">Transformational coaching techniques, developmental scaffolding, identity work</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                    <h3 class="text-xl font-semibold mb-4 text-primary">Specialized Domains of Expertise</h3>
+                    
+                    <div class="space-y-4">
+                        <div class="timeline-item">
+                            <h4 class="font-bold">Trauma-Informed Approach</h4>
+                            <p class="text-sm mt-1">Ben demonstrates trauma-informed practice principles per SAMHSA guidelines.</p>
+                            <div class="mt-2 p-3 bg-gray-100 dark:bg-gray-700 rounded-md">
+                                <p class="text-xs font-medium">Evidence (30:59-31:42):</p>
+                                <p class="text-xs mt-1">"This is okay, so just so you know, most of my people who I coach are Indian boys and men, so I am very aware with, with the contentions, especially opening up and talking about things that seem with an inch of emotion. That's not, that's not the norm from where that."</p>
+                            </div>
+                        </div>
+                        
+                        <div class="timeline-item">
+                            <h4 class="font-bold">Cross-Cultural Psychology</h4>
+                            <p class="text-sm mt-1">Ben applies concepts from Berry's acculturation framework.</p>
+                            <div class="mt-2 p-3 bg-gray-100 dark:bg-gray-700 rounded-md">
+                                <p class="text-xs font-medium">Evidence (52:04-52:26):</p>
+                                <p class="text-xs mt-1">"You need to understand that. And it may feel foreign for you taking directions which are not Indian, because you're not in India... And if you don't listen, you're not going to get the affordment of. The rights of why people come here."</p>
+                            </div>
+                        </div>
+                        
+                        <div class="timeline-item">
+                            <h4 class="font-bold">Clinical Supervision</h4>
+                            <p class="text-sm mt-1">Ben demonstrates competencies consistent with APA's supervision guidelines.</p>
+                            <div class="mt-2 p-3 bg-gray-100 dark:bg-gray-700 rounded-md">
+                                <p class="text-xs font-medium">Evidence (35:36-36:19):</p>
+                                <p class="text-xs mt-1">"So whatever is going on, I always want to try and figure out. I love solutions. Figure out what we can do. Firstly, your first and foremost before anything behind you. I couldn't give a this first. Even in this jobs on you."</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                    <h3 class="text-xl font-semibold mb-4 text-primary">Professional Domain Assessment</h3>
+                    
+                    <p class="mb-4">Based on the comprehensive analysis, Ben Mak demonstrates competencies that place him in a specialized professional category that transcends traditional disciplinary boundaries:</p>
+                    
+                    <div class="p-4 border border-primary rounded-lg mb-6">
+                        <h4 class="font-bold text-primary mb-2">Cultural Clinical Psychology</h4>
+                        <p class="text-sm">Ben is operating at the intersection of clinical psychology, cross-cultural psychology, and organizational development, with particular expertise in helping individuals navigate systems while addressing psychological barriers to success.</p>
+                        <p class="text-sm mt-2">His approach most closely resembles the emerging field of "Cultural Clinical Psychology" as defined by Ryder, Yang, and Heine (2002), which integrates cultural factors directly into clinical formulation rather than treating them as external variables.</p>
+                    </div>
+                    
+                    <p class="mb-3">In professional certification terms, his demonstrated skills would align with:</p>
+                    <ul class="list-disc pl-5 space-y-2">
+                        <li>Board Certified Coach (BCC) with specialization in Executive/Leadership Coaching</li>
+                        <li>Advanced Practitioner status in cross-cultural psychology</li>
+                        <li>Clinical supervision qualification (based on developmental approach to learning)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Handle dark mode
+        function setDarkMode(isDark) {
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        // Check user preference for dark mode
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            setDarkMode(true);
+        }
+
+        // Listen for changes in dark mode preference
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            setDarkMode(event.matches);
+        });
+
+        // Dark mode toggle button
+        document.getElementById('darkModeToggle').addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+        });
+
+        // Tab navigation
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active class from all tabs
+                tabBtns.forEach(b => b.classList.remove('border-primary', 'text-primary'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab
+                btn.classList.add('border-primary', 'text-primary');
+                const tabId = btn.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // Show more matrices button
+        document.getElementById('showMoreMatrices').addEventListener('click', function() {
+            const extraMatrices = document.getElementById('extraMatrices');
+            const button = document.getElementById('showMoreMatrices');
+            
+            if (extraMatrices.classList.contains('hidden')) {
+                extraMatrices.classList.remove('hidden');
+                button.textContent = 'Show Less';
+            } else {
+                extraMatrices.classList.add('hidden');
+                button.textContent = 'Show More Transformation Matrices';
             }
         });
 
-        // Highlight the "I'm important" quote on load in transformation tab
-        const highlightQuote = () => {
+        // Handle dark mode
+        function setDarkMode(isDark) {
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        // Check user preference for dark mode
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            setDarkMode(true);
+        }
+
+        // Listen for changes in dark mode preference
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            setDarkMode(event.matches);
+        });
+
+        // Dark mode toggle button
+        document.getElementById('darkModeToggle').addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+        });
+
+        // Initialize variables
+        let skillsChart;
+        let chartRotation = 0;
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        // Initialize skills chart
+        function initSkillsChart() {
+            if (skillsChart) return; // Prevent multiple initializations
+            
+            const ctx = document.getElementById('skillsChart').getContext('2d');
+            
+            // Create gradient
+            const gradientFill = ctx.createLinearGradient(0, 0, 0, 400);
+            gradientFill.addColorStop(0, 'rgba(93, 92, 222, 0.3)');
+            gradientFill.addColorStop(1, 'rgba(79, 70, 229, 0.1)');
+            
+            skillsChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: [
+                        'Cross-Cultural Intelligence',
+                        'Psychological Intervention',
+                        'Systemic Navigation',
+                        'Metacognitive Awareness',
+                        'Business Model Innovation',
+                        'Strategic Communication'
+                    ],
+                    datasets: [{
+                        label: 'Ben\'s Skills (percentile)',
+                        data: [95, 90, 85, 93, 80, 92],
+                        fill: true,
+                        backgroundColor: gradientFill,
+                        borderColor: '#5D5CDE',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#5D5CDE',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#5D5CDE',
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                            titleColor: '#5D5CDE',
+                            bodyColor: '#333',
+                            borderColor: '#5D5CDE',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false,
+                            titleFont: {
+                                size: 16,
+                                weight: 'bold'
+                            },
+                            bodyFont: {
+                                size: 14
+                            },
+                            callbacks: {
+                                title: function(tooltipItems) {
+                                    return tooltipItems[0].label;
+                                },
+                                label: function(context) {
+                                    return `Score: ${context.raw}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        r: {
+                            angleLines: {
+                                display: true,
+                                color: 'rgba(93, 92, 222, 0.2)'
+                            },
+                            grid: {
+                                color: 'rgba(93, 92, 222, 0.1)'
+                            },
+                            pointLabels: {
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 100,
+                            ticks: {
+                                backdropColor: 'transparent',
+                                color: '#666',
+                                z: 100
+                            }
+                        }
+                    },
+                    elements: {
+                        line: {
+                            tension: 0.1
+                        }
+                    },
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+        }
+        
+        // Rotate chart function
+        function rotateChart() {
+            if (!skillsChart) return;
+            
+            chartRotation += 60;
+            skillsChart.options.rotation = chartRotation * Math.PI / 180;
+            skillsChart.update();
+        }
+        
+        // Highlight the "I'm important" quote
+        function highlightQuote() {
             const importantQuote = document.getElementById('importantQuote');
             if (importantQuote) {
                 importantQuote.classList.add('highlight');
@@ -913,12 +1715,72 @@
                     importantQuote.classList.remove('highlight');
                 }, 3000);
             }
-        };
+        }
 
-        // When transformation tab is clicked, highlight the quote
-        document.querySelector('[data-tab="transformation"]').addEventListener('click', () => {
-            // Wait for tab content to be visible
-            setTimeout(highlightQuote, 300);
+        // Animate progress bars
+        function animateProgressBars() {
+            const progressBars = document.querySelectorAll('.overflow-hidden .shadow-none');
+            progressBars.forEach(bar => {
+                const width = bar.style.width;
+                bar.style.width = '0';
+                bar.classList.add('animate-progress');
+                setTimeout(() => {
+                    bar.style.width = width;
+                }, 100);
+            });
+        }
+
+        // Tab navigation
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active class from all tabs
+                tabBtns.forEach(b => {
+                    b.classList.remove('bg-primary', 'text-white', 'shadow-md');
+                    b.classList.add('hover:bg-gray-100', 'dark:hover:bg-gray-700');
+                });
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab
+                btn.classList.add('bg-primary', 'text-white', 'shadow-md');
+                btn.classList.remove('hover:bg-gray-100', 'dark:hover:bg-gray-700');
+                const tabId = btn.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+                
+                // Run tab-specific animations
+                if (tabId === 'overview') {
+                    setTimeout(animateProgressBars, 300);
+                    setTimeout(() => {
+                        if (!skillsChart) {
+                            initSkillsChart();
+                        }
+                    }, 300);
+                } else if (tabId === 'transformation') {
+                    setTimeout(highlightQuote, 300);
+                }
+            });
+        });
+
+        // Show more matrices button
+        document.getElementById('showMoreMatrices').addEventListener('click', function() {
+            const extraMatrices = document.getElementById('extraMatrices');
+            const button = document.getElementById('showMoreMatrices');
+            
+            if (extraMatrices.classList.contains('hidden')) {
+                extraMatrices.classList.remove('hidden');
+                button.innerHTML = '<i class="fas fa-chevron-up mr-2"></i><span>Show Less</span>';
+            } else {
+                extraMatrices.classList.add('hidden');
+                button.innerHTML = '<i class="fas fa-chevron-down mr-2"></i><span>Show More Transformation Matrices</span>';
+            }
+        });
+
+        // Rotate chart button
+        document.getElementById('rotateChartBtn').addEventListener('click', rotateChart);
+
+        // Initialize the page when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            initSkillsChart();
+            animateProgressBars();
         });
     </script>
 </body>
