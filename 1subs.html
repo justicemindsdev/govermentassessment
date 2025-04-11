@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com https://drive.google.com https://*.cloudflarestream.com; media-src 'self' blob: https://drive.google.com https://*.cloudflarestream.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self' blob:; upgrade-insecure-requests; block-all-mixed-content;">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ben Mak Claim Substantiation - Enhanced Version</title>
+    
+    <!-- Critical CSS inlined for faster rendering -->
+    <style>
+        :root {
+            --primary-color: #112240;
+            --secondary-color: #1c3a6d;
+            --accent-color: #38547a;
+            --light-color: #f0f4f8;
+            --dark-color: #0a0f20;
+            --success-color: #0e8d62;
+            --warning-color: #d86c18;
+            --glass-bg: rgba(10, 15, 32, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.07);
+            --glass-highlight: rgba(56, 84, 122, 0.2);
+            --government-blue: #1e3c72;
+            --executive-gray: #2c3e50;
+            --highlight-color: #4a90e2;
+            
+            /* Performance variables */
+            --animation-duration: 0.2s; /* Reduced for better performance */
+            --transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--light-color);
+            background-color: var(--dark-color);
+            padding: 20px;
+            background-image: linear-gradient(135deg, var(--dark-color) 0%, var(--executive-gray) 100%);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: var(--glass-bg);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            overflow: hidden;
+            contain: content; /* CSS containment for performance */
+        }
+        
+        /* Add will-change for elements that will animate */
+        .category, .claim, .modal-content, .transcript-word {
+            will-change: transform, opacity;
+        }
+    </style>
+    
+    <!-- Preload critical assets -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/hls.js@latest" as="script">
+    
+    <!-- Deferred non-critical CSS -->
+    <link rel="stylesheet" href="styles.css" media="print" onload="this.media='all'">
+    
+    <!-- Preconnect to video CDN -->
+    <link rel="preconnect" href="https://customer-e5m1en7nnf9e7or4.cloudflarestream.com">
+    
+    <!-- Add module preload for custom modules -->
+    <link rel="modulepreload" href="js/video-processor.js">
+    <link rel="modulepreload" href="js/ui-controller.js">
+</head>
+<body>
+    <!-- Theme toggle button -->
+    <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark mode" aria-label="Toggle theme">☀</button>
+    
+    <!-- Sidebar toggle button (mobile only) -->
+    <button class="toggle-sidebar" id="toggle-sidebar" title="Toggle sidebar" aria-label="Toggle sidebar">☰</button>
+    
+    <div class="container">
+        <header>
+            <h1>Ben Mak Claim Substantiation - Enhanced</h1>
+            <p>A comprehensive analysis of claims with video evidence - Improved Version</p>
+            <div class="nav-links">
+                <a href="index.html">Original Dashboard</a>
+                <a href="betterapp.html" class="active">Enhanced Dashboard</a>
+                <a href="upload.html">Upload New Evidence</a>
+            </div>
+        </header>
+        
+        <div class="intro">
+            <h2>Overview</h2>
+            <p>This enhanced version provides a more interactive and user-friendly experience for analyzing Ben Mak's expertise as demonstrated in his meeting with Mbalu (ICS). Each claim is substantiated with direct evidence from the transcript, including timestamps that link to the corresponding video segment.</p>
+        </div>
+        
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Search for claims, evidence, or keywords..." aria-label="Search">
+            <div class="search-results" id="search-results">
+                <!-- Search results will be populated by JavaScript using virtual list -->
+                <div id="virtual-search-results"></div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <!-- Sidebar with category navigation -->
+            <aside class="sidebar" id="sidebar">
+                <h3>Categories</h3>
+                <ul class="nav-list">
+                    <li><a href="#system-navigation" class="active">System Navigation Knowledge</a></li>
+                    <li><a href="#advocacy-techniques">Advocacy Techniques</a></li>
+                    <li><a href="#power-dynamics">Power Dynamics Management</a></li>
+                    <li><a href="#metacognitive">Metacognitive Awareness</a></li>
+                    <li><a href="#coercive-control">Coercive Control Recognition</a></li>
+                    <li><a href="#causal-links">Causal Link Articulation</a></li>
+                </ul>
+            </aside>
+            
+            <!-- Main content area -->
+            <div class="content">
+                <!-- Content container using IntersectionObserver for lazy loading -->
+                <div id="content-container"></div>
+            </div>
+        </div>
+        
+        <!-- Video Modal - Completely refactored for performance -->
+        <div id="videoModal" class="modal" aria-modal="true" role="dialog" aria-hidden="true">
+            <div class="modal-content">
+                <button class="close-btn" aria-label="Close modal">×</button>
+                <h3 id="modal-title">Video Evidence</h3>
+                
+                <div class="news-style-banner" id="news-banner">
+                    SERVICE USER DEMONSTRATES EXPERT KNOWLEDGE OF PROFESSIONAL BOUNDARIES
+                </div>
+                
+                <div class="video-container">
+                    <!-- Navigation arrows for clips -->
+                    <div class="clip-nav-arrows">
+                        <button class="clip-nav-arrow prev" aria-label="Previous clip">◀</button>
+                        <button class="clip-nav-arrow next" aria-label="Next clip">▶</button>
+                    </div>
+                    
+                    <div id="loading-overlay" class="loading-overlay">
+                        <div class="loading-spinner" aria-hidden="true"></div>
+                        <span>Loading video...</span>
+                    </div>
+                    
+                    <!-- Video element with playsinline for mobile -->
+                    <video id="evidence-video" controls preload="metadata" playsinline></video>
+                    
+                    <div class="clip-progress">
+                        <div id="clip-progress-bar" class="clip-progress-bar" aria-hidden="true"></div>
+                    </div>
+                    
+                    <div class="clip-controls">
+                        <div class="clip-info">
+                            Clip duration: <span id="clip-time">0:30</span>
+                        </div>
+                        <div class="clip-buttons">
+                            <button id="replay-clip" class="clip-button">Replay Clip</button>
+                            <button id="full-context" class="clip-button">View Full Context</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="transcript-container">
+                    <!-- Transcript will be rendered efficiently using DocumentFragment -->
+                    <div id="transcript-display" class="transcript-display"></div>
+                </div>
+                
+                <div id="evidence-summary" class="evidence-summary">
+                    <!-- Evidence summary will be rendered efficiently -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>Ben Mak Claim Substantiation Tool © 2025 | Enhanced Version</p>
+    </footer>
+
+    <!-- Template for claim items to prevent layout thrashing -->
+    <template id="claim-template">
+        <div class="claim">
+            <div class="claim-header">
+                <span class="claim-title"></span>
+                <span class="timestamp"></span>
+                <span class="evidence-strength"></span>
+            </div>
+            <div class="claim-quote">
+                <span class="quote-text"></span>
+                <span class="claim-quote-timestamp"></span>
+            </div>
+            <div class="claim-analysis">
+                <p class="analysis-text"></p>
+                <div class="claim-points-container"></div>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Template for claim point -->
+    <template id="claim-point-template">
+        <div class="claim-point">
+            <span class="timestamp-link"></span>
+            <span class="point-text"></span>
+        </div>
+    </template>
+    
+    <!-- Import HLS.js with defer for non-blocking -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest" defer></script>
+    
+    <!-- Use ES modules for better code organization -->
+    <script type="module">
+        // Import modules
+        import { VideoProcessor } from './js/video-processor.js';
+        import { UIController } from './js/ui-controller.js';
+        import { DataManager } from './js/data-manager.js';
+        
+        // Initialize App when DOM content is loaded
+        document.addEventListener('DOMContentLoaded', initializeApp);
+        
+        // Main application class using module pattern for encapsulation
+        function initializeApp() {
+            // Initialize modules
+            const dataManager = new DataManager();
+            const videoProcessor = new VideoProcessor({
+                videoElement: document.getElementById('evidence-video'),
+                videoSrc: 'https://customer-e5m1en7nnf9e7or4.cloudflarestream.com/4eb277917d1f8d96cbd31c18aafd7cd8/manifest/video.m3u8',
+                loadingOverlay: document.getElementById('loading-overlay'),
+                progressBar: document.getElementById('clip-progress-bar')
+            });
+            
+            const uiController = new UIController({
+                videoProcessor,
+                dataManager,
+                modal: document.getElementById('videoModal'),
+                contentContainer: document.getElementById('content-container'),
+                searchInput: document.getElementById('search-input'),
+                searchResults: document.getElementById('search-results')
+            });
+            
+            // Setup UI components and event listeners using delegation
+            setupEventDelegation();
+            initializeIntersectionObserver();
+            
+            // Pre-render initial content
+            uiController.renderInitialContent();
+            
+            // Set up one global event handler for better performance
+            function setupEventDelegation() {
+                document.body.addEventListener('click', function(event) {
+                    // Using closest to find parent elements that match selector
+                    const timestamp = event.target.closest('.timestamp, .claim-quote-timestamp, .timestamp-link, .time-link');
+                    
+                    if (timestamp) {
+                        event.preventDefault();
+                        const time = timestamp.dataset.time || timestamp.textContent;
+                        const endTime = timestamp.dataset.endTime;
+                        videoProcessor.playClip(time, endTime);
+                        uiController.openModal(time);
+                        return;
+                    }
+                    
+                    // Handle other clickable elements
+                    if (event.target.closest('.close-btn')) {
+                        uiController.closeModal();
+                    } else if (event.target.closest('#replay-clip')) {
+                        videoProcessor.replayCurrentClip();
+                    } else if (event.target.closest('#full-context')) {
+                        videoProcessor.playFullContext();
+                    } else if (event.target.closest('.category-header')) {
+                        const category = event.target.closest('.category');
+                        uiController.toggleCategory(category);
+                    } else if (event.target.closest('.nav-list a')) {
+                        event.preventDefault();
+                        const link = event.target.closest('.nav-list a');
+                        const targetId = link.getAttribute('href').substring(1);
+                        uiController.switchToCategory(targetId);
+                    } else if (event.target.closest('.clip-nav-arrow.prev')) {
+                        videoProcessor.playPreviousClip();
+                    } else if (event.target.closest('.clip-nav-arrow.next')) {
+                        videoProcessor.playNextClip();
+                    } else if (event.target.closest('#theme-toggle')) {
+                        uiController.toggleTheme();
+                    } else if (event.target.closest('#toggle-sidebar')) {
+                        uiController.toggleSidebar();
+                    }
+                }, { passive: false });
+                
+                // Use passive event listeners for scroll events
+                document.querySelector('.content').addEventListener('scroll', debounce(() => {
+                    uiController.updateVisibleCategories();
+                }, 100), { passive: true });
+                
+                // Optimize search with debounce
+                document.getElementById('search-input').addEventListener('input', debounce((e) => {
+                    uiController.performSearch(e.target.value);
+                }, 250));
+            }
+            
+            // Implement IntersectionObserver for lazy loading content
+            function initializeIntersectionObserver() {
+                const options = {
+                    root: null,
+                    rootMargin: '100px',
+                    threshold: 0.1
+                };
+                
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const element = entry.target;
+                            
+                            // Lazy load content
+                            if (element.classList.contains('lazy-category')) {
+                                uiController.loadCategoryContent(element.id);
+                                observer.unobserve(element);
+                            }
+                            
+                            // Add animation class for visible elements
+                            element.classList.add('visible');
+                        }
+                    });
+                }, options);
+                
+                // Observe elements with lazy-load class
+                document.querySelectorAll('.lazy-category').forEach(element => {
+                    observer.observe(element);
+                });
+            }
+            
+            // Utility function for debouncing
+            function debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+        }
+    </script>
+</body>
+</html>
