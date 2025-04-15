@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>High Court Evidence: Mak v Newlyn PLC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .legal-ref { 
+            cursor: pointer;
+            border-bottom: 1px dashed #3b82f6;
+        }
+        .timeline-marker {
+            width: 12px;
+            height: 12px;
+            border: 2px solid #3b82f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors">
+    <!-- Theme Toggle -->
+    <div class="fixed top-4 right-4">
+        <button id="themeToggle" class="p-2 rounded-full bg-white dark:bg-gray-800 shadow-lg">
+            🌓
+        </button>
+    </div>
+
+    <main class="max-w-6xl mx-auto p-6">
+        <!-- Logo -->
+        <div class="flex justify-center mb-6">
+            <img src="https://drive.google.com/uc?export=view&id=10cJQHxSDUik5V0uJTEREC5u5e7_KPagx" alt="Legal Logo" class="h-24 object-contain" />
+        </div>
+        
+        <!-- Header -->
+        <header class="mb-12 text-center">
+            <h1 class="text-3xl font-bold mb-2 dark:text-white">
+                IN THE HIGH COURT OF JUSTICE<br>
+                CLAIM NO: 2025-MAK-001
+            </h1>
+            <p class="text-gray-600 dark:text-gray-300">
+                Between BEN MAK (Claimant) and NEWLYN PLC (Defendant)
+            </p>
+        </header>
+
+        <!-- Evidence Navigation -->
+        <nav class="mb-8 sticky top-0 bg-white dark:bg-gray-800 shadow-sm">
+            <div class="flex space-x-4 p-4 overflow-x-auto">
+                <a href="#overview" class="px-4 py-2 rounded bg-blue-100 dark:bg-blue-900">Case Overview</a>
+                <a href="#transcript" class="px-4 py-2 rounded">Call Analysis</a>
+                <a href="#grounds" class="px-4 py-2 rounded">Legal Grounds</a>
+                <a href="#evidence" class="px-4 py-2 rounded">Evidence Matrix</a>
+            </div>
+        </nav>
+
+        <!-- Timeline Visualization -->
+        <section class="mb-16" id="timeline">
+            <h2 class="text-2xl font-bold mb-6 dark:text-white">Chronological Evidence Timeline</h2>
+            <div class="flex flex-col space-y-8">
+                <!-- Timeline Item -->
+                <div class="flex">
+                    <div class="timeline-marker rounded-full bg-white dark:bg-gray-800"></div>
+                    <div class="ml-4 flex-1">
+                        <div class="p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+                            <h3 class="font-bold mb-2 dark:text-white">15/01/2025 - Initial Contact</h3>
+                            <p class="text-gray-600 dark:text-gray-300">
+                                Defendant's representative made false assertions about legal authority
+                                <span class="legal-ref" data-ref="MCOB">(MCOB 2.2A.3)</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Additional timeline items would follow same pattern -->
+            </div>
+        </section>
+
+        <!-- Interactive Evidence Sections -->
+        <section id="transcript" class="mb-16">
+            <h2 class="text-2xl font-bold mb-6 dark:text-white">Call Transcript Analysis</h2>
+            <div class="space-y-6">
+                <div class="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+                    <div class="flex items-center mb-4">
+                        <div class="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
+                        <h3 class="font-semibold dark:text-white">Misrepresentation of Legal Authority</h3>
+                    </div>
+                    <blockquote class="border-l-4 border-blue-500 pl-4 mb-4 dark:text-gray-300">
+                        "We're the High Court Enforcement Officers team..."
+                    </blockquote>
+                    <div class="space-y-2">
+                        <p class="legal-ref" data-ref="CPUTR">→ CPUTR 2008 Regulation 9</p>
+                        <p class="legal-ref" data-ref="FCA">→ FCA Handbook PRIN 2.1.1</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Legal References Modal -->
+        <div id="legalModal" class="fixed inset-0 bg-black bg-opacity-50 hidden">
+            <div class="max-w-2xl bg-white dark:bg-gray-800 m-4 p-6 rounded-lg mx-auto mt-20">
+                <h3 class="text-xl font-bold mb-4 dark:text-white" id="modalTitle"></h3>
+                <div class="space-y-4" id="modalContent"></div>
+                <button onclick="closeModal()" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
+                    Close
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="2subs.js"></script>
+    <script src="3subds.js"></script>
+    <script src="4subs.js"></script>
+    <script src="6subs.js"></script>
+    <script src="7subds.js"></script>
+    <script src="8subs.js"></script>
+</body>
+</html>

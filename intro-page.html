@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Justice Minds Forensic Intelligence</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Special+Elite&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
+        
+        :root {
+            --primary-color: #0f2a4a;
+            --secondary-color: #2a4a6d;
+            --accent-color: #4a6da7;
+            --light-color: #f0f4f8;
+            --dark-color: #0a1525;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--dark-color);
+            color: var(--light-color);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-image: radial-gradient(circle at center, #1e3a5f 0%, #0a1525 100%);
+        }
+        
+        .intro-container {
+            text-align: center;
+            max-width: 1000px;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .logo-container {
+            margin-bottom: 30px;
+            transform: scale(0);
+            animation: zoomIn 1.5s ease forwards;
+        }
+        
+        .logo {
+            max-width: 300px;
+            height: auto;
+            filter: drop-shadow(0 0 10px rgba(74, 109, 167, 0.7));
+        }
+        
+        .tagline-container {
+            margin-top: 30px;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .tagline {
+            font-family: 'Special Elite', cursive;
+            font-size: 1.8rem;
+            letter-spacing: 1px;
+            opacity: 0;
+            animation: fadeIn 1s ease 2s forwards;
+            text-shadow: 0 0 10px rgba(74, 109, 167, 0.7);
+        }
+        
+        .typewriter {
+            overflow: hidden;
+            white-space: nowrap;
+            margin: 0 auto;
+            letter-spacing: 0.15em;
+            animation: typing 6s steps(40, end) 3s forwards;
+            width: 0;
+        }
+        
+        .key-animation {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .key {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            background-color: #c0c0c0;
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            animation: keyTurn 3s ease 9s forwards;
+            opacity: 0;
+        }
+        
+        .key-hole {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+            border: 10px solid #c0c0c0;
+            border-radius: 50%;
+            opacity: 0;
+            animation: fadeIn 1s ease 9s forwards;
+        }
+        
+        .door-left, .door-right {
+            position: absolute;
+            top: 0;
+            width: 50%;
+            height: 100%;
+            background-color: var(--dark-color);
+            z-index: 10;
+        }
+        
+        .door-left {
+            left: 0;
+            animation: doorOpenLeft 2s ease 12s forwards;
+        }
+        
+        .door-right {
+            right: 0;
+            animation: doorOpenRight 2s ease 12s forwards;
+        }
+        
+        .enter-button {
+            margin-top: 50px;
+            padding: 15px 30px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0;
+            animation: fadeIn 1s ease 14s forwards;
+            box-shadow: 0 0 20px rgba(74, 109, 167, 0.7);
+        }
+        
+        .enter-button:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-3px);
+            box-shadow: 0 0 30px rgba(74, 109, 167, 0.9);
+        }
+        
+        @keyframes zoomIn {
+            0% { transform: scale(0); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        
+        @keyframes typing {
+            0% { width: 0; }
+            100% { width: 100%; }
+        }
+        
+        @keyframes keyTurn {
+            0% { transform: translate(-50%, -50%) rotate(0deg); opacity: 1; }
+            50% { transform: translate(-50%, -50%) rotate(180deg); opacity: 1; }
+            100% { transform: translate(-50%, -50%) rotate(360deg); opacity: 0; }
+        }
+        
+        @keyframes doorOpenLeft {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+        
+        @keyframes doorOpenRight {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(100%); }
+        }
+    </style>
+</head>
+<body>
+    <div class="door-left"></div>
+    <div class="door-right"></div>
+    
+    <div class="intro-container">
+        <div class="logo-container">
+            <img src="LOGO TRANS.png" alt="Justice Minds Forensic Intelligence Logo" class="logo">
+        </div>
+        
+        <div class="tagline-container">
+            <div class="tagline typewriter">
+                Justice Minds Forensic Intelligence. Top expert analysis with surgical precision.
+            </div>
+        </div>
+        
+        <button class="enter-button" onclick="window.location.href='test-unified-tool.html'">
+            Enter Analysis Portal
+        </button>
+    </div>
+    
+    <div class="key-animation">
+        <div class="key-hole"></div>
+        <div class="key"></div>
+    </div>
+    
+    <script>
+        // Auto-redirect after animations complete (optional)
+        setTimeout(() => {
+            // Uncomment to enable auto-redirect
+            // window.location.href = 'test-unified-tool.html';
+        }, 16000); // 16 seconds after page load
+    </script>
+</body>
+</html>

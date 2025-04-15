@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Justice Minds Forensic Intelligence</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Roboto+Slab:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary-color: #0c2340;
+            --secondary-color: #1a3a5f;
+            --accent-color: #c8102e;
+            --light-color: #f5f5f5;
+            --dark-color: #0a1525;
+            --success-color: #006747;
+            --warning-color: #f2a900;
+            --glass-bg: rgba(12, 35, 64, 0.95);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            line-height: 1.5;
+            color: var(--light-color);
+            background-color: var(--dark-color);
+            padding: 0;
+            background-image: linear-gradient(135deg, var(--dark-color) 0%, #1e293b 100%);
+            font-size: 0.95rem;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: var(--glass-bg);
+            box-shadow: var(--glass-shadow);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            border-bottom: 3px solid var(--accent-color);
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo {
+            height: 60px;
+            width: auto;
+        }
+        
+        .header-title {
+            text-align: left;
+        }
+        
+        h1 {
+            margin-bottom: 5px;
+            font-size: 1.8rem;
+            letter-spacing: 0.5px;
+            font-family: 'Roboto Slab', serif;
+            font-weight: 600;
+        }
+        
+        h2 {
+            color: var(--light-color);
+            margin: 20px 0 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--accent-color);
+            letter-spacing: 0.5px;
+            font-size: 1.4rem;
+            font-family: 'Roboto Slab', serif;
+            font-weight: 500;
+        }
+        
+        h3 {
+            color: var(--light-color);
+            margin: 15px 0 10px;
+            letter-spacing: 0.5px;
+            font-size: 1.2rem;
+            font-family: 'Roboto Slab', serif;
+            font-weight: 500;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .header-button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 15px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .header-button:hover {
+            background-color: #a00d25;
+            transform: translateY(-2px);
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+        }
+        
+        .sidebar {
+            width: 280px;
+            background-color: var(--secondary-color);
+            padding: 20px;
+            border-right: 1px solid var(--glass-border);
+        }
+        
+        .content {
+            flex: 1;
+            padding: 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .nav-list {
+            list-style: none;
+        }
+        
+        .nav-list li {
+            margin-bottom: 10px;
+        }
+        
+        .nav-list a {
+            color: var(--light-color);
+            text-decoration: none;
+            display: block;
+            padding: 12px 15px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+        
+        .nav-list a:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left-color: var(--accent-color);
+        }
+        
+        .nav-list a.active {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-left-color: var(--accent-color);
+            font-weight: 600;
+        }
+        
+        .main-video-container {
+            width: 100%;
+            background-color: #000;
+            position: relative;
+            aspect-ratio: 16 / 9;
+        }
+        
+        .main-video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .video-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .video-title {
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+        }
+        
+        .video-timestamp {
+            color: white;
+            font-weight: 500;
+            font-size: 0.9rem;
+            background-color: rgba(0,0,0,0.6);
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        
+        .segments-container {
+            padding: 20px;
+            background-color: var(--secondary-color);
+            border-bottom: 1px solid var(--glass-border);
+        }
+        
+        .segment-title {
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .segment-view-toggle {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .view-button {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .view-button.active {
+            background-color: var(--accent-color);
+        }
+        
+        .view-button:hover:not(.active) {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .thumbnails-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+        }
+        
+        .thumbnail-card {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid var(--glass-border);
+        }
+        
+        .thumbnail-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            border-color: var(--accent-color);
+        }
+        
+        .thumbnail-image {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            object-fit: cover;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        
+        .thumbnail-info {
+            padding: 10px;
+        }
+        
+        .thumbnail-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            color: white;
+        }
+        
+        .thumbnail-timestamp {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .claims-container {
+            padding: 20px;
+            flex: 1;
+        }
+        
+        .claim {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            border-left: 4px solid var(--accent-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid var(--glass-border);
+            border-left: 4px solid var(--accent-color);
+            position: relative;
+        }
+        
+        .claim-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .claim-title {
+            font-weight: 800;
+            color: var(--light-color);
+            font-size: 1.1rem;
+            flex: 1;
+            min-width: 200px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            font-family: 'Roboto Slab', serif;
+        }
+        
+        .claim-quote {
+            font-style: italic;
+            margin: 10px 0;
+            padding: 12px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-left: 3px solid var(--accent-color);
+            border-radius: 0 6px 6px 0;
+            position: relative;
+            font-size: 0.9rem;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+        }
+        
+        .claim-analysis {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        .evidence-strength {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-left: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .strong {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .moderate {
+            background-color: var(--warning-color);
+            color: white;
+        }
+        
+        .weak {
+            background-color: var(--accent-color);
+            color: white;
+        }
+        
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            overflow: auto;
+        }
+        
+        .modal-content {
+            background-color: var(--glass-bg);
+            margin: 5% auto;
+            padding: 25px;
+            border-radius: 12px;
+            width: 80%;
+            max-width: 900px;
+            position: relative;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .close-btn:hover {
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 15px;
+        }
+        
+        .modal-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            font-family: 'Roboto Slab', serif;
+        }
+        
+        .modal-body {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .modal-video-container {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background-color: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .modal-video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .modal-segments {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 10px 0;
+        }
+        
+        .modal-segment {
+            min-width: 180px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+        }
+        
+        .modal-segment:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent-color);
+        }
+        
+        .modal-segment-image {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            object-fit: cover;
+        }
+        
+        .modal-segment-info {
+            padding: 10px;
+        }
+        
+        .modal-segment-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+        
+        .modal-segment-timestamp {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .modal-expertise {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            padding: 15px;
+            border: 1px solid var(--glass-border);
+        }
+        
+        .modal-expertise-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-family: 'Roboto Slab', serif;
+            color: var(--accent-color);
+        }
+        
+        .modal-expertise-content {
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        
+        .modal-footer {
+            margin-top: 20px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .modal-button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-button:hover {
+            background-color: #a00d25;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border-top: 3px solid var(--accent-color);
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .footer-logo {
+            height: 40px;
+            width: auto;
+        }
+        
+        .footer-text {
+            font-size: 0.9rem;
+        }
+        
+        .footer-links {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .footer-link {
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .footer-link:hover {
+            color: var(--accent-color);
+        }
+        
+        /* Responsive styles */
+        @media (max-width: 1024px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--glass-border);
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .header-logo {
+                justify-content: center;
+            }
+            
+            .header-title {
+                text-align: center;
+            }
+            
+            .header-actions {
+                justify-content: center;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .thumbnails-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-logo">
+                <img src="LOGO TRANS.png" alt="Justice Minds Logo" class="logo">
+                <div class="header-title">
+                    <h1>Justice Minds Forensic Intelligence</h1>
+                    <p>Top expert analysis with surgical precision</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="header-button">
+                    <i class="fas fa-share-alt"></i> Share Analysis
+                </button>
+                <button class="header-button">
+                    <i class="fas fa-search"></i> Search Evidence
+                </button>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <h3>Evidence Categories</h3>
+                <ul class="nav-list">
+                    <li><a href="#system-navigation" class="active">System Navigation Knowledge</a></li>
+                    <li><a href="#advocacy-techniques">Advocacy Techniques</a></li>
+                    <li><a href="#power-dynamics">Power Dynamics Management</a></li>
+                    <li><a href="#metacognitive">Metacognitive Awareness</a></li>
+                    <li><a href="#coercive-control">Coercive Control Recognition</a></li>
+                    <li><a href="#causal-links">Causal Link Articulation</a></li>
+                </ul>
+            </div>
+            
+            <div class="content">
+                <div class="main-video-container">
+                    <video id="main-video" class="main-video" controls></video>
+                    <div class="video-controls">
+                        <div class="video-title">Understanding of Professional Roles and Responsibilities</div>
+                        <div class="video-timestamp">10:09 - 10:45</div>
+                    </div>
+                </div>
+                
+                <div class="segments-container">
+                    <div class="segment-title">
+                        <span>Available Segments</span>
+                        <div class="segment-view-toggle">
+                            <button class="view-button active" id="grid-view-btn">
+                                <i class="fas fa-th"></i>
+                            </button>
+                            <button class="view-button" id="list-view-btn">
+                                <i class="fas fa-list"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="thumbnails-grid">
+                        <div class="thumbnail-card" data-time="10:09" data-end-time="10:45" data-title="Professional Boundaries Discussion">
+                            <img src="https://via.placeholder.com/320x180/0c2340/ffffff?text=10:09" alt="Segment at 10:09" class="thumbnail-image">
+                            <div class="thumbnail-info">
+                                <div class="thumbnail-title">Professional Boundaries Discussion</div>
+                                <div class="thumbnail-timestamp">
+                                    <i class="fas fa-clock"></i> 10:09
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="thumbnail-card" data-time="10:58" data-end-time="11:30" data-title="Organizational Response">
+                            <img src="https://via.placeholder.com/320x180/0c2340/ffffff?text=10:58" alt="Segment at 10:58" class="thumbnail-image">
+                            <div class="thumbnail-info">
+                                <div class="thumbnail-title">Organizational Response</div>
+                                <div class="thumbnail-timestamp">
+                                    <i class="fas fa-clock"></i> 10:58
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="thumbnail-card" data-time="13:21" data-end-time="13:55" data-title="Assessment Framework Critique">
+                            <img src="https://via.placeholder.com/320x180/0c2340/ffffff?text=13:21" alt="Segment at 13:21" class="thumbnail-image">
+                            <div class="thumbnail-info">
+                                <div class="thumbnail-title">Assessment Framework Critique</div>
+                                <div class="thumbnail-timestamp">
+                                    <i class="fas fa-clock"></i> 13:21
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="thumbnail-card" data-time="12:36" data-end-time="13:10" data-title="Linguistic Context">
+                            <img src="https://via.placeholder.com/320x180/0c2340/ffffff?text=12:36" alt="Segment at 12:36" class="thumbnail-image">
+                            <div class="thumbnail-info">
+                                <div class="thumbnail-title">Linguistic Context</div>
+                                <div class="thumbnail-timestamp">
+                                    <i class="fas fa-clock"></i> 12:36
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="claims-container">
+                    <div id="system-navigation" class="category active">
+                        <h2>System Navigation Knowledge</h2>
+                        
+                        <!-- Professional Roles and Responsibilities -->
+                        <div class="claim">
+                            <div class="claim-header">
+                                <span class="claim-title">Understanding of Professional Roles and Responsibilities</span>
+                                <span class="evidence-strength strong">Strong Evidence</span>
+                            </div>
+                            <div class="claim-quote">
+                                "I'd explained that I'd asked you for your work email and that you gave me the other one. And I said you shouldn't do that because that can get you into trouble because it's not a work one. I wasn't trying to get you into trouble and I didn't want to get you in trouble. I was actually raising it with integrity to see why they hadn't gave you one to stop you getting in trouble and also to stop Integrity getting in trouble because it's not proper process and it's not what you do in a setting a situation like this."
+                            </div>
+                            <div class="claim-analysis">
+                                <p>Ben demonstrates exceptional understanding of professional boundaries (work vs. personal email), organizational liability, process requirements, and how to raise concerns constructively rather than punitively.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Organizational Structures and Processes -->
+                        <div class="claim">
+                            <div class="claim-header">
+                                <span class="claim-title">Knowledge of Organizational Structures and Processes</span>
+                                <span class="evidence-strength strong">Strong Evidence</span>
+                            </div>
+                            <div class="claim-quote">
+                                "And Jade was really nice and understanding and thanked me for letting them know. They also asked if I felt it would be best if you didn't. Be my worker. And I said, no, I want you to remain me worker. Because I didn't think it would be fair that if. And they weren't saying it, as in. As a. As a. As a punishment, orders or anything other than, did I want you to be moved from caring for me to someone else?"
+                            </div>
+                            <div class="claim-analysis">
+                                <p>Ben shows sophisticated understanding of management response protocols, recognition of how concerns can impact service provision, knowledge of service user rights regarding worker assignment, and ability to distinguish between punitive and supportive management responses.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Assessment Frameworks -->
+                        <div class="claim">
+                            <div class="claim-header">
+                                <span class="claim-title">Understanding of Assessment Frameworks</span>
+                                <span class="evidence-strength strong">Strong Evidence</span>
+                            </div>
+                            <div class="claim-quote">
+                                "I said, I would like that not to happen because a spotlight observation is too scrutinous. And by that I mean it's too surgical and clinical and as though being looked to find fault. Yeah, I said, I don't. I wouldn't prefer that. I would rather have a complex case review where the general overview between us is observed, where it's not all limelight on you."
+                            </div>
+                            <div class="claim-analysis">
+                                <p>Ben demonstrates ability to propose alternative, more holistic assessment frameworks and recognition of how assessment approaches impact service delivery.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Expertise Modal -->
+        <div id="expertise-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn">×</span>
+                <div class="modal-header">
+                    <h3 class="modal-title">Professional Boundaries Discussion</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="modal-video-container">
+                        <video id="modal-video" class="modal-video" controls></video>
+                    </div>
+                    
+                    <div class="modal-segments">
+                        <div class="modal-segment" data-time="10:09" data-end-time="10:45">
+                            <img src="https://via.placeholder.com/320x180/0c2340/ffffff?text=10:09" alt="Segment at 10:09" class="modal-segment-image">
+                            <div class="modal-segment-info">
+                                <div class="modal-segment-title">Professional Boundaries</div>
+                                <div class="modal-segment-timestamp">10:09 - 10:45</div>
+                            </div>
+                        </div>
+                        
+                        <div class="modal-segment" data-time="10:15" data-end-time="10:30">
+                            <img src="https://via.placeholder.com/320x180/0c2340/ffffff?text=10:15" alt="Segment at 10:15" class="modal-segment-image">
+                            <div class="modal-segment-info">
+                                <div class="modal-segment-title">Integrity Discussion</div>
+                                <div class="modal-segment-timestamp">10:15 - 10:30</div>
+                            </div>
+                        </div>
+                        
+                        <div class="modal-segment" data-time="10:25" data-end-time="10:40">
+                            <img src="https://via.placeholder.com/320x180/0c2340/ffffff?text=10:25" alt="Segment at 10:25" class="modal-segment-image">
+                            <div class="modal-segment-info">
+                                <div class="modal-segment-title">Process Requirements</div>
+                                <div class="modal-segment-timestamp">10:25 - 10:40</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-expertise">
+                        <div class="modal-expertise-title">Professional Boundaries Framework</div>
+                        <div class="modal-expertise-content">
+                            <p>This framework examines how service users understand and navigate professional boundaries, organizational liability, and proper processes in professional settings.</p>
+                            <p>Ben demonstrates expertise in:</p>
+                            <ul>
+                                <li>Understanding the distinction between personal and professional communication channels</li>
+                                <li>Recognizing organizational liability concerns</li>

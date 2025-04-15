@@ -1,0 +1,1455 @@
+                                       <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unified Substantiation Tool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        :root {
+            --primary-color: #0f2a4a;
+            --secondary-color: #2a4a6d;
+            --accent-color: #4a6da7;
+            --light-color: #f0f4f8;
+            --dark-color: #0a1525;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --glass-bg: rgba(10, 21, 37, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+        §p
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.5;
+            color: var(--light-color);
+            background-color: var(--dark-color);
+            padding: 20px;
+            background-image: linear-gradient(135deg, var(--dark-color) 0%, #1e293b 100%);
+            font-size: 0.95rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: var(--glass-bg);
+            border-radius: 12px;
+            box-shadow: var(--glass-shadow);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            overflow: hidden;
+        }
+        
+        header {
+            background-color: rgba(15, 42, 74, 0.9);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            border-bottom: 1px solid var(--glass-border);
+            position: relative;
+        }
+        
+        .share-button {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .share-button:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+        
+        h1 {
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+            letter-spacing: 0.5px;
+        }
+        
+        h2 {
+            color: var(--light-color);
+            margin: 20px 0 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--glass-border);
+            letter-spacing: 0.5px;
+            font-size: 1.4rem;
+        }
+        
+        h3 {
+            color: var(--light-color);
+            margin: 15px 0 10px;
+            letter-spacing: 0.5px;
+            font-size: 1.2rem;
+        }
+        
+        .intro {
+            padding: 20px;
+            background-color: rgba(42, 74, 109, 0.4);
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .main-content {
+            display: flex;
+            min-height: 600px;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: rgba(15, 42, 74, 0.6);
+            padding: 20px;
+            border-right: 1px solid var(--glass-border);
+        }
+        
+        .content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .nav-list {
+            list-style: none;
+        }
+        
+        .nav-list li {
+            margin-bottom: 10px;
+        }
+        
+        .nav-list a {
+            color: var(--light-color);
+            text-decoration: none;
+            display: block;
+            padding: 10px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-list a:hover {
+            background-color: rgba(74, 109, 167, 0.2);
+            transform: translateX(5px);
+        }
+        
+        .nav-list a.active {
+            background-color: var(--accent-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(74, 109, 167, 0.3);
+        }
+        
+        .category {
+            margin-bottom: 30px;
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .category-header {
+            background-color: rgba(15, 42, 74, 0.8);
+            color: white;
+            padding: 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 6px 6px 0 0;
+            border: 1px solid var(--glass-border);
+            border-bottom: none;
+        }
+        
+        .category-content {
+            padding: 15px;
+            display: none;
+        }
+        
+        .category.active .category-content {
+            display: block;
+        }
+        
+        .category-video-container {
+            width: 100%;
+            margin-bottom: 20px;
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            aspect-ratio: 16 / 9;
+            display: none;
+        }
+        
+        .category.active .category-video-container {
+            display: block;
+        }
+        
+        .claim {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: rgba(10, 21, 37, 0.6);
+            border-radius: 6px;
+            border-left: 4px solid var(--accent-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid var(--glass-border);
+            border-left: 4px solid var(--accent-color);
+            position: relative;
+        }
+        
+        .claim-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .claim-title {
+            font-weight: 800;
+            color: var(--light-color);
+            font-size: 1.1rem;
+            flex: 1;
+            min-width: 200px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        
+        .timestamps-container {
+            margin-top: 10px;
+            padding: 8px;
+            background-color: rgba(15, 42, 74, 0.3);
+            border-radius: 6px;
+            border: 1px solid var(--glass-border);
+        }
+        
+        .timestamps-toggle {
+            cursor: pointer;
+            color: var(--accent-color);
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px;
+            background-color: rgba(15, 42, 74, 0.5);
+            border-radius: 4px;
+        }
+        
+        .framework-info {
+            display: none;
+            padding: 12px;
+            margin-top: 10px;
+            background-color: rgba(15, 42, 74, 0.6);
+            border-radius: 6px;
+            border: 1px solid var(--glass-border);
+        }
+        
+        .framework-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: var(--light-color);
+        }
+        
+        .timestamp-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .timestamp {
+            color: var(--accent-color);
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+            position: relative;
+            padding: 5px 10px;
+            background-color: rgba(74, 109, 167, 0.2);
+            border-radius: 4px;
+            border: 1px solid rgba(74, 109, 167, 0.3);
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .timestamp:before {
+            content: "▶";
+            font-size: 0.8em;
+        }
+        
+        .timestamp:hover {
+            background-color: rgba(74, 109, 167, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .timestamp:hover::after {
+            content: "Play clip";
+            position: absolute;
+            background-color: var(--dark-color);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .claim-quote {
+            font-style: italic;
+            margin: 10px 0;
+            padding: 12px;
+            background-color: rgba(15, 42, 74, 0.7);
+            border-left: 3px solid var(--accent-color);
+            border-radius: 0 6px 6px 0;
+            position: relative;
+            font-size: 0.9rem;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+        }
+        
+        .claim-quote-timestamp {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            font-size: 0.8rem;
+            color: var(--accent-color);
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        
+        .claim-quote-timestamp:hover {
+            color: var(--light-color);
+        }
+        
+        .claim-analysis {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        .evidence-strength {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-left: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .strong {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .moderate {
+            background-color: var(--warning-color);
+            color: white;
+        }
+        
+        .weak {
+            background-color: var(--accent-color);
+            color: white;
+        }
+        
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            overflow: auto;
+        }
+        
+        .modal-content {
+            background-color: var(--glass-bg);
+            margin: 5% auto;
+            padding: 25px;
+            border-radius: 12px;
+            width: 80%;
+            max-width: 800px;
+            position: relative;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .close-btn:hover {
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        .video-container {
+            width: 100%;
+            margin-top: 20px;
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            aspect-ratio: 16 / 9;
+        }
+        
+        .evidence-summary {
+            background-color: rgba(15, 42, 74, 0.7);
+            border-left: 4px solid var(--accent-color);
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 6px;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .evidence-summary h4 {
+            margin-top: 0;
+            color: var(--light-color);
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 10px;
+        }
+        
+        .evidence-summary ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        .evidence-summary li {
+            margin-bottom: 8px;
+        }
+        
+        .evidence-tag {
+            display: inline-block;
+            background-color: rgba(42, 74, 109, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            border: 1px solid var(--glass-border);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .evidence-tag:hover {
+            background-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background-color: #000;
+            border-radius: 6px;
+        }
+        
+        /* Hide video controls timeline */
+        video::-webkit-media-controls-timeline {
+            display: none !important;
+        }
+        
+        video::-webkit-media-controls-time-remaining-display {
+            display: none !important;
+        }
+        
+        video::-webkit-media-controls-current-time-display {
+            display: none !important;
+        }
+        
+        .news-style-banner {
+            background-color: rgba(74, 109, 167, 0.7);
+            color: white;
+            padding: 12px 18px;
+            margin-top: 15px;
+            font-weight: bold;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            letter-spacing: 0.5px;
+        }
+        
+        .transcript-display {
+            background-color: rgba(10, 21, 37, 0.7);
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            line-height: 1.8;
+            max-height: 120px;
+            overflow-y: auto;
+            border: 1px solid var(--glass-border);
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) inset;
+        }
+        
+        .transcript-word {
+            display: inline-block;
+            margin-right: 4px;
+            position: relative;
+            color: rgba(240, 244, 248, 0.8);
+        }
+        
+        .transcript-word.active {
+            color: white;
+            font-weight: bold;
+        }
+        
+        .transcript-word.active::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -2px;
+            width: 100%;
+            height: 2px;
+            background-color: var(--accent-color);
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+        
+        .evidence-point {
+            position: relative;
+            margin-bottom: 12px;
+            padding-left: 30px;
+        }
+        
+        .timestamp-link {
+            position: absolute;
+            left: 0;
+            color: var(--accent-color);
+            font-size: 0.8rem;
+            cursor: pointer;
+            text-decoration: underline;
+            font-weight: bold;
+        }
+        
+        .timestamp-link:hover {
+            color: var(--light-color);
+        }
+        
+        .clip-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding: 12px;
+            background-color: rgba(15, 42, 74, 0.7);
+            border-radius: 6px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .clip-info {
+            font-size: 0.95rem;
+            color: var(--light-color);
+            font-weight: 500;
+        }
+        
+        .clip-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .clip-button {
+            padding: 6px 12px;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .clip-button:hover {
+            background-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+        
+        .clip-progress {
+            height: 6px;
+            background-color: rgba(240, 244, 248, 0.2);
+            width: 100%;
+            position: relative;
+            margin-top: 12px;
+            border-radius: 3px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) inset;
+        }
+        
+        .clip-progress-bar {
+            height: 100%;
+            background-color: var(--accent-color);
+            width: 0%;
+            transition: width 0.1s linear;
+            border-radius: 3px;
+            box-shadow: 0 0 5px rgba(74, 109, 167, 0.5);
+        }
+        
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.2rem;
+            z-index: 10;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+        
+        .search-container {
+            padding: 20px;
+            background-color: rgba(15, 42, 74, 0.5);
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        #search-input {
+            width: 100%;
+            padding: 12px 15px;
+            background-color: rgba(10, 21, 37, 0.7);
+            border: 1px solid var(--glass-border);
+            border-radius: 6px;
+            font-size: 1rem;
+            color: var(--light-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) inset;
+            transition: all 0.3s ease;
+        }
+        
+        #search-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(74, 109, 167, 0.3);
+        }
+        
+        #search-input::placeholder {
+            color: rgba(240, 244, 248, 0.5);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            background-color: rgba(15, 42, 74, 0.8);
+            color: white;
+            border-top: 1px solid var(--glass-border);
+        }
+        
+        /* Thumbnail styles */
+        .thumbnail-container {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        
+        .clip-thumbnail {
+            width: 120px;
+            height: 68px;
+            border-radius: 4px;
+            object-fit: cover;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+        
+        .clip-thumbnail:hover {
+            transform: scale(1.05);
+            border-color: var(--accent-color);
+        }
+        
+        .clip-thumbnail.active {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px var(--accent-color);
+        }
+        
+        .thumbnail-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 4px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .clip-thumbnail:hover .thumbnail-overlay {
+            opacity: 1;
+        }
+        
+        .play-icon {
+            color: white;
+            font-size: 24px;
+            filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
+        }
+        
+        .timestamp-badge {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background-color: rgba(10, 21, 37, 0.8);
+            color: white;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+        
+        /* Timeline styles */
+        .timeline-marker {
+            width: 12px;
+            height: 12px;
+            border: 2px solid #3b82f6;
+            border-radius: 50%;
+            background-color: white;
+        }
+        
+        /* Legal reference styles */
+        .legal-ref { 
+            cursor: pointer;
+            border-bottom: 1px dashed #3b82f6;
+            color: #3b82f6;
+            transition: all 0.2s ease;
+        }
+        
+        .legal-ref:hover {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+        }
+        
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--glass-border);
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+            }
+            
+            .share-button {
+                position: static;
+                margin-top: 15px;
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .claim-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .timestamp {
+                margin-top: 10px;
+            }
+            
+            .evidence-strength {
+                margin-left: 0;
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Ben Mak Claim Substantiation</h1>
+            <p>A comprehensive analysis of claims with video evidence</p>
+            <button class="share-button" id="open-share-modal">
+                <i class="fas fa-share-alt"></i> Share Analysis
+            </button>
+        </header>
+        
+        <div class="intro">
+            <h2>Overview</h2>
+            <p>This document provides a comprehensive analysis of Ben Mak's expertise as demonstrated in his meeting with Mbalu (ICS). Each claim is substantiated with direct evidence from the transcript, including timestamps that link to the corresponding video segment.</p>
+            <p>Click on any timestamp to view the video evidence in a popup window with synchronized transcript highlighting.</p>
+        </div>
+        
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Search for claims or evidence...">
+        </div>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <h3>Categories</h3>
+                <ul class="nav-list">
+                    <li><a href="#system-navigation" class="active">System Navigation Knowledge</a></li>
+                    <li><a href="#advocacy-techniques">Advocacy Techniques</a></li>
+                    <li><a href="#power-dynamics">Power Dynamics Management</a></li>
+                    <li><a href="#metacognitive">Metacognitive Awareness</a></li>
+                    <li><a href="#coercive-control">Coercive Control Recognition</a></li>
+                    <li><a href="#causal-links">Causal Link Articulation</a></li>
+                </ul>
+            </div>
+            
+            <div class="content">
+                <!-- System Navigation Knowledge -->
+                <div id="system-navigation" class="category active">
+                    <div class="category-header">
+                        <h2>System Navigation Knowledge</h2>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="category-content">
+                        <div class="category-video-container">
+                            <video id="system-navigation-video" class="category-video" controls></video>
+                        </div>
+                        <!-- Professional Roles and Responsibilities -->
+                        <div class="claim">
+                            <div class="claim-header">
+                                <span class="claim-title">Understanding of Professional Roles and Responsibilities</span>
+                                <span class="evidence-strength strong">Strong Evidence</span>
+                            </div>
+                            <div class="timestamps-container">
+                                <div class="timestamps-toggle" data-framework="Professional Boundaries Framework">
+                                    <span><i class="fas fa-clock"></i> Professional Boundaries Framework</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </div>
+                                <div class="framework-info">
+                                    <div class="framework-title">Professional Boundaries Framework</div>
+                                    <p>This framework examines how service users understand and navigate professional boundaries, organizational liability, and proper processes in professional settings. Ben demonstrates expertise in identifying appropriate boundaries and raising concerns constructively.</p>
+                                </div>
+                                <div class="timestamp-container">
+                                    <span class="timestamp" data-time="10:09" data-end-time="10:45">10:09</span>
+                                    <span class="timestamp" data-time="10:15" data-end-time="10:30">10:15</span>
+                                    <span class="timestamp" data-time="10:25" data-end-time="10:40">10:25</span>
+                                </div>
+                            </div>
+                            <div class="claim-quote">
+                                "I'd explained that I'd asked you for your work email and that you gave me the other one. And I said you shouldn't do that because that can get you into trouble because it's not a work one. I wasn't trying to get you into trouble and I didn't want to get you in trouble. I was actually raising it with integrity to see why they hadn't gave you one to stop you getting in trouble and also to stop Integrity getting in trouble because it's not proper process and it's not what you do in a setting a situation like this."
+                            </div>
+                            <div class="claim-analysis">
+                                <p>Ben demonstrates exceptional understanding of professional boundaries (work vs. personal email), organizational liability, process requirements, and how to raise concerns constructively rather than punitively.</p>
+                            </div>
+                            <div class="thumbnail-container">
+                                <div class="clip-thumbnail" data-time="10:09" data-end-time="10:45">
+                                    <img src="https://via.placeholder.com/120x68/0f2a4a/ffffff?text=10:09" alt="Clip at 10:09">
+                                    <div class="thumbnail-overlay">
+                                        <i class="fas fa-play play-icon"></i>
+                                    </div>
+                                    <span class="timestamp-badge">10:09</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Organizational Structures and Processes -->
+                        <div class="claim">
+                            <div class="claim-header">
+                                <span class="claim-title">Knowledge of Organizational Structures and Processes</span>
+                                <span class="evidence-strength strong">Strong Evidence</span>
+                            </div>
+                            <div class="timestamps-container">
+                                <div class="timestamps-toggle">
+                                    <i class="fas fa-clock"></i> Available Timestamps
+                                </div>
+                                <span class="timestamp" data-time="10:58" data-end-time="11:30">10:58</span>
+                                <span class="timestamp" data-time="11:05" data-end-time="11:20">11:05</span>
+                                <span class="timestamp" data-time="11:15" data-end-time="11:25">11:15</span>
+                            </div>
+                            <div class="claim-quote">
+                                "And Jade was really nice and understanding and thanked me for letting them know. They also asked if I felt it would be best if you didn't. Be my worker. And I said, no, I want you to remain me worker. Because I didn't think it would be fair that if. And they weren't saying it, as in. As a. As a. As a punishment, orders or anything other than, did I want you to be moved from caring for me to someone else?"
+                            </div>
+                            <div class="claim-analysis">
+                                <p>Ben shows sophisticated understanding of management response protocols, recognition of how concerns can impact service provision, knowledge of service user rights regarding worker assignment, and ability to distinguish between punitive and supportive management responses.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Assessment Frameworks -->
+                        <div class="claim">
+                            <div class="claim-header">
+                                <span class="claim-title">Understanding of Assessment Frameworks</span>
+                                <span class="evidence-strength strong">Strong Evidence</span>
+                            </div>
+                            <div class="timestamps-container">
+                                <div class="timestamps-toggle">
+                                    <i class="fas fa-clock"></i> Available Timestamps
+                                </div>
+                                <span class="timestamp" data-time="13:21" data-end-time="13:55">13:21</span>
+                                <span class="timestamp" data-time="13:28" data-end-time="13:45">13:28</span>
+                                <span class="timestamp" data-time="13:35" data-end-time="13:50">13:35</span>
+                            </div>
+                            <div class="claim-quote">
+                                "I said, I would like that not to happen because a spotlight observation is too scrutinous. And by that I mean it's too surgical and clinical and as though being looked to find fault. Yeah, I said, I don't. I wouldn't prefer that. I would rather have a complex case review where the general overview between us is observed, where it's not all limelight on you."
+                            </div>
+                            <div class="claim-analysis">
+                                <p>Ben demonstrates ability to propose alternative, more holistic assessment frameworks and recognition of how assessment approaches impact service delivery.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Advocacy Techniques -->
+                <div id="advocacy-techniques" class="category">
+                    <div class="category-header">
+                        <h2>Advocacy Techniques</h2>
+                        <span class="toggle-icon">▲</span>
+                    </div>
+                    <div class="category-content">
+                        <div class="category-video-container">
+                            <video id="advocacy-techniques-video" class="category-video" controls></video>
+                        </div>
+                        <!-- Advocacy Without Triggering Defensive Responses -->
+                        <div class="claim">
+                            <div class="claim-header">
+                                <span class="claim-title">Advocacy Without Triggering Defensive Responses</span>
+                                <span class="evidence-strength strong">Strong Evidence</span>
+                            </div>
+                            <div class="timestamps-container">
+                                <div class="timestamps-toggle">
+                                    <i class="fas fa-clock"></i> Available Timestamps
+                                </div>
+                                <span class="timestamp" data-time="12:36" data-end-time="13:10">12:36</span>
+                                <span class="timestamp" data-time="12:45" data-end-time="13:00">12:45</span>
+                                <span class="timestamp" data-time="12:50" data-end-time="13:05">12:50</span>
+                            </div>
+                            <div class="claim-quote">
+                                "I also raised with Jade that it's important to know I don't speak French and I don't speak Arabic, and. And I don't speak probably as many languages as you, so we can't have weight, per se, in a holistic view, because I did raise that. You. You didn't know a hostel was. Now, I defended you in that essence, because ask me to say it in French, I won't be able to."
+                            </div>
+                            <div class="claim-analysis">
+                                <p>Ben demonstrates ability to contextualize perceived shortcomings, skill in reframing potential criticism as systemic issues, technique of normalizing knowledge gaps through personal comparison, and advocacy that acknowledges cultural and linguistic differences.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Video Modal Content -->
+        <div id="video-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn">×</span>
+                <h3 id="modal-title">Video Evidence</h3>
+                <div class="video-container">
+                    <video id="evidence-video" controls></video>
+                </div>
+            </div>
+        </div>
+
+        <!-- Complete JavaScript Implementation -->
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM elements
+            const modal = document.getElementById('video-modal');
+            const uploadModal = document.getElementById('upload-modal');
+            const expertiseModal = document.getElementById('expertise-modal');
+            const closeBtn = document.querySelectorAll('.close-btn');
+            const video = document.getElementById('evidence-video');
+            const modalTitle = document.getElementById('modal-title');
+            const timestamps = document.querySelectorAll('.timestamp');
+            const categoryHeaders = document.querySelectorAll('.category-header');
+            const searchInput = document.getElementById('search-input');
+            const timestampsToggles = document.querySelectorAll('.timestamps-toggle');
+            const uploadEvidenceBtn = document.getElementById('upload-evidence-btn');
+            const presentExpertiseBtn = document.getElementById('present-expertise-btn');
+            const uploadToCloudflareBtn = document.getElementById('upload-to-cloudflare');
+            const cancelUploadBtn = document.getElementById('cancel-upload');
+            const generateExpertiseBtn = document.getElementById('generate-expertise');
+            const cancelExpertiseBtn = document.getElementById('cancel-expertise');
+            const frameworkInfos = document.querySelectorAll('.framework-info');
+            const systemNavigationVideo = document.getElementById('system-navigation-video');
+            const advocacyTechniquesVideo = document.getElementById('advocacy-techniques-video');
+            
+            // Video source
+            const videoSrc = 'https://customer-e5m1en7nnf9e7or4.cloudflarestream.com/4eb277917d1f8d96cbd31c18aafd7cd8/manifest/video.m3u8';
+            
+            // Initialize HLS.js for video streaming
+            const hls = new Hls();
+            
+            // Error handling
+            hls.on(Hls.Events.ERROR, function(event, data) {
+                console.error('HLS Error:', data);
+                if (data.fatal) {
+                    switch(data.type) {
+                        case Hls.ErrorTypes.NETWORK_ERROR:
+                            alert('Network error loading video');
+                            break;
+                        case Hls.ErrorTypes.MEDIA_ERROR:
+                            alert('Error decoding video');
+                            break;
+                        default:
+                            hls.recoverMediaError();
+                    }
+                }
+            });
+
+            // Initialize HLS for category videos
+            let systemNavigationHls = null;
+            let advocacyTechniquesHls = null;
+            
+            if (Hls.isSupported()) {
+                // Initialize main modal video
+                hls.loadSource(videoSrc);
+                hls.attachMedia(video);
+                
+                // Initialize System Navigation video
+                if (systemNavigationVideo) {
+                    systemNavigationHls = new Hls();
+                    systemNavigationHls.loadSource(videoSrc);
+                    systemNavigationHls.attachMedia(systemNavigationVideo);
+                }
+                
+                // Initialize Advocacy Techniques video
+                if (advocacyTechniquesVideo) {
+                    advocacyTechniquesHls = new Hls();
+                    advocacyTechniquesHls.loadSource(videoSrc);
+                    advocacyTechniquesHls.attachMedia(advocacyTechniquesVideo);
+                }
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                // For Safari which has built-in HLS support
+                video.src = videoSrc;
+                if (systemNavigationVideo) systemNavigationVideo.src = videoSrc;
+                if (advocacyTechniquesVideo) advocacyTechniquesVideo.src = videoSrc;
+            }
+            
+            // Add event listeners to timestamps
+            timestamps.forEach(timestamp => {
+                timestamp.addEventListener('click', function() {
+                    const startTime = parseTimeToSeconds(this.getAttribute('data-time'));
+                    const endTime = parseTimeToSeconds(this.getAttribute('data-end-time'));
+                    const claimTitle = this.closest('.claim').querySelector('.claim-title').textContent;
+                    const categoryId = this.closest('.category').id;
+                    
+                    // Update modal title
+                    modalTitle.textContent = `Video Evidence: ${claimTitle}`;
+                    
+                    // Open modal
+                    modal.style.display = 'block';
+                    
+                    // Set video time and play
+                    video.currentTime = startTime;
+                    video.play();
+                    
+                    // Update category video
+                    if (categoryId === 'system-navigation' && systemNavigationVideo) {
+                        systemNavigationVideo.currentTime = startTime;
+                        systemNavigationVideo.play();
+                    } else if (categoryId === 'advocacy-techniques' && advocacyTechniquesVideo) {
+                        advocacyTechniquesVideo.currentTime = startTime;
+                        advocacyTechniquesVideo.play();
+                    }
+                });
+            });
+            
+            // Add event listeners to thumbnails
+            const thumbnails = document.querySelectorAll('.clip-thumbnail');
+            thumbnails.forEach(thumbnail => {
+                thumbnail.addEventListener('click', function() {
+                    const startTime = parseTimeToSeconds(this.getAttribute('data-time'));
+                    const endTime = parseTimeToSeconds(this.getAttribute('data-end-time'));
+                    const claimTitle = this.closest('.claim').querySelector('.claim-title').textContent;
+                    const categoryId = this.closest('.category').id;
+                    
+                    // Update modal title
+                    modalTitle.textContent = `Video Evidence: ${claimTitle}`;
+                    
+                    // Open modal
+                    modal.style.display = 'block';
+                    
+                    // Set video time and play
+                    video.currentTime = startTime;
+                    video.play();
+                    
+                    // Update category video
+                    if (categoryId === 'system-navigation' && systemNavigationVideo) {
+                        systemNavigationVideo.currentTime = startTime;
+                        systemNavigationVideo.play();
+                    } else if (categoryId === 'advocacy-techniques' && advocacyTechniquesVideo) {
+                        advocacyTechniquesVideo.currentTime = startTime;
+                        advocacyTechniquesVideo.play();
+                    }
+                });
+            });
+            
+            // Close modal when clicking close button
+            closeBtn.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    modal.style.display = 'none';
+                    video.pause();
+                });
+            });
+            
+            // Close modal when clicking outside of it
+            window.addEventListener('click', function(event) {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                    video.pause();
+                }
+            });
+            
+            // Toggle category content when clicking on header
+            categoryHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const category = this.parentElement;
+                    const isActive = category.classList.contains('active');
+                    const toggleIcon = this.querySelector('.toggle-icon');
+                    
+                    if (isActive) {
+                        category.classList.remove('active');
+                        toggleIcon.textContent = '▲';
+                    } else {
+                        category.classList.add('active');
+                        toggleIcon.textContent = '▼';
+                    }
+                });
+            });
+            
+            // Search functionality
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const claims = document.querySelectorAll('.claim');
+                
+                claims.forEach(claim => {
+                    const claimTitle = claim.querySelector('.claim-title').textContent.toLowerCase();
+                    const claimQuote = claim.querySelector('.claim-quote').textContent.toLowerCase();
+                    const claimAnalysis = claim.querySelector('.claim-analysis').textContent.toLowerCase();
+                    
+                    if (claimTitle.includes(searchTerm) || claimQuote.includes(searchTerm) || claimAnalysis.includes(searchTerm)) {
+                        claim.style.display = 'block';
+                        
+                        // Make sure the parent category is visible
+                        const category = claim.closest('.category');
+                        category.classList.add('active');
+                        category.querySelector('.toggle-icon').textContent = '▼';
+                    } else {
+                        claim.style.display = 'none';
+                    }
+                });
+                
+                // If search is empty, reset display
+                if (searchTerm === '') {
+                    claims.forEach(claim => {
+                        claim.style.display = 'block';
+                    });
+                }
+            });
+            
+            // Toggle framework info when clicking on timestamps toggle
+            timestampsToggles.forEach(toggle => {
+                toggle.addEventListener('click', function() {
+                    const container = this.closest('.timestamps-container');
+                    const frameworkInfo = container.querySelector('.framework-info');
+                    const chevron = this.querySelector('.fa-chevron-down, .fa-chevron-up');
+                    
+                    if (frameworkInfo) {
+                        // Toggle framework info visibility
+                        if (frameworkInfo.style.display === 'block') {
+                            frameworkInfo.style.display = 'none';
+                            if (chevron) {
+                                chevron.classList.remove('fa-chevron-up');
+                                chevron.classList.add('fa-chevron-down');
+                            }
+                        } else {
+                            frameworkInfo.style.display = 'block';
+                            if (chevron) {
+                                chevron.classList.remove('fa-chevron-down');
+                                chevron.classList.add('fa-chevron-up');
+                            }
+                        }
+                    }
+                });
+            });
+            
+            // Open upload modal
+            if (uploadEvidenceBtn) {
+                uploadEvidenceBtn.addEventListener('click', function() {
+                    uploadModal.style.display = 'block';
+                });
+            }
+            
+            // Open expertise modal
+            if (presentExpertiseBtn) {
+                presentExpertiseBtn.addEventListener('click', function() {
+                    expertiseModal.style.display = 'block';
+                });
+            }
+            
+            // Cancel upload
+            if (cancelUploadBtn) {
+                cancelUploadBtn.addEventListener('click', function() {
+                    uploadModal.style.display = 'none';
+                });
+            }
+            
+            // Cancel expertise
+            if (cancelExpertiseBtn) {
+                cancelExpertiseBtn.addEventListener('click', function() {
+                    expertiseModal.style.display = 'none';
+                });
+            }
+            
+            // Upload to Cloudflare
+            if (uploadToCloudflareBtn) {
+                uploadToCloudflareBtn.addEventListener('click', function() {
+                    const title = document.getElementById('evidence-title').value;
+                    const category = document.getElementById('evidence-category').value;
+                    const framework = document.getElementById('evidence-framework').value;
+                    const description = document.getElementById('framework-description').value;
+                    const videoFile = document.getElementById('video-file').files[0];
+                    const transcriptText = document.getElementById('transcript-text').value;
+                    const transcriptFile = document.getElementById('transcript-file').files[0];
+                    
+                    if (!title || !category || !framework || !videoFile) {
+                        alert('Please fill in all required fields and select a video file.');
+                        return;
+                    }
+                    
+                    // Create FormData for upload
+                    const formData = new FormData();
+                    formData.append('title', title);
+                    formData.append('category', category);
+                    formData.append('framework', framework);
+                    formData.append('description', description);
+                    formData.append('video', videoFile);
+                    
+                    if (transcriptText) {
+                        formData.append('transcriptText', transcriptText);
+                    }
+                    
+                    if (transcriptFile) {
+                        formData.append('transcriptFile', transcriptFile);
+                    }
+                    
+                    // Cloudflare upload endpoint
+                    const uploadEndpoint = '/cloudflare-upload';
+                    
+                    // Show loading state
+                    uploadToCloudflareBtn.disabled = true;
+                    uploadToCloudflareBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+                    
+                    // Simulate upload (in a real implementation, this would be an actual fetch request)
+                    setTimeout(() => {
+                        alert('Video uploaded successfully to Cloudflare!');
+                        uploadModal.style.display = 'none';
+                        uploadToCloudflareBtn.disabled = false;
+                        uploadToCloudflareBtn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Upload to Cloudflare';
+                    }, 2000);
+                    
+                    // In a real implementation, you would use fetch:
+                    /*
+                    fetch(uploadEndpoint, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert('Video uploaded successfully to Cloudflare!');
+                        uploadModal.style.display = 'none';
+                    })
+                    .catch(error => {
+                        alert('Error uploading video: ' + error.message);
+                    })
+                    .finally(() => {
+                        uploadToCloudflareBtn.disabled = false;
+                        uploadToCloudflareBtn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Upload to Cloudflare';
+                    });
+                    */
+                });
+            }
+            
+            // Generate expertise analysis
+            if (generateExpertiseBtn) {
+                generateExpertiseBtn.addEventListener('click', function() {
+                    const prompt = document.getElementById('expertise-prompt').value;
+                    
+                    if (!prompt) {
+                        alert('Please enter an analysis prompt.');
+                        return;
+                    }
+                    
+                    // Show loading state
+                    generateExpertiseBtn.disabled = true;
+                    generateExpertiseBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+                    
+                    // Simulate analysis generation (in a real implementation, this would call an AI API)
+                    setTimeout(() => {
+                        alert('Expertise analysis generated successfully!');
+                        expertiseModal.style.display = 'none';
+                        generateExpertiseBtn.disabled = false;
+                        generateExpertiseBtn.innerHTML = '<i class="fas fa-brain"></i> Generate Analysis';
+                    }, 2000);
+                });
+            }
+            
+            // Helper function to parse time string (MM:SS) to seconds
+            function parseTimeToSeconds(timeString) {
+                const [minutes, seconds] = timeString.split(':').map(Number);
+                return minutes * 60 + seconds;
+            }
+        });
+        </script>
+        
+        <footer>
+            <p>Ben Mak Claim Substantiation Tool © 2025</p>
+            <div class="mt-4">
+                <button id="upload-evidence-btn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-cloud-upload-alt mr-2"></i> Upload New Evidence
+                </button>
+                <button id="present-expertise-btn" class="ml-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors">
+                    <i class="fas fa-brain mr-2"></i> Present Expertise
+                </button>
+            </div>
+        </footer>
+        
+        <!-- Upload Modal -->
+        <div id="upload-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn">×</span>
+                <h3>Upload New Evidence</h3>
+                
+                <div class="p-4 bg-blue-900 bg-opacity-30 rounded-lg mb-4">
+                    <h4 class="text-lg font-bold mb-2">Evidence Details</h4>
+                    <div class="mb-3">
+                        <label class="block text-sm mb-1">Evidence Title</label>
+                        <input type="text" id="evidence-title" class="w-full p-2 bg-gray-900 bg-opacity-50 rounded border border-gray-700 text-white" placeholder="E.g., Professional Boundaries Discussion">
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-sm mb-1">Category</label>
+                        <select id="evidence-category" class="w-full p-2 bg-gray-900 bg-opacity-50 rounded border border-gray-700 text-white">
+                            <option value="system-navigation">System Navigation Knowledge</option>
+                            <option value="advocacy-techniques">Advocacy Techniques</option>
+                            <option value="power-dynamics">Power Dynamics Management</option>
+                            <option value="metacognitive">Metacognitive Awareness</option>
+                            <option value="coercive-control">Coercive Control Recognition</option>
+                            <option value="causal-links">Causal Link Articulation</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-sm mb-1">Framework</label>
+                        <input type="text" id="evidence-framework" class="w-full p-2 bg-gray-900 bg-opacity-50 rounded border border-gray-700 text-white" placeholder="E.g., Professional Boundaries Framework">
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-sm mb-1">Framework Description</label>
+                        <textarea id="framework-description" class="w-full p-2 bg-gray-900 bg-opacity-50 rounded border border-gray-700 text-white h-24" placeholder="Describe the framework this evidence relates to..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="p-4 bg-blue-900 bg-opacity-30 rounded-lg mb-4">
+                    <h4 class="text-lg font-bold mb-2">Video Upload</h4>
+                    <div class="mb-3">
+                        <label class="block text-sm mb-1">Video File</label>
+                        <input type="file" id="video-file" class="w-full p-2 bg-gray-900 bg-opacity-50 rounded border border-gray-700 text-white" accept="video/*">
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-sm mb-1">Transcript (Optional)</label>
+                        <textarea id="transcript-text" class="w-full p-2 bg-gray-900 bg-opacity-50 rounded border border-gray-700 text-white h-24" placeholder="Enter transcript text or upload a transcript file..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-sm mb-1">Transcript File (Optional)</label>
+                        <input type="file" id="transcript-file" class="w-full p-2 bg-gray-900 bg-opacity-50 rounded border border-gray-700 text-white" accept=".txt,.srt,.vtt">
+                    </div>
+                </div>
+                
+                <div class="flex justify-end gap-3 mt-4">
+                    <button id="cancel-upload" class="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors">Cancel</button>
+                    <button id="upload-to-cloudflare" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center gap-2">
+                        <i class="fas fa-cloud-upload-alt"></i> Upload to Cloudflare
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Expertise Modal -->
+        <div id="expertise-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn">×</span>
+                <h3>Present Expertise</h3>
+                
+                <div class="p-4 bg-blue-900 bg-opacity-30 rounded-lg mb-4">
+                    <h4 class="text-lg font-bold mb-2">Expertise Analysis</h4>
+                    <div class="mb-3">
+                        <label class="block text-sm mb-1">Analysis Prompt</label>
+                        <textarea id="expertise-prompt" class="w-full p-2 bg-gray-900 bg-opacity-50 rounded border border-gray-700 text-white h-24" placeholder="Enter a prompt to analyze expertise from the evidence..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end gap-3 mt-4">
+                    <button id="cancel-expertise" class="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors">Cancel</button>
+                    <button id="generate-expertise" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors flex items-center gap-2">
+                        <i class="fas fa-brain"></i> Generate Analysis
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
