@@ -1,0 +1,2817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Surveillance Analytics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@4.0.0/marked.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                        accent: '#FF5733',
+                        dark: '#181818',
+                        light: '#FFFFFF'
+                    }
+                }
+            }
+        }
+        
+        // Dark mode detection
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+    </script>
+    <style>
+        .loading-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #5D5CDE;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .dark .loading-spinner {
+            border-color: rgba(255, 255, 255, 0.1);
+            border-left-color: #5D5CDE;
+        }
+        
+        /* Graph styles */
+        .node {
+            stroke: #fff;
+            stroke-width: 1.5px;
+        }
+        
+        .link {
+            stroke: #999;
+            stroke-opacity: 0.6;
+        }
+        
+        /* Timeline styles */
+        .timeline-dot {
+            transition: all 0.2s ease;
+        }
+        
+        .timeline-dot:hover {
+            r: 8;
+        }
+    </style>
+</head>
+<body class="bg-light dark:bg-dark text-gray-900 dark:text-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-6">
+        <header class="mb-8">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-bold text-primary">Email Surveillance Analytics</h1>
+                    <p class="text-sm md:text-base text-gray-600 dark:text-gray-400">Powered by Justice Minds Forensic Intelligence™</p>
+                </div>
+                <div class="hidden md:block">
+                    <span class="px-3 py-1 bg-red-500 text-white rounded-full text-xs font-semibold animate-pulse">JUSTICE MINDS</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- File Upload Section -->
+        <div id="uploadSection" class="mb-8 p-6 bg-gray-100 dark:bg-gray-800 rounded-lg shadow-md">
+            <h2 class="text-xl font-semibold mb-4">Upload Email Tracking Data</h2>
+            <p class="mb-4 text-gray-700 dark:text-gray-300">Upload your CSV file to analyze surveillance patterns. Your data is processed locally and never leaves your device.</p>
+            
+            <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+                <div class="flex-1">
+                    <label for="fileUpload" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Email Tracking CSV
+                    </label>
+                    <input type="file" id="fileUpload" accept=".csv" 
+                           class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-base focus:outline-none focus:ring-2 focus:ring-primary" />
+                </div>
+                <div class="flex items-end">
+                    <button id="analyzeBtn" class="px-6 py-2 bg-primary hover:bg-primary/90 text-white rounded-md transition-colors">
+                        Analyze Data
+                    </button>
+                </div>
+            </div>
+            
+            <div id="uploadStatus" class="mt-4 hidden">
+                <div class="flex items-center">
+                    <div class="loading-spinner mr-3"></div>
+                    <span id="uploadStatusText">Processing data...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Section (initially hidden) -->
+        <div id="dashboardSection" class="hidden">
+            <!-- Summary Statistics -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow-md">
+                    <h3 class="text-lg font-semibold mb-1">Total Emails</h3>
+                    <p id="totalEmails" class="text-3xl font-bold text-primary">-</p>
+                </div>
+                <div class="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow-md">
+                    <h3 class="text-lg font-semibold mb-1">High Surveillance</h3>
+                    <p id="highSurveillance" class="text-3xl font-bold text-red-500">-</p>
+                </div>
+                <div class="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow-md">
+                    <h3 class="text-lg font-semibold mb-1">Avg. Opens</h3>
+                    <p id="avgOpens" class="text-3xl font-bold text-yellow-500">-</p>
+                </div>
+                <div class="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow-md">
+                    <h3 class="text-lg font-semibold mb-1">Top Surveillance Domain</h3>
+                    <p id="topDomain" class="text-xl font-semibold text-primary">-</p>
+                </div>
+            </div>
+            
+            <!-- Visualization Section -->
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+                <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-semibold mb-4">Surveillance Timeline</h3>
+                    <div id="timelineViz" class="w-full h-[300px]"></div>
+                </div>
+                <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-semibold mb-4">Domain Surveillance Network</h3>
+                    <div id="networkViz" class="w-full h-[300px]"></div>
+                </div>
+            </div>
+            
+            <!-- Filter Controls -->
+            <div class="mb-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg shadow-md">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+                    <h3 class="text-xl font-semibold">Email Surveillance Data</h3>
+                    <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+                        <input type="text" id="searchEmails" placeholder="Search emails..." 
+                               class="px-3 py-2 text-base border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-primary" />
+                        <select id="filterSurveillance" class="px-3 py-2 text-base border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-primary">
+                            <option value="all">All Emails</option>
+                            <option value="high">High Surveillance (10+ Opens)</option>
+                            <option value="medium">Medium Surveillance (5-9 Opens)</option>
+                            <option value="low">Low Surveillance (1-4 Opens)</option>
+                            <option value="none">No Surveillance (0 Opens)</option>
+                        </select>
+                        <select id="sortEmails" class="px-3 py-2 text-base border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-primary">
+                            <option value="opens-desc">Most Opens</option>
+                            <option value="opens-asc">Least Opens</option>
+                            <option value="date-desc">Newest First</option>
+                            <option value="date-asc">Oldest First</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Email Table -->
+            <div class="mb-8">
+                <div class="overflow-x-auto bg-gray-100 dark:bg-gray-800 rounded-lg shadow-md">
+                    <table class="min-w-full divide-y divide-gray-300 dark:divide-gray-600">
+                        <thead class="bg-gray-200 dark:bg-gray-700">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Recipient</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Subject</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Sent</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Last Opened</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Opens</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Details</th>
+                            </tr>
+                        </thead>
+                        <tbody id="emailsTable" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            <!-- Email data will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="tablePagination" class="mt-4 flex justify-between items-center px-4">
+                    <div>
+                        <span class="text-sm text-gray-600 dark:text-gray-400">Showing <span id="pageInfo">-</span></span>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button id="prevPage" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors disabled:opacity-50">Previous</button>
+                        <button id="nextPage" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors disabled:opacity-50">Next</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Surveillance Patterns Analysis -->
+            <div class="mb-8">
+                <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-semibold mb-4">Surveillance Patterns & Intelligence</h3>
+                    <div id="patternsAnalysis" class="space-y-4">
+                        <!-- Will be filled dynamically -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Report Generation -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-semibold mb-4">Evidence Report</h3>
+                    <p class="mb-4 text-gray-700 dark:text-gray-300">Generate a comprehensive report of email surveillance patterns for legal proceedings.</p>
+                    <button id="legalReportBtn" class="w-full px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-md transition-colors">
+                        Generate Legal Report
+                    </button>
+                </div>
+                <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-semibold mb-4">GDPR Complaint</h3>
+                    <p class="mb-4 text-gray-700 dark:text-gray-300">Create a detailed GDPR violation complaint with evidence of excessive data access.</p>
+                    <button id="gdprReportBtn" class="w-full px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-md transition-colors">
+                        Generate GDPR Complaint
+                    </button>
+                </div>
+                <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-semibold mb-4">Public Interest Report</h3>
+                    <p class="mb-4 text-gray-700 dark:text-gray-300">Create a public interest disclosure document for whistleblowing or media release.</p>
+                    <button id="publicReportBtn" class="w-full px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors">
+                        Generate Public Interest Report
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Ask Claude About Data -->
+            <div class="mb-8">
+                <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-semibold mb-4">AI-Powered Forensic Analysis</h3>
+                    <p class="mb-4 text-gray-700 dark:text-gray-300">
+                        Ask Claude to analyze your email surveillance data and discover hidden patterns or intelligence.
+                    </p>
+                    <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+                        <input type="text" id="claudePrompt" placeholder="What patterns do you see in this email surveillance data?" 
+                               class="flex-grow px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md text-base focus:outline-none focus:ring-2 focus:ring-primary" />
+                        <button id="askClaudeBtn" class="px-6 py-2 bg-primary hover:bg-primary/90 text-white rounded-md transition-colors whitespace-nowrap">
+                            Ask Claude
+                        </button>
+                    </div>
+                    <div id="claudeResponse" class="mt-4 hidden">
+                        <div id="claudeLoading" class="flex items-center mb-3">
+                            <div class="loading-spinner mr-3"></div>
+                            <span>Analyzing data with Claude...</span>
+                        </div>
+                        <div id="claudeContent" class="p-4 bg-gray-200 dark:bg-gray-700 rounded-md text-gray-900 dark:text-gray-100 prose prose-sm max-w-none dark:prose-invert"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Report Modal -->
+        <div id="reportModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto mx-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 id="reportTitle" class="text-xl font-semibold">Report</h3>
+                    <button id="closeReportBtn" class="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div id="reportContent" class="text-gray-900 dark:text-gray-100 prose prose-sm max-w-none dark:prose-invert"></div>
+                <div class="mt-6 flex justify-end space-x-4">
+                    <button id="copyReportBtn" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md transition-colors">
+                        Copy to Clipboard
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <footer class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 text-center text-sm text-gray-600 dark:text-gray-400">
+            <p>Email Surveillance Analytics | Justice Minds Forensic Intelligence</p>
+            <p class="mt-1">Your data is processed locally and never leaves your device.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Data storage
+        let emailData = [];
+        let currentPage = 1;
+        const pageSize = 15;
+        
+        // DOM elements
+        const fileUpload = document.getElementById('fileUpload');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const uploadStatus = document.getElementById('uploadStatus');
+        const uploadStatusText = document.getElementById('uploadStatusText');
+        const dashboardSection = document.getElementById('dashboardSection');
+        
+        // Table elements
+        const emailsTable = document.getElementById('emailsTable');
+        const searchEmails = document.getElementById('searchEmails');
+        const filterSurveillance = document.getElementById('filterSurveillance');
+        const sortEmails = document.getElementById('sortEmails');
+        const prevPageBtn = document.getElementById('prevPage');
+        const nextPageBtn = document.getElementById('nextPage');
+        const pageInfo = document.getElementById('pageInfo');
+        
+        // Stats elements
+        const totalEmailsEl = document.getElementById('totalEmails');
+        const highSurveillanceEl = document.getElementById('highSurveillance');
+        const avgOpensEl = document.getElementById('avgOpens');
+        const topDomainEl = document.getElementById('topDomain');
+        
+        // Report elements
+        const legalReportBtn = document.getElementById('legalReportBtn');
+        const gdprReportBtn = document.getElementById('gdprReportBtn');
+        const publicReportBtn = document.getElementById('publicReportBtn');
+        const reportModal = document.getElementById('reportModal');
+        const reportTitle = document.getElementById('reportTitle');
+        const reportContent = document.getElementById('reportContent');
+        const closeReportBtn = document.getElementById('closeReportBtn');
+        const copyReportBtn = document.getElementById('copyReportBtn');
+        
+        // Claude elements
+        const claudePrompt = document.getElementById('claudePrompt');
+        const askClaudeBtn = document.getElementById('askClaudeBtn');
+        const claudeResponse = document.getElementById('claudeResponse');
+        const claudeLoading = document.getElementById('claudeLoading');
+        const claudeContent = document.getElementById('claudeContent');
+        
+        // Initialize event listeners
+        function initListeners() {
+            analyzeBtn.addEventListener('click', handleFileUpload);
+            
+            // Table controls
+            searchEmails.addEventListener('input', renderTable);
+            filterSurveillance.addEventListener('change', renderTable);
+            sortEmails.addEventListener('change', renderTable);
+            prevPageBtn.addEventListener('click', () => {
+                currentPage--;
+                renderTable();
+            });
+            nextPageBtn.addEventListener('click', () => {
+                currentPage++;
+                renderTable();
+            });
+            
+            // Report buttons
+            legalReportBtn.addEventListener('click', () => generateReport('legal'));
+            gdprReportBtn.addEventListener('click', () => generateReport('gdpr'));
+            publicReportBtn.addEventListener('click', () => generateReport('public'));
+            
+            // Report modal
+            closeReportBtn.addEventListener('click', () => {
+                reportModal.classList.add('hidden');
+            });
+            
+            copyReportBtn.addEventListener('click', () => {
+                const content = reportContent.innerText;
+                navigator.clipboard.writeText(content)
+                    .then(() => {
+                        alert('Report copied to clipboard');
+                    })
+                    .catch(err => {
+                        console.error('Failed to copy: ', err);
+                        alert('Could not copy text. Please select and copy manually.');
+                    });
+            });
+            
+            // Claude integration
+            askClaudeBtn.addEventListener('click', askClaude);
+        }
+        
+        // Handle file upload
+        async function handleFileUpload() {
+            const file = fileUpload.files[0];
+            if (!file) {
+                alert('Please select a CSV file to analyze');
+                return;
+            }
+            
+            // Show upload status
+            uploadStatus.classList.remove('hidden');
+            uploadStatusText.textContent = 'Reading file...';
+            
+            try {
+                const text = await file.text();
+                uploadStatusText.textContent = 'Parsing data...';
+                
+                // Parse CSV data
+                emailData = parseCSV(text);
+                
+                // Process data
+                uploadStatusText.textContent = 'Analyzing surveillance patterns...';
+                processData();
+                
+                // Add a small delay to show processing
+                setTimeout(() => {
+                    // Hide upload section and show dashboard
+                    uploadStatus.classList.add('hidden');
+                    dashboardSection.classList.remove('hidden');
+                    
+                    // Render the dashboard
+                    renderDashboard();
+                }, 800);
+            } catch (error) {
+                console.error('Error processing file:', error);
+                uploadStatusText.textContent = 'Error processing file. Please ensure it is a valid CSV.';
+            }
+        }
+        
+        // Parse CSV data
+        function parseCSV(csvText) {
+            const lines = csvText.split('\n');
+            const headers = lines[0].split(',').map(header => 
+                header.trim().replace(/^"|"$/g, '')
+            );
+            
+            const results = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                
+                // Handle commas within quotes
+                const values = [];
+                let inQuotes = false;
+                let currentValue = '';
+                
+                for (let j = 0; j < lines[i].length; j++) {
+                    const char = lines[i][j];
+                    
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (char === ',' && !inQuotes) {
+                        values.push(currentValue.trim().replace(/^"|"$/g, ''));
+                        currentValue = '';
+                    } else {
+                        currentValue += char;
+                    }
+                }
+                
+                values.push(currentValue.trim().replace(/^"|"$/g, ''));
+                
+                const obj = {};
+                headers.forEach((header, index) => {
+                    obj[header] = values[index] || '';
+                });
+                
+                results.push(obj);
+            }
+            
+            return results;
+        }
+        
+        // Process the data for analysis
+        function processData() {
+            // Add derived fields for analysis
+            emailData.forEach(email => {
+                // Parse dates
+                if (email.Sent) {
+                    email.SentDate = parseEmailDate(email.Sent);
+                }
+                
+                if (email['Last Opened'] && email['Last Opened'] !== 'Not read yet') {
+                    email.LastOpenedDate = parseEmailDate(email['Last Opened']);
+                } else {
+                    email.LastOpenedDate = null;
+                }
+                
+                // Parse numeric values
+                email.OpensCount = parseInt(email.Opens) || 0;
+                email.ClicksCount = parseInt(email.Clicks) || 0;
+                email.PDFViewsCount = parseInt(email['PDF views']) || 0;
+                
+                // Extract domain from recipient
+                email.Domain = extractDomain(email.Recipient);
+                
+                // Flag emails by surveillance level
+                if (email.OpensCount >= 10) {
+                    email.SurveillanceLevel = 'high';
+                } else if (email.OpensCount >= 5) {
+                    email.SurveillanceLevel = 'medium';
+                } else if (email.OpensCount >= 1) {
+                    email.SurveillanceLevel = 'low';
+                } else {
+                    email.SurveillanceLevel = 'none';
+                }
+                
+                // Set surveillance context
+                email.SurveillanceContext = getSurveillanceContext(email);
+            });
+        }
+        
+        // Parse date string to Date object
+        function parseEmailDate(dateStr) {
+            try {
+                // Example: "Apr 10, 2025, 1:19:32 PM"
+                if (!dateStr) return null;
+                
+                const regex = /([A-Za-z]{3})\s+(\d+),\s+(\d{4}),\s+(\d+):(\d+):(\d+)\s+([AP]M)/;
+                const match = dateStr.match(regex);
+                
+                if (match) {
+                    const months = {
+                        'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+                        'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+                    };
+                    
+                    const month = months[match[1]];
+                    const day = parseInt(match[2]);
+                    const year = parseInt(match[3]);
+                    let hour = parseInt(match[4]);
+                    const minute = parseInt(match[5]);
+                    const second = parseInt(match[6]);
+                    const ampm = match[7];
+                    
+                    if (ampm === 'PM' && hour < 12) hour += 12;
+                    if (ampm === 'AM' && hour === 12) hour = 0;
+                    
+                    return new Date(year, month, day, hour, minute, second);
+                }
+                
+                return new Date(dateStr);
+            } catch (error) {
+                console.error('Error parsing date:', dateStr, error);
+                return null;
+            }
+        }
+        
+        // Extract domain from email address
+        function extractDomain(email) {
+            if (!email) return 'Unknown';
+            
+            // Check if we have multiple recipients
+            if (email.includes(',')) {
+                const firstEmail = email.split(',')[0].trim();
+                return extractDomain(firstEmail);
+            }
+            
+            // Extract domain from email
+            const match = email.match(/@([^.]+\.[^,\s]+)/i);
+            if (match) {
+                return match[1];
+            }
+            
+            // If no @ symbol, return the email as is (might be a name or organization)
+            return email;
+        }
+        
+        // Get surveillance context based on email content
+        function getSurveillanceContext(email) {
+            const subject = email.Subject ? email.Subject.toLowerCase() : '';
+            const opens = email.OpensCount;
+            
+            // Check for legal/court related terms
+            const legalTerms = [
+                'court', 'legal', 'justice', 'law', 'case', 'complaint', 'judge', 'hearing',
+                'eviction', 'notice', 'urgent attention', 'appeal', 'tribunal', 'investigation'
+            ];
+            
+            const hasLegalTerms = legalTerms.some(term => subject.includes(term));
+            
+            // Check for government/official related terms
+            const governmentTerms = [
+                'council', 'government', 'official', 'department', 'ministry', 'authority',
+                'parliament', 'mp ', 'notice', 'dwp', 'nhs', 'police', 'westminster'
+            ];
+            
+            const hasGovernmentTerms = governmentTerms.some(term => subject.includes(term));
+            
+            // Check for personal sensitive terms
+            const personalTerms = [
+                'disability', 'health', 'mental', 'medical', 'private', 'personal',
+                'confidential', 'sensitive', 'family', 'children', 'safeguarding', 'vulnerable'
+            ];
+            
+            const hasPersonalTerms = personalTerms.some(term => subject.includes(term));
+            
+            // Assign context based on terms and open counts
+            if (hasLegalTerms && opens >= 10) {
+                return 'Legal Case Surveillance';
+            } else if (hasGovernmentTerms && opens >= 7) {
+                return 'Government Authority Monitoring';
+            } else if (hasPersonalTerms && opens >= 5) {
+                return 'Personal Data Surveillance';
+            } else if (opens >= 20) {
+                return 'Extreme Surveillance';
+            } else if (opens >= 10) {
+                return 'High Surveillance';
+            } else if (opens >= 5) {
+                return 'Moderate Surveillance';
+            } else {
+                return 'Normal Activity';
+            }
+        }
+        
+        // Render the dashboard
+        function renderDashboard() {
+            computeStatistics();
+            renderTable();
+            renderTimeline();
+            renderNetwork();
+            analyzeSurveillancePatterns();
+        }
+        
+        // Compute dashboard statistics
+        function computeStatistics() {
+            const totalEmails = emailData.length;
+            const highSurveillance = emailData.filter(email => email.OpensCount >= 10).length;
+            
+            // Calculate average opens
+            const totalOpens = emailData.reduce((sum, email) => sum + email.OpensCount, 0);
+            const avgOpens = totalOpens / totalEmails;
+            
+            // Find top surveillance domain
+            const domainOpens = {};
+            emailData.forEach(email => {
+                if (!domainOpens[email.Domain]) {
+                    domainOpens[email.Domain] = 0;
+                }
+                domainOpens[email.Domain] += email.OpensCount;
+            });
+            
+            let topDomain = 'None';
+            let maxOpens = 0;
+            
+            for (const domain in domainOpens) {
+                if (domainOpens[domain] > maxOpens) {
+                    maxOpens = domainOpens[domain];
+                    topDomain = domain;
+                }
+            }
+            
+            // Update stats in the UI
+            totalEmailsEl.textContent = totalEmails;
+            highSurveillanceEl.textContent = highSurveillance;
+            avgOpensEl.textContent = avgOpens.toFixed(1);
+            topDomainEl.textContent = topDomain;
+        }
+        
+        // Filter and sort the email data
+        function getFilteredData() {
+            const searchTerm = searchEmails.value.toLowerCase();
+            const selectedSurveillance = filterSurveillance.value;
+            const sortOption = sortEmails.value;
+            
+            // Filter by search term and surveillance level
+            let filteredData = emailData.filter(email => {
+                // Search term filter
+                const matchesSearch = !searchTerm ||
+                    (email.Recipient && email.Recipient.toLowerCase().includes(searchTerm)) ||
+                    (email.Subject && email.Subject.toLowerCase().includes(searchTerm));
+                
+                // Surveillance level filter
+                const matchesSurveillance = 
+                    selectedSurveillance === 'all' ||
+                    (selectedSurveillance === 'high' && email.SurveillanceLevel === 'high') ||
+                    (selectedSurveillance === 'medium' && email.SurveillanceLevel === 'medium') ||
+                    (selectedSurveillance === 'low' && email.SurveillanceLevel === 'low') ||
+                    (selectedSurveillance === 'none' && email.SurveillanceLevel === 'none');
+                
+                return matchesSearch && matchesSurveillance;
+            });
+            
+            // Sort the data
+            filteredData.sort((a, b) => {
+                switch (sortOption) {
+                    case 'opens-desc':
+                        return b.OpensCount - a.OpensCount;
+                    case 'opens-asc':
+                        return a.OpensCount - b.OpensCount;
+                    case 'date-desc':
+                        return (b.SentDate || 0) - (a.SentDate || 0);
+                    case 'date-asc':
+                        return (a.SentDate || 0) - (b.SentDate || 0);
+                    default:
+                        return b.OpensCount - a.OpensCount;
+                }
+            });
+            
+            return filteredData;
+        }
+        
+        // Render the email table
+        function renderTable() {
+            const filteredData = getFilteredData();
+            
+            // Calculate pagination
+            const totalItems = filteredData.length;
+            const totalPages = Math.ceil(totalItems / pageSize);
+            
+            // Adjust current page if it's out of bounds
+            if (currentPage > totalPages) {
+                currentPage = Math.max(1, totalPages);
+            }
+            
+            const start = (currentPage - 1) * pageSize;
+            const end = Math.min(start + pageSize, totalItems);
+            const pageData = filteredData.slice(start, end);
+            
+            // Update pagination info
+            pageInfo.textContent = `${start + 1}-${end} of ${totalItems}`;
+            
+            // Enable/disable pagination buttons
+            prevPageBtn.disabled = currentPage <= 1;
+            nextPageBtn.disabled = currentPage >= totalPages;
+            
+            // Clear current table
+            emailsTable.innerHTML = '';
+            
+            // Render each row
+            pageData.forEach(email => {
+                const row = document.createElement('tr');
+                
+                // Highlight based on surveillance level
+                if (email.SurveillanceLevel === 'high') {
+                    row.classList.add('bg-red-50', 'dark:bg-red-900', 'dark:bg-opacity-20');
+                } else if (email.SurveillanceLevel === 'medium') {
+                    row.classList.add('bg-yellow-50', 'dark:bg-yellow-900', 'dark:bg-opacity-20');
+                }
+                
+                // Recipient
+                const recipientCell = document.createElement('td');
+                recipientCell.className = 'px-4 py-2 whitespace-nowrap';
+                
+                // Truncate long recipient lists
+                let displayRecipient = email.Recipient;
+                if (displayRecipient.length > 30) {
+                    const firstEmail = displayRecipient.split(',')[0];
+                    const moreCount = displayRecipient.split(',').length - 1;
+                    displayRecipient = `${firstEmail}${moreCount > 0 ? ` +${moreCount} more` : ''}`;
+                }
+                
+                recipientCell.textContent = displayRecipient;
+                row.appendChild(recipientCell);
+                
+                // Subject
+                const subjectCell = document.createElement('td');
+                subjectCell.className = 'px-4 py-2';
+                subjectCell.textContent = email.Subject;
+                row.appendChild(subjectCell);
+                
+                // Sent date
+                const sentCell = document.createElement('td');
+                sentCell.className = 'px-4 py-2 whitespace-nowrap';
+                sentCell.textContent = email.SentDate ? formatDate(email.SentDate) : '';
+                row.appendChild(sentCell);
+                
+                // Last opened
+                const openedCell = document.createElement('td');
+                openedCell.className = 'px-4 py-2 whitespace-nowrap';
+                openedCell.textContent = email.LastOpenedDate ? formatDate(email.LastOpenedDate) : 'Not opened';
+                row.appendChild(openedCell);
+                
+                // Opens count
+                const opensCell = document.createElement('td');
+                opensCell.className = 'px-4 py-2 text-center font-semibold';
+                
+                // Color code the opens count
+                if (email.OpensCount >= 20) {
+                    opensCell.classList.add('text-red-600', 'dark:text-red-400');
+                } else if (email.OpensCount >= 10) {
+                    opensCell.classList.add('text-red-500');
+                } else if (email.OpensCount >= 5) {
+                    opensCell.classList.add('text-yellow-500');
+                }
+                
+                opensCell.textContent = email.OpensCount;
+                row.appendChild(opensCell);
+                
+                // Status
+                const statusCell = document.createElement('td');
+                statusCell.className = 'px-4 py-2';
+                
+                const statusBadge = document.createElement('span');
+                statusBadge.className = 'px-2 py-1 rounded-full text-xs font-medium';
+                
+                switch (email.SurveillanceLevel) {
+                    case 'high':
+                        statusBadge.classList.add('bg-red-100', 'text-red-800', 'dark:bg-red-900', 'dark:bg-opacity-30', 'dark:text-red-300');
+                        statusBadge.textContent = email.SurveillanceContext;
+                        break;
+                    case 'medium':
+                        statusBadge.classList.add('bg-yellow-100', 'text-yellow-800', 'dark:bg-yellow-900', 'dark:bg-opacity-30', 'dark:text-yellow-300');
+                        statusBadge.textContent = email.SurveillanceContext;
+                        break;
+                    case 'low':
+                        statusBadge.classList.add('bg-blue-100', 'text-blue-800', 'dark:bg-blue-900', 'dark:bg-opacity-30', 'dark:text-blue-300');
+                        statusBadge.textContent = 'Normal Monitoring';
+                        break;
+                    default:
+                        statusBadge.classList.add('bg-gray-100', 'text-gray-800', 'dark:bg-gray-700', 'dark:text-gray-300');
+                        statusBadge.textContent = 'No Surveillance';
+                }
+                
+                statusCell.appendChild(statusBadge);
+                row.appendChild(statusCell);
+                
+                // Details button
+                const detailsCell = document.createElement('td');
+                detailsCell.className = 'px-4 py-2';
+                
+                const detailsBtn = document.createElement('button');
+                detailsBtn.className = 'text-primary hover:underline';
+                detailsBtn.textContent = 'View Details';
+                detailsBtn.addEventListener('click', () => showEmailDetails(email));
+                
+                detailsCell.appendChild(detailsBtn);
+                row.appendChild(detailsCell);
+                
+                emailsTable.appendChild(row);
+            });
+        }
+        
+        // Format a date for display
+        function formatDate(date) {
+            if (!date) return '';
+            return date.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+        }
+        
+        // Show detailed information for an email
+        function showEmailDetails(email) {
+            generateReport('detail', email);
+        }
+        
+        // Render the timeline visualization
+        function renderTimeline() {
+            const container = document.getElementById('timelineViz');
+            container.innerHTML = '';
+            
+            // Set up dimensions
+            const margin = { top: 20, right: 30, bottom: 50, left: 50 };
+            const width = container.clientWidth - margin.left - margin.right;
+            const height = container.clientHeight - margin.top - margin.bottom;
+            
+            // Create SVG element
+            const svg = d3.select('#timelineViz')
+                .append('svg')
+                .attr('width', width + margin.left + margin.right)
+                .attr('height', height + margin.top + margin.bottom)
+                .append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+            
+            // Filter data to emails with valid dates
+            const timelineData = emailData.filter(email => email.SentDate && !isNaN(email.SentDate));
+            
+            if (timelineData.length === 0) {
+                svg.append('text')
+                    .attr('x', width / 2)
+                    .attr('y', height / 2)
+                    .attr('text-anchor', 'middle')
+                    .attr('fill', 'currentColor')
+                    .text('No valid date data available for timeline visualization');
+                return;
+            }
+            
+            // Set up scales
+            const x = d3.scaleTime()
+                .domain(d3.extent(timelineData, d => d.SentDate))
+                .range([0, width]);
+            
+            const y = d3.scaleLinear()
+                .domain([0, d3.max(timelineData, d => d.OpensCount) || 10])
+                .range([height, 0]);
+            
+            // Add X axis
+            svg.append('g')
+                .attr('transform', `translate(0,${height})`)
+                .call(d3.axisBottom(x).ticks(5))
+                .selectAll('text')
+                .attr('transform', 'rotate(-45)')
+                .attr('text-anchor', 'end');
+            
+            // Add Y axis
+            svg.append('g')
+                .call(d3.axisLeft(y).ticks(5));
+            
+            // Add X axis label
+            svg.append('text')
+                .attr('x', width / 2)
+                .attr('y', height + margin.bottom - 5)
+                .attr('text-anchor', 'middle')
+                .attr('fill', 'currentColor')
+                .text('Date Email Sent');
+            
+            // Add Y axis label
+            svg.append('text')
+                .attr('transform', 'rotate(-90)')
+                .attr('x', -height / 2)
+                .attr('y', -margin.left + 15)
+                .attr('text-anchor', 'middle')
+                .attr('fill', 'currentColor')
+                .text('Number of Opens');
+            
+            // Add dots for each email
+            svg.selectAll('circle')
+                .data(timelineData)
+                .enter()
+                .append('circle')
+                .attr('class', 'timeline-dot')
+                .attr('cx', d => x(d.SentDate))
+                .attr('cy', d => y(d.OpensCount))
+                .attr('r', d => {
+                    if (d.OpensCount >= 20) return 7;
+                    if (d.OpensCount >= 10) return 6;
+                    if (d.OpensCount >= 5) return 5;
+                    return 4;
+                })
+                .attr('fill', d => {
+                    if (d.OpensCount >= 20) return '#EF4444'; // Red
+                    if (d.OpensCount >= 10) return '#F59E0B'; // Amber
+                    if (d.OpensCount >= 5) return '#FBBF24';  // Yellow
+                    return '#5D5CDE'; // Primary
+                })
+                .attr('opacity', 0.7)
+                .attr('stroke', 'currentColor')
+                .attr('stroke-width', 0.5)
+                .on('mouseover', function(event, d) {
+                    // Show tooltip
+                    const tooltip = svg.append('g')
+                        .attr('class', 'tooltip')
+                        .attr('opacity', 0);
+                    
+                    const tooltipBg = tooltip.append('rect')
+                        .attr('fill', 'white')
+                        .attr('stroke', '#999')
+                        .attr('rx', 4)
+                        .attr('ry', 4);
+                    
+                    const tooltipText = tooltip.append('text')
+                        .attr('fill', 'black')
+                        .attr('dominant-baseline', 'hanging')
+                        .attr('x', 8)
+                        .attr('y', 4);
+                    
+                    tooltipText.append('tspan')
+                        .attr('x', 8)
+                        .attr('dy', 0)
+                        .text(`Subject: ${(d.Subject || '').substring(0, 30)}${(d.Subject || '').length > 30 ? '...' : ''}`);
+                    
+                    tooltipText.append('tspan')
+                        .attr('x', 8)
+                        .attr('dy', '1.2em')
+                        .text(`Recipient: ${(d.Recipient || '').substring(0, 30)}${(d.Recipient || '').length > 30 ? '...' : ''}`);
+                    
+                    tooltipText.append('tspan')
+                        .attr('x', 8)
+                        .attr('dy', '1.2em')
+                        .text(`Sent: ${d.SentDate.toLocaleDateString()}`);
+                    
+                    tooltipText.append('tspan')
+                        .attr('x', 8)
+                        .attr('dy', '1.2em')
+                        .text(`Opens: ${d.OpensCount}`);
+                    
+                    const bbox = tooltipText.node().getBBox();
+                    tooltipBg
+                        .attr('width', bbox.width + 16)
+                        .attr('height', bbox.height + 8);
+                    
+                    let tooltipX = x(d.SentDate) + 10;
+                    let tooltipY = y(d.OpensCount) - 10;
+                    
+                    // Adjust tooltip position if it would go off the right edge
+                    if (tooltipX + bbox.width + 16 > width) {
+                        tooltipX = x(d.SentDate) - bbox.width - 16 - 10;
+                    }
+                    
+                    // Adjust tooltip position if it would go off the top edge
+                    if (tooltipY - bbox.height - 8 < 0) {
+                        tooltipY = y(d.OpensCount) + 20;
+                    }
+                    
+                    tooltip
+                        .attr('transform', `translate(${tooltipX}, ${tooltipY - bbox.height - 8})`)
+                        .transition()
+                        .duration(200)
+                        .attr('opacity', 1);
+                    
+                    // Highlight the dot
+                    d3.select(this)
+                        .transition()
+                        .duration(200)
+                        .attr('r', d => {
+                            if (d.OpensCount >= 20) return 10;
+                            if (d.OpensCount >= 10) return 9;
+                            if (d.OpensCount >= 5) return 8;
+                            return 7;
+                        })
+                        .attr('stroke-width', 2);
+                })
+                .on('mouseout', function() {
+                    // Remove tooltip
+                    svg.select('.tooltip').remove();
+                    
+                    // Reset dot size
+                    d3.select(this)
+                        .transition()
+                        .duration(200)
+                        .attr('r', d => {
+                            if (d.OpensCount >= 20) return 7;
+                            if (d.OpensCount >= 10) return 6;
+                            if (d.OpensCount >= 5) return 5;
+                            return 4;
+                        })
+                        .attr('stroke-width', 0.5);
+                })
+                .on('click', (event, d) => showEmailDetails(d));
+        }
+        
+        // Render the network visualization
+        function renderNetwork() {
+            const container = document.getElementById('networkViz');
+            container.innerHTML = '';
+            
+            // Set up dimensions
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            
+            // Create SVG element
+            const svg = d3.select('#networkViz')
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height);
+            
+            // Extract domains and count their opens
+            const domains = {};
+            emailData.forEach(email => {
+                if (!email.Domain) return;
+                
+                if (!domains[email.Domain]) {
+                    domains[email.Domain] = {
+                        name: email.Domain,
+                        value: 0,
+                        emails: 0
+                    };
+                }
+                
+                domains[email.Domain].value += email.OpensCount;
+                domains[email.Domain].emails += 1;
+            });
+            
+            // Convert to nodes array
+            const nodes = Object.values(domains)
+                .filter(d => d.value > 0) // Only include domains with opens
+                .sort((a, b) => b.value - a.value) // Sort by value
+                .slice(0, 25); // Limit to top 25 domains
+            
+            if (nodes.length === 0) {
+                svg.append('text')
+                    .attr('x', width / 2)
+                    .attr('y', height / 2)
+                    .attr('text-anchor', 'middle')
+                    .attr('fill', 'currentColor')
+                    .text('No domain data available for network visualization');
+                return;
+            }
+            
+            // Create links between domains that appear in the same email
+            const links = [];
+            
+            // Add center node
+            nodes.unshift({
+                name: 'You',
+                value: d3.sum(nodes, d => d.value),
+                emails: d3.sum(nodes, d => d.emails),
+                isCenter: true
+            });
+            
+            // Add links from center to all domains
+            nodes.slice(1).forEach(node => {
+                links.push({
+                    source: 0, // Center node
+                    target: nodes.findIndex(d => d.name === node.name),
+                    value: node.value
+                });
+            });
+            
+            // Create force simulation
+            const simulation = d3.forceSimulation(nodes)
+                .force('link', d3.forceLink(links).id(d => d.name).distance(100))
+                .force('charge', d3.forceManyBody().strength(-200))
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .force('collision', d3.forceCollide().radius(d => Math.sqrt(d.value) + 10));
+            
+            // Create links
+            const link = svg.append('g')
+                .selectAll('line')
+                .data(links)
+                .enter()
+                .append('line')
+                .attr('class', 'link')
+                .attr('stroke-width', d => Math.max(1, Math.sqrt(d.value) / 5));
+            
+            // Create node groups
+            const node = svg.append('g')
+                .selectAll('.node')
+                .data(nodes)
+                .enter()
+                .append('g')
+                .attr('class', 'node')
+                .call(d3.drag()
+                    .on('start', dragstarted)
+                    .on('drag', dragged)
+                    .on('end', dragended));
+            
+            // Add circles to node groups
+            node.append('circle')
+                .attr('r', d => d.isCenter ? 20 : Math.max(5, Math.sqrt(d.value) / 1.5))
+                .attr('fill', d => {
+                    if (d.isCenter) return '#5D5CDE';
+                    if (d.value / d.emails >= 20) return '#EF4444'; // Red
+                    if (d.value / d.emails >= 10) return '#F59E0B'; // Amber
+                    if (d.value / d.emails >= 5) return '#FBBF24';  // Yellow
+                    return '#5D5CDE'; // Primary
+                })
+                .attr('stroke', 'currentColor')
+                .attr('stroke-width', 1.5);
+            
+            // Add labels to node groups
+            node.append('text')
+                .attr('dy', d => d.isCenter ? 30 : -10)
+                .attr('text-anchor', 'middle')
+                .attr('fill', 'currentColor')
+                .attr('font-size', d => d.isCenter ? '12px' : '10px')
+                .text(d => d.name);
+            
+            // Add values for non-center nodes
+            node.filter(d => !d.isCenter)
+                .append('text')
+                .attr('dy', 4)
+                .attr('text-anchor', 'middle')
+                .attr('fill', 'white')
+                .attr('font-size', '8px')
+                .text(d => d.value > 100 ? Math.round(d.value / 10) * 10 : d.value);
+            
+            // Add hover functionality
+            node.on('mouseover', function(event, d) {
+                d3.select(this).select('circle')
+                    .transition()
+                    .duration(200)
+                    .attr('r', d => d.isCenter ? 25 : Math.max(8, Math.sqrt(d.value) / 1.2));
+                
+                // Highlight connected links
+                link.filter(l => l.source === d || l.target === d)
+                    .transition()
+                    .duration(200)
+                    .attr('stroke', '#5D5CDE')
+                    .attr('stroke-width', l => Math.max(2, Math.sqrt(l.value) / 4));
+                
+                // Show info tooltip
+                const tooltip = svg.append('g')
+                    .attr('class', 'tooltip')
+                    .attr('opacity', 0);
+                
+                const tooltipBg = tooltip.append('rect')
+                    .attr('fill', 'white')
+                    .attr('stroke', '#999')
+                    .attr('rx', 4)
+                    .attr('ry', 4);
+                
+                const tooltipText = tooltip.append('text')
+                    .attr('fill', 'black')
+                    .attr('dominant-baseline', 'hanging')
+                    .attr('x', 8)
+                    .attr('y', 4);
+                
+                tooltipText.append('tspan')
+                    .attr('x', 8)
+                    .attr('dy', 0)
+                    .text(`Domain: ${d.name}`);
+                
+                tooltipText.append('tspan')
+                    .attr('x', 8)
+                    .attr('dy', '1.2em')
+                    .text(`Total Opens: ${d.value}`);
+                
+                tooltipText.append('tspan')
+                    .attr('x', 8)
+                    .attr('dy', '1.2em')
+                    .text(`Emails: ${d.emails}`);
+                
+                tooltipText.append('tspan')
+                    .attr('x', 8)
+                    .attr('dy', '1.2em')
+                    .text(`Avg Opens: ${(d.value / d.emails).toFixed(1)}`);
+                
+                const bbox = tooltipText.node().getBBox();
+                tooltipBg
+                    .attr('width', bbox.width + 16)
+                    .attr('height', bbox.height + 8);
+                
+                let tooltipX = d.x + 10;
+                let tooltipY = d.y - 10;
+                
+                tooltip
+                    .attr('transform', `translate(${tooltipX}, ${tooltipY - bbox.height - 8})`)
+                    .transition()
+                    .duration(200)
+                    .attr('opacity', 1);
+            })
+            .on('mouseout', function() {
+                d3.select(this).select('circle')
+                    .transition()
+                    .duration(200)
+                    .attr('r', d => d.isCenter ? 20 : Math.max(5, Math.sqrt(d.value) / 1.5));
+                
+                // Reset links
+                link.transition()
+                    .duration(200)
+                    .attr('stroke', '#999')
+                    .attr('stroke-width', d => Math.max(1, Math.sqrt(d.value) / 5));
+                
+                // Remove tooltip
+                svg.select('.tooltip').remove();
+            });
+            
+            // Update positions on simulation tick
+            simulation.on('tick', () => {
+                link
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+                
+                node.attr('transform', d => `translate(${d.x}, ${d.y})`);
+            });
+            
+            // Drag functions
+            function dragstarted(event) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                event.subject.fx = event.subject.x;
+                event.subject.fy = event.subject.y;
+            }
+            
+            function dragged(event) {
+                event.subject.fx = event.x;
+                event.subject.fy = event.y;
+            }
+            
+            function dragended(event) {
+                if (!event.active) simulation.alphaTarget(0);
+                event.subject.fx = null;
+                event.subject.fy = null;
+            }
+        }
+        
+        // Analyze surveillance patterns
+        function analyzeSurveillancePatterns() {
+            const patternsContainer = document.getElementById('patternsAnalysis');
+            patternsContainer.innerHTML = '';
+            
+            // Identify high surveillance emails
+            const highSurveillance = emailData
+                .filter(email => email.OpensCount >= 10)
+                .sort((a, b) => b.OpensCount - a.OpensCount);
+            
+            if (highSurveillance.length === 0) {
+                patternsContainer.innerHTML = `
+                    <div class="p-4 bg-gray-200 dark:bg-gray-700 rounded-md">
+                        <p class="text-gray-700 dark:text-gray-300">No significant surveillance patterns detected in your data.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 1. Find domains with systematic surveillance
+            const domainSurveillance = {};
+            emailData.forEach(email => {
+                if (!email.Domain) return;
+                
+                if (!domainSurveillance[email.Domain]) {
+                    domainSurveillance[email.Domain] = {
+                        domain: email.Domain,
+                        totalEmails: 0,
+                        totalOpens: 0,
+                        highSurveillanceCount: 0,
+                        subjects: {}
+                    };
+                }
+                
+                domainSurveillance[email.Domain].totalEmails++;
+                domainSurveillance[email.Domain].totalOpens += email.OpensCount;
+                
+                if (email.OpensCount >= 10) {
+                    domainSurveillance[email.Domain].highSurveillanceCount++;
+                }
+                
+                // Track subjects for this domain
+                if (email.Subject) {
+                    if (!domainSurveillance[email.Domain].subjects[email.Subject]) {
+                        domainSurveillance[email.Domain].subjects[email.Subject] = 0;
+                    }
+                    domainSurveillance[email.Domain].subjects[email.Subject] += email.OpensCount;
+                }
+            });
+            
+            // Filter domains with significant surveillance
+            const significantDomains = Object.values(domainSurveillance)
+                .filter(d => d.highSurveillanceCount >= 2 || (d.totalEmails >= 5 && d.totalOpens / d.totalEmails >= 8))
+                .sort((a, b) => (b.totalOpens / b.totalEmails) - (a.totalOpens / a.totalEmails));
+            
+            // 2. Find temporal patterns (e.g., spikes in surveillance)
+            const monthlyActivity = {};
+            emailData.forEach(email => {
+                if (!email.SentDate) return;
+                
+                const monthYear = `${email.SentDate.getMonth() + 1}/${email.SentDate.getFullYear()}`;
+                if (!monthlyActivity[monthYear]) {
+                    monthlyActivity[monthYear] = {
+                        period: monthYear,
+                        date: new Date(email.SentDate.getFullYear(), email.SentDate.getMonth(), 1),
+                        totalEmails: 0,
+                        totalOpens: 0
+                    };
+                }
+                
+                monthlyActivity[monthYear].totalEmails++;
+                monthlyActivity[monthYear].totalOpens += email.OpensCount;
+            });
+            
+            const monthlyData = Object.values(monthlyActivity)
+                .sort((a, b) => a.date - b.date);
+            
+            // Identify months with high surveillance
+            const highSurveillanceMonths = monthlyData
+                .filter(m => m.totalEmails >= 3 && (m.totalOpens / m.totalEmails) >= 8)
+                .sort((a, b) => (b.totalOpens / b.totalEmails) - (a.totalOpens / a.totalEmails));
+            
+            // 3. Find subject patterns (topics that trigger surveillance)
+            const subjectPatterns = {};
+            emailData.forEach(email => {
+                if (!email.Subject) return;
+                
+                // Clean up and normalize the subject
+                const words = email.Subject.toLowerCase().split(/\s+/);
+                words.forEach(word => {
+                    if (word.length < 3) return; // Skip short words
+                    
+                    if (!subjectPatterns[word]) {
+                        subjectPatterns[word] = {
+                            word,
+                            occurrences: 0,
+                            totalOpens: 0
+                        };
+                    }
+                    
+                    subjectPatterns[word].occurrences++;
+                    subjectPatterns[word].totalOpens += email.OpensCount;
+                });
+            });
+            
+            // Filter significant subject patterns
+            const significantSubjects = Object.values(subjectPatterns)
+                .filter(s => s.occurrences >= 3 && (s.totalOpens / s.occurrences) >= 5)
+                .sort((a, b) => (b.totalOpens / b.occurrences) - (a.totalOpens / a.occurrences))
+                .slice(0, 10); // Top 10 subjects
+            
+            // Build the analysis HTML
+            let analysisHTML = '';
+            
+            // Add domain surveillance pattern
+            if (significantDomains.length > 0) {
+                analysisHTML += `
+                    <div class="p-4 bg-red-50 dark:bg-red-900 dark:bg-opacity-20 rounded-md">
+                        <h4 class="font-semibold text-lg text-red-800 dark:text-red-300">Systematic Domain Surveillance Detected</h4>
+                        <p class="text-gray-700 dark:text-gray-300 mt-1 mb-3">The following domains/organizations show systematic email monitoring patterns:</p>
+                        
+                        <div class="space-y-3">
+                `;
+                
+                significantDomains.slice(0, 5).forEach(domain => {
+                    analysisHTML += `
+                        <div class="bg-white dark:bg-gray-800 p-3 rounded-md shadow-sm">
+                            <div class="flex justify-between">
+                                <h5 class="font-semibold">${domain.domain}</h5>
+                                <span class="text-red-500 dark:text-red-400 font-semibold">${(domain.totalOpens / domain.totalEmails).toFixed(1)} opens/email</span>
+                            </div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                ${domain.totalEmails} emails with ${domain.totalOpens} total opens
+                                (${domain.highSurveillanceCount} emails with high surveillance)
+                            </p>
+                            
+                            <div class="mt-2 text-sm">
+                                <p class="font-medium text-gray-700 dark:text-gray-300">Most monitored subjects:</p>
+                                <ul class="list-disc list-inside mt-1 space-y-1">
+                    `;
+                    
+                    // Show top 3 most opened subjects for this domain
+                    const topSubjects = Object.entries(domain.subjects)
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 3);
+                    
+                    topSubjects.forEach(([subject, opens]) => {
+                        analysisHTML += `
+                            <li>${subject.length > 40 ? subject.substring(0, 40) + '...' : subject} <span class="text-red-500 dark:text-red-400">(${opens} opens)</span></li>
+                        `;
+                    });
+                    
+                    analysisHTML += `
+                                </ul>
+                            </div>
+                            
+                            <div class="mt-2">
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    <strong>Risk Level:</strong> ${domain.totalOpens / domain.totalEmails >= 15 ? 'High' : 'Medium'} - 
+                                    ${domain.totalOpens / domain.totalEmails >= 15 ? 
+                                        'Evidence of excessive monitoring, potential GDPR violation' : 
+                                        'Systematic monitoring that may exceed necessary access'}
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                analysisHTML += `
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Add temporal pattern analysis
+            if (highSurveillanceMonths.length > 0) {
+                analysisHTML += `
+                    <div class="p-4 bg-yellow-50 dark:bg-yellow-900 dark:bg-opacity-20 rounded-md mt-4">
+                        <h4 class="font-semibold text-lg text-yellow-800 dark:text-yellow-300">Temporal Surveillance Patterns</h4>
+                        <p class="text-gray-700 dark:text-gray-300 mt-1 mb-3">Periods of heightened email surveillance were detected:</p>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-300 dark:divide-gray-600">
+                                <thead>
+                                    <tr class="bg-gray-100 dark:bg-gray-700">
+                                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Time Period</th>
+                                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Total Emails</th>
+                                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Total Opens</th>
+                                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Avg. Opens</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                `;
+                
+                highSurveillanceMonths.slice(0, 5).forEach(month => {
+                    const avgOpens = month.totalOpens / month.totalEmails;
+                    
+                    analysisHTML += `
+                        <tr>
+                            <td class="px-3 py-2 whitespace-nowrap">${month.date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</td>
+                            <td class="px-3 py-2">${month.totalEmails}</td>
+                            <td class="px-3 py-2">${month.totalOpens}</td>
+                            <td class="px-3 py-2 font-semibold ${
+                                avgOpens >= 15 ? 'text-red-500 dark:text-red-400' : 
+                                avgOpens >= 10 ? 'text-yellow-500 dark:text-yellow-400' : 
+                                'text-gray-900 dark:text-gray-100'
+                            }">${avgOpens.toFixed(1)}</td>
+                        </tr>
+                    `;
+                });
+                
+                analysisHTML += `
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <p class="mt-3 text-sm text-gray-600 dark:text-gray-400">
+                            These periods show unusual surveillance activity and correlate with significant events or communications.
+                        </p>
+                    </div>
+                `;
+            }
+            
+            // Add subject pattern analysis
+            if (significantSubjects.length > 0) {
+                analysisHTML += `
+                    <div class="p-4 bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20 rounded-md mt-4">
+                        <h4 class="font-semibold text-lg text-blue-800 dark:text-blue-300">Trigger Words & Monitored Topics</h4>
+                        <p class="text-gray-700 dark:text-gray-300 mt-1 mb-3">These terms appear to trigger higher surveillance when included in email subjects:</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                `;
+                
+                significantSubjects.forEach(subject => {
+                    const avgOpens = subject.totalOpens / subject.occurrences;
+                    
+                    analysisHTML += `
+                        <div class="bg-white dark:bg-gray-800 p-3 rounded-md shadow-sm">
+                            <div class="flex justify-between items-center">
+                                <span class="font-medium">"${subject.word}"</span>
+                                <span class="text-sm ${
+                                    avgOpens >= 15 ? 'text-red-500 dark:text-red-400' : 
+                                    avgOpens >= 10 ? 'text-yellow-500 dark:text-yellow-400' : 
+                                    'text-blue-500 dark:text-blue-400'
+                                } font-semibold">${avgOpens.toFixed(1)} opens/email</span>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Appears in ${subject.occurrences} emails with ${subject.totalOpens} total opens</p>
+                        </div>
+                    `;
+                });
+                
+                analysisHTML += `
+                        </div>
+                        
+                        <p class="mt-3 text-sm text-gray-600 dark:text-gray-400">
+                            Emails containing these terms receive significantly higher scrutiny and monitoring.
+                        </p>
+                    </div>
+                `;
+            }
+            
+            // Add top individual emails with extraordinary surveillance
+            const extremeSurveillance = emailData
+                .filter(email => email.OpensCount >= 20)
+                .sort((a, b) => b.OpensCount - a.OpensCount)
+                .slice(0, 5);
+            
+            if (extremeSurveillance.length > 0) {
+                analysisHTML += `
+                    <div class="p-4 bg-red-50 dark:bg-red-900 dark:bg-opacity-20 rounded-md mt-4">
+                        <h4 class="font-semibold text-lg text-red-800 dark:text-red-300">Extreme Surveillance Cases</h4>
+                        <p class="text-gray-700 dark:text-gray-300 mt-1 mb-3">These specific emails show extraordinary monitoring levels:</p>
+                        
+                        <div class="space-y-3">
+                `;
+                
+                extremeSurveillance.forEach(email => {
+                    analysisHTML += `
+                        <div class="bg-white dark:bg-gray-800 p-3 rounded-md shadow-sm">
+                            <div class="flex justify-between">
+                                <h5 class="font-semibold">${email.Subject || 'No Subject'}</h5>
+                                <span class="text-red-500 dark:text-red-400 font-semibold">${email.OpensCount} opens</span>
+                            </div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                To: ${email.Recipient}
+                            </p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                Sent: ${formatDate(email.SentDate)}, Last opened: ${formatDate(email.LastOpenedDate)}
+                            </p>
+                            
+                            <div class="mt-2">
+                                <p class="text-xs text-red-600 dark:text-red-400 font-semibold">
+                                    This level of access indicates deliberate surveillance and may constitute a data protection violation.
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                analysisHTML += `
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Add intelligence summary and recommendations
+            analysisHTML += `
+                <div class="p-4 bg-gray-100 dark:bg-gray-700 rounded-md mt-4">
+                    <h4 class="font-semibold text-lg">Intelligence Summary & Recommendations</h4>
+                    
+                    <div class="mt-3 space-y-2">
+                        <p class="text-gray-700 dark:text-gray-300">
+                            <strong>Key Finding:</strong> ${
+                                significantDomains.length > 0 ? 
+                                `Systematic surveillance by ${significantDomains.length} domains with pattern consistency suggestive of organizational monitoring.` :
+                                'Scattered surveillance without clear organizational patterns.'
+                            }
+                        </p>
+                        
+                        <p class="text-gray-700 dark:text-gray-300">
+                            <strong>Risk Assessment:</strong> ${
+                                highSurveillance.length >= 10 ? 'High' :
+                                highSurveillance.length >= 5 ? 'Medium' : 'Low'
+                            } - ${
+                                highSurveillance.length >= 10 ? 'Multiple instances of excessive monitoring suggest deliberate surveillance systems.' :
+                                highSurveillance.length >= 5 ? 'Several instances of questionable access patterns warrant investigation.' :
+                                'Limited evidence of systematic surveillance, but some concerning patterns.'
+                            }
+                        </p>
+                        
+                        <p class="text-gray-700 dark:text-gray-300">
+                            <strong>Recommended Actions:</strong>
+                        </p>
+                        
+                        <ul class="list-disc list-inside text-gray-700 dark:text-gray-300 ml-4 space-y-1">
+                            <li>Generate GDPR subject access requests to top monitoring domains</li>
+                            <li>Document all high-surveillance emails as potential evidence</li>
+                            <li>Consider using encrypted communications for sensitive topics</li>
+                            <li>${
+                                extremeSurveillance.length > 0 ?
+                                'Prepare formal complaints for cases with excessive access (20+ opens)' :
+                                'Monitor for escalation in surveillance patterns over time'
+                            }</li>
+                            <li>Consider using alternative communication channels for topics that trigger high monitoring</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+            
+            // Add the analysis to the container
+            patternsContainer.innerHTML = analysisHTML;
+        }
+        
+        // Generate a report
+        function generateReport(type, specificEmail = null) {
+            let title = '';
+            let content = '';
+            
+            const currentDate = new Date().toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            // Generate appropriate report based on type
+            switch (type) {
+                case 'legal':
+                    title = 'Forensic Email Surveillance Report';
+                    content = generateLegalReport();
+                    break;
+                case 'gdpr':
+                    title = 'GDPR Violation Evidence Report';
+                    content = generateGDPRReport();
+                    break;
+                case 'public':
+                    title = 'Public Interest Disclosure: Email Surveillance Evidence';
+                    content = generatePublicReport();
+                    break;
+                case 'detail':
+                    title = `Email Detail: ${specificEmail.Subject || 'No Subject'}`;
+                    content = generateEmailDetailReport(specificEmail);
+                    break;
+                default:
+                    title = 'Email Surveillance Report';
+                    content = '<p>Report type not specified.</p>';
+            }
+            
+            // Update the modal
+            reportTitle.textContent = title;
+            reportContent.innerHTML = content;
+            
+            // Show the modal
+            reportModal.classList.remove('hidden');
+        }
+        
+        // Generate a legal evidence report
+        function generateLegalReport() {
+            const currentDate = new Date().toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            // Get high surveillance emails
+            const highSurveillance = emailData
+                .filter(email => email.OpensCount >= 10)
+                .sort((a, b) => b.OpensCount - a.OpensCount);
+            
+            // Get organization surveillance data
+            const orgSurveillance = {};
+            emailData.forEach(email => {
+                if (!email.Domain) return;
+                
+                if (!orgSurveillance[email.Domain]) {
+                    orgSurveillance[email.Domain] = {
+                        domain: email.Domain,
+                        totalEmails: 0,
+                        totalOpens: 0,
+                        highSurveillanceCount: 0
+                    };
+                }
+                
+                orgSurveillance[email.Domain].totalEmails++;
+                orgSurveillance[email.Domain].totalOpens += email.OpensCount;
+                
+                if (email.OpensCount >= 10) {
+                    orgSurveillance[email.Domain].highSurveillanceCount++;
+                }
+            });
+            
+            // Get top surveillance organizations
+            const topOrgs = Object.values(orgSurveillance)
+                .filter(org => org.totalEmails >= 3)
+                .sort((a, b) => (b.totalOpens / b.totalEmails) - (a.totalOpens / a.totalEmails))
+                .slice(0, 10);
+            
+            let report = `
+                <div class="space-y-6">
+                    <div class="text-center">
+                        <h1 class="text-2xl font-bold">FORENSIC EMAIL SURVEILLANCE REPORT</h1>
+                        <p class="text-gray-600 dark:text-gray-400">Generated on ${currentDate}</p>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-semibold">1. EXECUTIVE SUMMARY</h2>
+                        <p>This forensic report documents evidence of email surveillance patterns identified through email tracking data. The analysis reveals ${highSurveillance.length} instances of high-level surveillance (10+ opens) and ${topOrgs.length} organizations with systematic monitoring patterns. This report provides evidence suitable for legal proceedings related to privacy violations, data protection breaches, or procedural impropriety.</p>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-semibold">2. METHODOLOGY</h2>
+                        <p>The analysis utilized comprehensive email tracking data collected through authorized tracking mechanisms. All timestamps and access metrics were preserved with full chain of custody. The analytical methodology focused on:</p>
+                        <ul class="list-disc list-inside ml-4 space-y-1">
+                            <li>Quantitative analysis of access frequencies</li>
+                            <li>Temporal pattern identification</li>
+                            <li>Domain/organization correlation</li>
+                            <li>Subject matter classification</li>
+                            <li>Comparative baseline establishment</li>
+                        </ul>
+                        <p class="mt-2">This methodology aligns with accepted forensic standards for digital evidence collection and analysis.</p>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-semibold">3. SURVEILLANCE EVIDENCE SUMMARY</h2>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-300 dark:divide-gray-600 mt-2">
+                                <thead class="bg-gray-100 dark:bg-gray-700">
+                                    <tr>
+                                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Category</th>
+                                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Count</th>
+                                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Percentage</th>
+                                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Legal Significance</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                    <tr>
+                                        <td class="px-3 py-2">Total Emails</td>
+                                        <td class="px-3 py-2">${emailData.length}</td>
+                                        <td class="px-3 py-2">100%</td>
+                                        <td class="px-3 py-2">Baseline dataset</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-3 py-2">Extreme Surveillance (20+ opens)</td>
+                                        <td class="px-3 py-2">${emailData.filter(e => e.OpensCount >= 20).length}</td>
+                                        <td class="px-3 py-2">${((emailData.filter(e => e.OpensCount >= 20).length / emailData.length) * 100).toFixed(1)}%</td>
+                                        <td class="px-3 py-2">Prima facie evidence of excessive access</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-3 py-2">High Surveillance (10-19 opens)</td>
+                                        <td class="px-3 py-2">${emailData.filter(e => e.OpensCount >= 10 && e.OpensCount < 20).length}</td>
+                                        <td class="px-3 py-2">${((emailData.filter(e => e.OpensCount >= 10 && e.OpensCount < 20).length / emailData.length) * 100).toFixed(1)}%</td>
+                                        <td class="px-3 py-2">Questionable necessity under data minimization</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-3 py-2">Medium Surveillance (5-9 opens)</td>
+                                        <td class="px-3 py-2">${emailData.filter(e => e.OpensCount >= 5 && e.OpensCount < 10).length}</td>
+                                        <td class="px-3 py-2">${((emailData.filter(e => e.OpensCount >= 5 && e.OpensCount < 10).length / emailData.length) * 100).toFixed(1)}%</td>
+                                        <td class="px-3 py-2">Potential unusual interest</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-semibold">4. ORGANIZATIONAL SURVEILLANCE PATTERNS</h2>
+                        <p>The following organizations demonstrate systematic monitoring patterns that may be relevant to legal proceedings:</p>
+                        
+                        <div class="space-y-3 mt-3">
+            `;
+            
+            // Add top surveillance organizations
+            topOrgs.slice(0, 5).forEach(org => {
+                const averageOpens = org.totalOpens / org.totalEmails;
+                
+                report += `
+                    <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-md">
+                        <div class="flex justify-between">
+                            <h3 class="font-medium">${org.domain}</h3>
+                            <span class="font-semibold ${
+                                averageOpens >= 15 ? 'text-red-600 dark:text-red-400' :
+                                averageOpens >= 10 ? 'text-red-500 dark:text-red-300' :
+                                'text-yellow-600 dark:text-yellow-400'
+                            }">${averageOpens.toFixed(1)} opens/email</span>
+                        </div>
+                        <p class="text-sm mt-1">Total emails: ${org.totalEmails} | Total opens: ${org.totalOpens} | High surveillance emails: ${org.highSurveillanceCount}</p>
+                        <p class="text-sm mt-1 ${
+                            averageOpens >= 15 ? 'text-red-600 dark:text-red-400' :
+                            averageOpens >= 10 ? 'text-red-500 dark:text-red-300' :
+                            'text-gray-600 dark:text-gray-400'
+                        }">
+                            <strong>Legal Assessment:</strong> ${
+                                averageOpens >= 15 ? 'Strong evidence of excessive monitoring beyond necessity' :
+                                averageOpens >= 10 ? 'Pattern suggests systematic observation exceeding normal use' :
+                                'Consistent above-average monitoring pattern'
+                            }
+                        </p>
+                    </div>
+                `;
+            });
+            
+            report += `
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-semibold">5. KEY EVIDENCE CASES</h2>
+                        <p>The following communications show exceptional levels of monitoring that may constitute privacy violations:</p>
+                        
+                        <div class="space-y-3 mt-3">
+            `;
+            
+            // Add top surveillance emails
+            highSurveillance.slice(0, 5).forEach((email, index) => {
+                report += `
+                    <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-md">
+                        <h3 class="font-medium">Evidence Item ${index + 1}: ${email.Subject || 'No Subject'}</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
+                            <div>
+                                <p class="text-sm"><strong>Recipient:</strong> ${email.Recipient}</p>
+                                <p class="text-sm"><strong>Sent:</strong> ${formatDate(email.SentDate)}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm"><strong>Last Opened:</strong> ${formatDate(email.LastOpenedDate)}</p>
+                                <p class="text-sm"><strong>Total Opens:</strong> <span class="font-semibold text-red-600 dark:text-red-400">${email.OpensCount}</span></p>
+                            </div>
+                        </div>
+                        <p class="text-sm mt-2">
+                            <strong>Forensic Assessment:</strong> ${
+                                email.OpensCount >= 50 ? 'Extraordinary level of surveillance indicating deliberate and persistent monitoring' :
+                                email.OpensCount >= 20 ? 'Excessive access pattern suggesting coordinated review or distribution' :
+                                'Unusual access frequency exceeding reasonable necessity'
+                            }
+                        </p>
+                    </div>
+                `;
+            });
+            
+            report += `
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-semibold">6. LEGAL IMPLICATIONS</h2>
+                        <p>Based on the patterns identified, the following legal considerations may apply:</p>
+                        
+                        <div class="space-y-3 mt-3">
+                            <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-md">
+                                <h3 class="font-medium">Data Protection Considerations</h3>
+                                <ul class="list-disc list-inside ml-4 space-y-1 mt-2">
+                                    <li>Potential violations of GDPR Article 5(1)(c) - Data Minimization Principle</li>
+                                    <li>Possible breach of Article 6 - Lawful Basis for Processing</li>
+                                    <li>Questions regarding compliance with Article 13/14 - Information Provision</li>
+                                    <li>Concerns about unauthorized data sharing (Article 44-50) if multiple parties accessed</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-md">
+                                <h3 class="font-medium">Procedural Irregularities</h3>
+                                <ul class="list-disc list-inside ml-4 space-y-1 mt-2">
+                                    <li>Evidence suggesting potential coordination between multiple entities</li>
+                                    <li>Indications of targeted monitoring based on subject matter</li>
+                                    <li>Temporal correlation between surveillance spikes and significant events</li>
+                                    <li>Pattern consistency suggesting systematic rather than incidental access</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-md">
+                                <h3 class="font-medium">Evidentiary Strength</h3>
+                                <p class="mt-2">This report contains digital forensic evidence that meets threshold requirements for:</p>
+                                <ul class="list-disc list-inside ml-4 space-y-1 mt-1">
+                                    <li>Subject Access Requests under GDPR Article 15</li>
+                                    <li>Complaints to Supervisory Authorities (ICO)</li>
+                                    <li>Supporting evidence in related legal proceedings</li>
+                                    <li>Documentation for public interest disclosures</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-semibold">7. RECOMMENDED ACTIONS</h2>
+                        <ul class="list-disc list-inside ml-4 space-y-1 mt-2">
+                            <li>Submit formal Subject Access Requests to organizations with highest surveillance metrics</li>
+                            <li>Preserve this forensic report and underlying data as evidence</li>
+                            <li>Consider filing complaints with appropriate data protection authorities</li>
+                            <li>Evaluate legal options regarding excessive surveillance</li>
+                            <li>Implement enhanced privacy measures for future communications</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-semibold">8. CERTIFICATION</h2>
+                        <p>This forensic report was generated using objective data analysis methods. The underlying email tracking data has been preserved with full chain of custody. The patterns identified represent factual evidence suitable for evaluation in legal proceedings.</p>
+                        <p class="mt-2">Generated by: Justice Minds Forensic Intelligence</p>
+                        <p>Date: ${currentDate}</p>
+                    </div>
+                </div>
+            `;
+            
+            return report;
+        }
+        
+        // Generate a GDPR violation report
+        function generateGDPRReport() {
+            const currentDate = new Date().toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            // Get high surveillance emails
+            const excessiveAccess = emailData
+                .filter(email => email.OpensCount >= 20)
+                .sort((a, b) => b.OpensCount - a.OpensCount);
+            
+            const highAccess = emailData
+                .filter(email => email.OpensCount >= 10 && email.OpensCount < 20)
+                .sort((a, b) => b.OpensCount - a.OpensCount);
+            
+            // Get organization surveillance data
+            const orgSurveillance = {};
+            emailData.forEach(email => {
+                if (!email.Domain) return;
+                
+                if (!orgSurveillance[email.Domain]) {
+                    orgSurveillance[email.Domain] = {
+                        domain: email.Domain,
+                        totalEmails: 0,
+                        totalOpens: 0,
+                        highSurveillanceCount: 0
+                    };
+                }
+                
+                orgSurveillance[email.Domain].totalEmails++;
+                orgSurveillance[email.Domain].totalOpens += email.OpensCount;
+                
+                if (email.OpensCount >= 10) {
+                    orgSurveillance[email.Domain].highSurveillanceCount++;
+                }
+            });
+            
+            // Get top surveillance organizations
+            const topOrgs = Object.values(orgSurveillance)
+                .filter(org => org.totalEmails >= 3 && (org.totalOpens / org.totalEmails) >= 5)
+                .sort((a, b) => (b.totalOpens / b.totalEmails) - (a.totalOpens / a.totalEmails))
+                .slice(0, 5);
+            
+            let report = `
+                <div class="space-y-6">
+                    <div class="text-center">
+                        <h1 class="text-2xl font-bold">GDPR VIOLATION EVIDENCE REPORT</h1>
+                        <p class="text-gray-600 dark:text-gray-400">For ICO/DPA Complaint Submission</p>
+                        <p class="text-gray-600 dark:text-gray-400">Generated on ${currentDate}</p>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-semibold">1. EXECUTIVE SUMMARY</h2>
+                        <p>This report documents evidence of potential GDPR violations identified through analysis of email tracking data. The evidence shows patterns of excessive access to personal communications that appear to violate core GDPR principles including data minimization, purpose limitation, and potentially lawful basis requirements. This report identifies ${excessiveAccess.length} cases of excessive access (20+ opens) and ${topOrgs.length} organizations with systematic access patterns that warrant investigation by data protection authorities.</p>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-semibold">2. APPLICABLE GDPR PROVISIONS</h2>
+                        <div class="space-y-3 mt-2">
+                            <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-md">
+                                <h3 class="font-medium">Article 5 - Principles relating to processing of personal data</h3>
+                                <ul class="list-disc list-inside ml-4 space-y-1 mt-1 text-sm">
+                                    <li><strong>5(1)(a) - Lawfulness, fairness and transparency:</strong> Evidence suggests potential unfair processing through excessive monitoring</li>
+                                    <li><strong>5(1)(b) - Purpose limitation:</strong> Multiple access instances exceed reasonable purpose requirements</li>
+                                    <li><strong>5(1)(c) - Data minimization:</strong> Excessive opens violate minimization principles</li>
+                                    <li><strong>5(1)(f) - Integrity and confidentiality:</strong> Pattern suggests questionable security practices</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-md">
+                                <h3 class="font-medium">Article 6 - Lawfulness of processing</h3>
+                                <p class="text-sm mt-1">Evidence suggests potential lack of lawful basis for repeated excessive access to communications, particularly where frequency exceeds reasonable operational necessity.</p>
+                            </div>
+                            
+                            <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-md">
+                                <h3 class="font-medium">Article 13/14 - Information to be provided</h3>
+                                <p class="text-sm mt-1">Evidence raises questions about whether data subjects were adequately informed about the extent and nature of processing, particularly regarding repeated access patterns.</p>
+                            </div>
+                            
+                            <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-md">
+                                <h3 class="font-medium">Article 15 - Right of access</h3>
+                                <p class="text-sm mt-1">This report serves as preliminary evidence to support Subject Access Requests to controllers to determine full extent of processing and access.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-semibold">3. PRIMARY EVIDENCE OF VIOLATIONS</h2>
+                        <p>The following table presents the most significant instances of potential GDPR violations:</p>
+                        
+                        <div class="overflow-x-auto mt-3">
+                            <table class="min-w-full divide-y divide-gray-300 dark:divide-gray-600">
+                                <thead class="bg-gray-100 dark:bg-gray-700">
+                                    <tr>
+                                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Controller (Domain)</th>
+                                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Subject Matter</th>
+                                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Access Count</th>
+                                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Potential Violation</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+            `;
+            
+            // Add top excessive access emails
+            excessiveAccess.slice(0, 10).forEach(email => {
+                report += `
+                    <tr>
+                        <td class="px-3 py-2">${email.Domain}</td>
+                        <td class="px-3 py-2">${email.Subject || 'No Subject'}</td>
+                        <td class="px-3 py-2 font-semibold text-red-600 dark:text-red-400">${email.OpensCount}</td>
+                        <td class="px-3 py-2">
+                            <span class="text-sm">
+                                ${email.OpensCount >= 50 ? 'Severe violation of data minimization and purpose limitation' : 
+                                  email.OpensCount >= 20 ? 'Clear excessive processing beyond legitimate purpose' : 
+                                  'Questionable necessity of repetitive access'}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            report += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-semibold">4. SYSTEMATIC CONTROLLER VIOLATIONS</h2>
+                        <p>The following data controllers demonstrate systematic patterns that suggest organizational GDPR compliance issues:</p>
+                        
+                        <div class="space-y-3 mt-3">
+            `;
+            
+            // Add top surveillance organizations
+            topOrgs.forEach(org => {
+                const averageOpens = org.totalOpens / org.totalEmails;
+                
+                report += `
+                    <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-md">
+                        <div class="flex justify-between">
+                            <h3 class="font-medium">${org.domain}</h3>
+                            <span class="font-semibold text-red-600 dark:text-red-400">${averageOpens.toFixed(1)} opens/email</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mt-2 text-sm">
+                            <p><strong>Total emails:</strong> ${org.totalEmails}</p>
+                            <p><strong>Total opens:</strong> ${org.totalOpens}</p>
+                            <p><strong>High surveillance instances:</strong> ${org.highSurveillanceCount}</p>
+                        </div>
+                        <p class="text-sm mt-2">
+                            <strong>GDPR Compliance Assessment:</strong> ${
+                                averageOpens >= 15 ? 'Systematic excessive processing pattern indicating significant compliance failure' :
+                                averageOpens >= 10 ? 'Recurring access patterns suggesting organizational non-compliance' :
+                                'Questionable processing practices requiring investigation'
+                            }
+                        </p>
+                    </div>
+                `;
+            });
+            
+            report += `
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-semibold">5. SUBJECT ACCESS REQUEST TEMPLATE</h2>
+                        <p>The following template can be used to submit GDPR Article 15 requests to controllers identified in this report:</p>
+                        
+                        <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-md mt-3">
+                            <p class="italic text-sm text-gray-600 dark:text-gray-400">Copy and customize this template for each data controller:</p>
+                            
+                            <div class="border-l-4 border-primary pl-4 py-2 mt-2">
+                                <p>[Your Name]<br>[Your Address]<br>[Your Email]</p>
+                                <p class="mt-2">[Data Controller Name]<br>[Data Controller Address]</p>
+                                <p class="mt-3"><strong>Subject: GDPR Article 15 Subject Access Request</strong></p>
+                                <p class="mt-2">Dear Data Protection Officer,</p>
+                                <p class="mt-2">I am writing to you as the data subject to make a subject access request under Article 15 of the General Data Protection Regulation (GDPR).</p>
+                                <p class="mt-2">I have evidence that you have been processing my personal data contained in email communications between us. My tracking systems have detected unusually high access levels to specific emails, with some being accessed [number] times. This raises serious concerns about compliance with GDPR principles, particularly data minimization (Article 5(1)(c)) and purpose limitation (Article 5(1)(b)).</p>
+                                <p class="mt-2">I hereby request that you provide me with:</p>
+                                <ol class="list-decimal list-inside ml-4 space-y-1 mt-1">
+                                    <li>Confirmation that you are processing my personal data</li>
+                                    <li>A copy of my personal data that you are processing</li>
+                                    <li>The purposes of the processing</li>
+                                    <li>The categories of personal data concerned</li>
+                                    <li>The recipients or categories of recipients to whom my personal data have been or will be disclosed, particularly recipients in third countries or international organizations</li>
+                                    <li>Where possible, the envisaged period for which my personal data will be stored, or, if not possible, the criteria used to determine that period</li>
+                                    <li>Information about the source of the data, if not collected directly from me</li>
+                                    <li>The existence of automated decision-making, including profiling</li>
+                                    <li><strong>Specific information about each instance my email communications were accessed, by whom, and for what purpose</strong></li>
+                                </ol>
+                                <p class="mt-2">Specific emails of concern include those sent on [dates] with subjects [subjects].</p>
+                                <p class="mt-2">As per Article 12(3) of the GDPR, please provide the requested information within one month of receipt of this request. If you need additional time, please notify me, explaining the reasons for the delay.</p>
+                                <p class="mt-2">If you are not the appropriate person to receive this request, please forward it to the relevant person or department responsible for data protection matters.</p>
+                                <p class="mt-2">Yours sincerely,</p>
+                                <p>[Your Name]</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-semibold">6. ICO COMPLAINT PREPARATION</h2>
+                        <p>Based on the evidence in this report, consideration should be given to filing formal complaints with the Information Commissioner's Office (ICO). The key elements for such a complaint are:</p>
+                        
+                        <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-md mt-3">
+                            <h3 class="font-medium">Complaint Framework</h3>
+                            <ul class="list-disc list-inside ml-4 space-y-1 mt-2 text-sm">
+                                <li>Clear identification of the data controllers involved</li>
+                                <li>Specific evidence of excessive processing as documented in this report</li>
+                                <li>Chronology of events including dates and access patterns</li>
+                                <li>Reference to specific GDPR articles potentially violated</li>
+                                <li>Evidence of attempts to resolve directly with the controller (via SAR)</li>
+                                <li>Request for specific remedies and investigation</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-semibold">7. REMEDIES SOUGHT</h2>
+                        <p>Based on the evidence presented, the following remedies should be considered:</p>
+                        <ul class="list-disc list-inside ml-4 space-y-1 mt-2">
+                            <li>Full disclosure of all processing activities related to the identified communications</li>
+                            <li>Explanation for the excessive access patterns documented</li>
+                            <li>Identification of all parties who had access to the communications</li>
+                            <li>Confirmation of any subsequent processing or sharing of the data</li>
+                            <li>Implementation of enhanced data protection measures by the controllers</li>
+                            <li>Where appropriate, compensation for any distress caused by the violations</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-semibold">8. CERTIFICATION</h2>
+                        <p>This GDPR evidence report was generated using objective data tracking metrics. The patterns identified represent factual evidence suitable for investigation by data protection authorities and for inclusion in Subject Access Requests.</p>
+                        <p class="mt-2">Generated by: Justice Minds Forensic Intelligence</p>
+                        <p>Date: ${currentDate}</p>
+                    </div>
+                </div>
+            `;
+            
+            return report;
+        }
+        
+        // Generate a public interest report
+        function generatePublicReport() {
+            const currentDate = new Date().toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            // Get high surveillance emails
+            const excessiveAccess = emailData
+                .filter(email => email.OpensCount >= 20)
+                .sort((a, b) => b.OpensCount - a.OpensCount);
+            
+            // Get organization surveillance data
+            const orgSurveillance = {};
+            emailData.forEach(email => {
+                if (!email.Domain) return;
+                
+                if (!orgSurveillance[email.Domain]) {
+                    orgSurveillance[email.Domain] = {
+                        domain: email.Domain,
+                        totalEmails: 0,
+                        totalOpens: 0,
+                        highSurveillanceCount: 0,
+                        subjects: new Set()
+                    };
+                }
+                
+                orgSurveillance[email.Domain].totalEmails++;
+                orgSurveillance[email.Domain].totalOpens += email.OpensCount;
+                
+                if (email.OpensCount >= 10) {
+                    orgSurveillance[email.Domain].highSurveillanceCount++;
+                }
+                
+                if (email.Subject) {
+                    orgSurveillance[email.Domain].subjects.add(email.Subject);
+                }
+            });
+            
+            // Get top surveillance organizations
+            const topOrgs = Object.values(orgSurveillance)
+                .filter(org => org.totalEmails >= 3 && (org.totalOpens / org.totalEmails) >= 5)
+                .sort((a, b) => (b.totalOpens / b.totalEmails) - (a.totalOpens / a.totalEmails))
+                .slice(0, 5);
+            
+            // Identify types of communications under surveillance
+            const legalTerms = ['court', 'legal', 'justice', 'law', 'case', 'complaint', 'judge', 'hearing', 'eviction', 'notice', 'urgent attention', 'appeal', 'tribunal'];
+            const governmentTerms = ['council', 'government', 'official', 'department', 'ministry', 'authority', 'parliament', 'mp', 'dwp', 'nhs', 'police'];
+            
+            const legalEmails = emailData.filter(email => {
+                const subject = email.Subject ? email.Subject.toLowerCase() : '';
+                return legalTerms.some(term => subject.includes(term));
+            });
+            
+            const governmentEmails = emailData.filter(email => {
+                const subject = email.Subject ? email.Subject.toLowerCase() : '';
+                return governmentTerms.some(term => subject.includes(term));
+            });
+            
+            // Count total surveillance by category
+            const legalSurveillance = legalEmails.reduce((sum, email) => sum + email.OpensCount, 0);
+            const governmentSurveillance = governmentEmails.reduce((sum, email) => sum + email.OpensCount, 0);
+            
+            let report = `
+                <div class="space-y-6">
+                    <div class="text-center">
+                        <h1 class="text-2xl font-bold">PUBLIC INTEREST DISCLOSURE</h1>
+                        <h2 class="text-xl">Email Surveillance Evidence</h2>
+                        <p class="text-gray-600 dark:text-gray-400">Generated on ${currentDate}</p>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-semibold">1. DISCLOSURE STATEMENT</h2>
+                        <p>This public interest disclosure documents evidence of systematic email surveillance identified through comprehensive tracking data analysis. The patterns revealed raise serious concerns about privacy violations, potential data protection breaches, and questionable monitoring practices by multiple organizations. This disclosure is made in the public interest to expose surveillance practices that may affect many individuals and to promote transparency and accountability in data handling.</p>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-semibold">2. KEY FINDINGS</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                            <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
+                                <h3 class="font-medium">Scale of Surveillance</h3>
+                                <ul class="list-disc list-inside ml-4 space-y-1 mt-2 text-sm">
+                                    <li>Total communications analyzed: ${emailData.length}</li>
+                                    <li>Total surveillance instances: ${emailData.reduce((sum, email) => sum + email.OpensCount, 0)}</li>
+                                    <li>Extreme surveillance cases (20+ opens): ${excessiveAccess.length}</li>
+                                    <li>Organizations showing systematic monitoring: ${topOrgs.length}</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
+                                <h3 class="font-medium">Nature of Monitored Communications</h3>
+                                <ul class="list-disc list-inside ml-4 space-y-1 mt-2 text-sm">
+                                    <li>Legal/judicial matters: ${legalEmails.length} emails, ${legalSurveillance} total opens</li>
+                                    <li>Government/authority communications: ${governmentEmails.length} emails, ${governmentSurveillance} total opens</li>
+                                    <li>Emails containing "urgent" or similar: ${emailData.filter(e => e.Subject && e.Subject.toLowerCase().includes('urgent')).length}</li>
+                                    <li>Correlation between sensitive subject matter and increased surveillance</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-semibold">3. ORGANIZATIONAL SURVEILLANCE PATTERNS</h2>
+                        <p>Evidence shows systematic monitoring by several organizations that raises serious privacy concerns:</p>
+                        
+                        <div class="space-y-4 mt-3">
+            `;
+            
+            // Add top surveillance organizations
+            topOrgs.forEach((org, index) => {
+                const averageOpens = org.totalOpens / org.totalEmails;
+                
+                // Get sample subjects (up to 3)
+                const sampleSubjects = Array.from(org.subjects).slice(0, 3);
+                
+                report += `
+                    <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
+                        <h3 class="font-medium text-lg">Organization ${index + 1}: ${org.domain}</h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+                            <div class="bg-white dark:bg-gray-800 p-3 rounded-md shadow-sm">
+                                <h4 class="font-medium text-sm text-gray-600 dark:text-gray-400">Surveillance Metrics</h4>
+                                <p class="mt-1 font-semibold text-lg">${averageOpens.toFixed(1)} <span class="text-sm font-normal">opens per email</span></p>
+                                <p class="text-sm">${org.totalEmails} emails, ${org.totalOpens} total opens</p>
+                            </div>
+                            
+                            <div class="bg-white dark:bg-gray-800 p-3 rounded-md shadow-sm">
+                                <h4 class="font-medium text-sm text-gray-600 dark:text-gray-400">Severity Assessment</h4>
+                                <p class="mt-1 font-medium ${
+                                    averageOpens >= 15 ? 'text-red-600 dark:text-red-400' :
+                                    averageOpens >= 10 ? 'text-yellow-600 dark:text-yellow-400' :
+                                    'text-blue-600 dark:text-blue-400'
+                                }">
+                                    ${
+                                        averageOpens >= 15 ? 'SEVERE MONITORING' :
+                                        averageOpens >= 10 ? 'HIGH MONITORING' :
+                                        'SIGNIFICANT MONITORING'
+                                    }
+                                </p>
+                                <p class="text-sm mt-1">Evidence of systematic pattern</p>
+                            </div>
+                            
+                            <div class="bg-white dark:bg-gray-800 p-3 rounded-md shadow-sm">
+                                <h4 class="font-medium text-sm text-gray-600 dark:text-gray-400">Public Interest Concern</h4>
+                                <p class="mt-1 text-sm">
+                                    ${
+                                        averageOpens >= 15 ? 'Extreme access levels suggesting coordinated surveillance' :
+                                        averageOpens >= 10 ? 'Pattern indicates systematic monitoring exceeding necessity' :
+                                        'Above-normal monitoring raising privacy questions'
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <h4 class="font-medium text-sm text-gray-600 dark:text-gray-400">Sample Monitored Communications:</h4>
+                            <ul class="list-disc list-inside ml-4 space-y-1 mt-1 text-sm">
+                                ${sampleSubjects.map(subject => `<li>${subject}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            report += `
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-semibold">4. EXTREME SURVEILLANCE CASES</h2>
+                        <p>The following specific cases demonstrate extraordinary levels of surveillance:</p>
+                        
+                        <div class="overflow-x-auto mt-3">
+                            <table class="min-w-full divide-y divide-gray-300 dark:divide-gray-600">
+                                <thead class="bg-gray-100 dark:bg-gray-700">
+                                    <tr>
+                                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Subject</th>
+                                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Recipient</th>
+                                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Opens</th>
+                                        <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+            `;
+            
+            // Add extreme surveillance cases
+            excessiveAccess.slice(0, 10).forEach(email => {
+                report += `
+                    <tr>
+                        <td class="px-3 py-2">${email.Subject || 'No Subject'}</td>
+                        <td class="px-3 py-2">${email.Domain}</td>
+                        <td class="px-3 py-2 font-semibold text-red-600 dark:text-red-400">${email.OpensCount}</td>
+                        <td class="px-3 py-2">${formatDate(email.SentDate)}</td>
+                    </tr>
+                `;
+            });
+            
+            report += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-semibold">5. PUBLIC INTEREST JUSTIFICATION</h2>
+                        <p>This disclosure serves the public interest in the following ways:</p>
+                        
+                        <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-md mt-3 space-y-3">
+                            <div>
+                                <h3 class="font-medium">Transparency and Accountability</h3>
+                                <p class="text-sm mt-1">The evidence reveals monitoring practices that may affect many individuals who communicate with these organizations. Exposing these practices promotes transparency in how personal data is handled.</p>
+                            </div>
+                            
+                            <div>
+                                <h3 class="font-medium">Data Protection Awareness</h3>
+                                <p class="text-sm mt-1">Individuals have a right to know if their communications are subject to excessive monitoring. This disclosure helps raise awareness about potential data protection issues.</p>
+                            </div>
+                            
+                            <div>
+                                <h3 class="font-medium">Organizational Behavior</h3>
+                                <p class="text-sm mt-1">The pattern of surveillance may indicate systematic organizational policies rather than isolated incidents, suggesting potential structural privacy issues that warrant public attention.</p>
+                            </div>
+                            
+                            <div>
+                                <h3 class="font-medium">Regulatory Attention</h3>
+                                <p class="text-sm mt-1">The scale and consistency of the monitoring patterns merit investigation by appropriate regulatory bodies to ensure compliance with privacy laws.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-semibold">6. EVIDENCE PRESERVATION</h2>
+                        <p>The underlying data for this disclosure has been preserved with full integrity, including:</p>
+                        <ul class="list-disc list-inside ml-4 space-y-1 mt-2">
+                            <li>Complete tracking logs with timestamps</li>
+                            <li>Access metrics for all communications</li>
+                            <li>Original email metadata</li>
+                            <li>Analysis methodology documentation</li>
+                        </ul>
+                        <p class="mt-2">This evidence is available for examination by appropriate authorities and can be provided upon legitimate request.</p>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-semibold">7. CALL TO ACTION</h2>
+                        <p>Based on the evidence presented, the following actions are recommended:</p>
+                        <ul class="list-disc list-inside ml-4 space-y-1 mt-2">
+                            <li>Information Commissioner's Office investigation into high-surveillance organizations identified in this report</li>
+                            <li>Parliamentary/government examination of systematic surveillance practices</li>
+                            <li>Review of data protection guidelines regarding email monitoring</li>
+                            <li>Greater transparency from organizations about their monitoring practices</li>
+                            <li>Enhanced safeguards for sensitive communications, especially those involving legal or personal matters</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-semibold">8. CERTIFICATION AND CONTACT</h2>
+                        <p>This public interest disclosure was generated using objective data analysis methods. The findings represent factual evidence based on documented email tracking data.</p>
+                        <p class="mt-2">Generated by: Justice Minds Forensic Intelligence</p>
+                        <p>Date: ${currentDate}</p>
+                    </div>
+                </div>
+            `;
+            
+            return report;
+        }
+        
+        // Generate an email detail report
+        function generateEmailDetailReport(email) {
+            const currentDate = new Date().toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            let report = `
+                <div class="space-y-6">
+                    <div class="text-center">
+                        <h1 class="text-xl font-bold">EMAIL SURVEILLANCE DETAIL REPORT</h1>
+                        <p class="text-gray-600 dark:text-gray-400">Generated on ${currentDate}</p>
+                    </div>
+                    
+                    <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
+                        <h2 class="text-lg font-semibold">Email Information</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                            <div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Subject</p>
+                                <p class="font-medium">${email.Subject || 'No Subject'}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Recipient</p>
+                                <p class="font-medium">${email.Recipient}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Sent Date</p>
+                                <p class="font-medium">${formatDate(email.SentDate)}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Last Opened</p>
+                                <p class="font-medium">${email.LastOpenedDate ? formatDate(email.LastOpenedDate) : 'Not opened'}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Opens</p>
+                                <p class="font-medium ${
+                                    email.OpensCount >= 20 ? 'text-red-600 dark:text-red-400' :
+                                    email.OpensCount >= 10 ? 'text-yellow-600 dark:text-yellow-400' :
+                                    ''
+                                }">${email.OpensCount}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Clicks</p>
+                                <p class="font-medium">${email.ClicksCount}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">PDF Views</p>
+                                <p class="font-medium">${email.PDFViewsCount}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Domain</p>
+                                <p class="font-medium">${email.Domain}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
+                        <h2 class="text-lg font-semibold">Surveillance Analysis</h2>
+                        
+                        <div class="mt-3 space-y-4">
+                            <div>
+                                <h3 class="font-medium">Surveillance Level</h3>
+                                <div class="flex items-center mt-1">
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                                        <div class="h-2.5 rounded-full ${
+                                            email.OpensCount >= 20 ? 'bg-red-600 dark:bg-red-500' :
+                                            email.OpensCount >= 10 ? 'bg-yellow-600 dark:bg-yellow-500' :
+                                            email.OpensCount >= 5 ? 'bg-blue-600 dark:bg-blue-500' :
+                                            'bg-green-600 dark:bg-green-500'
+                                        }" style="width: ${Math.min(100, email.OpensCount * 5)}%"></div>
+                                    </div>
+                                    <span class="ml-2 font-medium ${
+                                        email.OpensCount >= 20 ? 'text-red-600 dark:text-red-400' :
+                                        email.OpensCount >= 10 ? 'text-yellow-600 dark:text-yellow-400' :
+                                        email.OpensCount >= 5 ? 'text-blue-600 dark:text-blue-400' :
+                                        'text-green-600 dark:text-green-400'
+                                    }">
+                                        ${
+                                            email.OpensCount >= 20 ? 'Extreme' :
+                                            email.OpensCount >= 10 ? 'High' :
+                                            email.OpensCount >= 5 ? 'Medium' :
+                                            email.OpensCount >= 1 ? 'Low' :
+                                            'None'
+                                        }
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h3 class="font-medium">Context Assessment</h3>
+                                <p class="mt-1">${email.SurveillanceContext}</p>
+                                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                                    ${
+                                        email.OpensCount >= 20 ? 'This level of access is highly unusual and suggests deliberate monitoring or distribution to multiple parties. It significantly exceeds what would be considered necessary for normal communication processing.' :
+                                        email.OpensCount >= 10 ? 'This access pattern shows above-normal interest in the communication content. It suggests either multiple people accessing the email or repeated review by the same individual(s).' :
+                                        email.OpensCount >= 5 ? 'This represents moderate monitoring that exceeds typical operational necessity for most communications.' :
+                                        'This shows a normal access pattern consistent with typical email processing.'
+                                    }
+                                </p>
+                            </div>
+                            
+                            <div>
+                                <h3 class="font-medium">Domain Pattern Comparison</h3>
+                                <p class="mt-1 text-sm">
+            `;
+            
+            // Get domain statistics for comparison
+            const domainEmails = emailData.filter(e => e.Domain === email.Domain);
+            const domainTotalOpens = domainEmails.reduce((sum, e) => sum + e.OpensCount, 0);
+            const domainAvgOpens = domainTotalOpens / domainEmails.length;
+            
+            // Compare this email to domain average
+            const comparisonRatio = email.OpensCount / domainAvgOpens;
+            
+            report += `
+                                    This email has been opened <strong>${email.OpensCount}</strong> times, compared to an average of <strong>${domainAvgOpens.toFixed(1)}</strong> opens for all emails to <strong>${email.Domain}</strong>.
+                                    
+                                    ${
+                                        comparisonRatio >= 3 ? `<span class="text-red-600 dark:text-red-400">This is ${comparisonRatio.toFixed(1)}x higher than average for this domain, suggesting exceptional interest in this specific communication.</span>` :
+                                        comparisonRatio >= 1.5 ? `<span class="text-yellow-600 dark:text-yellow-400">This is ${comparisonRatio.toFixed(1)}x higher than average for this domain, indicating above-normal attention.</span>` :
+                                        `<span>This is consistent with typical access patterns for this domain.</span>`
+                                    }
+                                </p>
+                            </div>
+                            
+                            <div>
+                                <h3 class="font-medium">Subject Matter Analysis</h3>
+                                <p class="mt-1 text-sm">
+            `;
+            
+            // Check for sensitive keywords in subject
+            const legalTerms = ['court', 'legal', 'justice', 'law', 'case', 'complaint', 'judge', 'hearing', 'eviction', 'notice', 'urgent attention', 'appeal', 'tribunal'];
+            const governmentTerms = ['council', 'government', 'official', 'department', 'ministry', 'authority', 'parliament', 'mp', 'dwp', 'nhs', 'police'];
+            const sensitiveTerms = ['urgent', 'attention', 'disabled', 'vulnerable', 'safeguarding', 'disability', 'request', 'complaint', 'statement', 'report'];
+            
+            const subject = email.Subject ? email.Subject.toLowerCase() : '';
+            const hasLegalTerms = legalTerms.some(term => subject.includes(term));
+            const hasGovernmentTerms = governmentTerms.some(term => subject.includes(term));
+            const hasSensitiveTerms = sensitiveTerms.some(term => subject.includes(term));
+            
+            if (hasLegalTerms) {
+                report += `
+                    This email appears to relate to <strong>legal or judicial matters</strong>. Communications of this nature containing personal data are subject to stricter data protection requirements and the excessive access may raise questions about necessity and proportionality of processing.
+                `;
+            } else if (hasGovernmentTerms) {
+                report += `
+                    This email appears to involve <strong>government or official authorities</strong>. Public authorities have specific data protection obligations and must demonstrate a clear legal basis for processing, including any monitoring activities.
+                `;
+            } else if (hasSensitiveTerms) {
+                report += `
+                    This email contains potentially <strong>sensitive subject matter</strong> based on key terms identified. The high level of access to such content merits scrutiny regarding the necessity and proportionality of such monitoring.
+                `;
+            } else {
+                report += `
+                    The subject matter of this email does not contain obvious indicators of sensitive content, though the surveillance level still appears disproportionate to typical operational needs.
+                `;
+            }
+            
+            report += `
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
+                        <h2 class="text-lg font-semibold">Legal and Compliance Considerations</h2>
+                        
+                        <div class="mt-3 space-y-3">
+            `;
+            
+            if (email.OpensCount >= 10) {
+                report += `
+                    <div>
+                        <h3 class="font-medium">Data Protection Concerns</h3>
+                        <p class="mt-1 text-sm">
+                            The access pattern for this email raises potential concerns regarding:
+                            <ul class="list-disc list-inside ml-4 space-y-1 mt-1">
+                                <li>GDPR Article 5(1)(c) - Data minimization principle</li>
+                                <li>GDPR Article 5(1)(b) - Purpose limitation principle</li>
+                                <li>GDPR Article 6 - Lawful basis for processing</li>
+                            </ul>
+                            
+                            The significant number of opens (${email.OpensCount}) suggests access beyond what would normally be necessary for the purposes of processing the communication.
+                        </p>
+                    </div>
+                    
+                    <div>
+                        <h3 class="font-medium">Recommended Actions</h3>
+                        <p class="mt-1 text-sm">
+                            Based on the surveillance pattern for this email, consider:
+                            <ul class="list-disc list-inside ml-4 space-y-1 mt-1">
+                                <li>Submitting a Subject Access Request to ${email.Domain} requesting information about all access instances</li>
+                                <li>Asking for specific information about who accessed the email and for what purpose</li>
+                                <li>Including this example in any broader complaint to data protection authorities</li>
+                                <li>Preserving this analysis as evidence</li>
+                            </ul>
+                        </p>
+                    </div>
+                `;
+            } else {
+                report += `
+                    <div>
+                        <h3 class="font-medium">Assessment</h3>
+                        <p class="mt-1 text-sm">
+                            The access pattern for this email (${email.OpensCount} opens) does not show evidence of excessive surveillance that would raise significant data protection concerns. The access level appears consistent with normal processing activities.
+                        </p>
+                    </div>
+                `;
+            }
+            
+            report += `
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 text-sm text-gray-600 dark:text-gray-400 text-right">
+                        <p>Generated by: Justice Minds Forensic Intelligence</p>
+                        <p>Date: ${currentDate}</p>
+                    </div>
+                </div>
+            `;
+            
+            return report;
+        }
+        
+        // Ask Claude for analysis
+        async function askClaude() {
+            const prompt = claudePrompt.value.trim();
+            if (!prompt) {
+                alert('Please enter a question about your data');
+                return;
+            }
+            
+            // Show Claude response section
+            claudeResponse.classList.remove('hidden');
+            claudeLoading.classList.remove('hidden');
+            claudeContent.innerHTML = '';
+            
+            try {
+                // Prepare summary of data for Claude
+                const summary = prepareDataSummaryForClaude();
+                
+                // Register handler for Claude's response
+                window.Poe.registerHandler("claude-analysis-handler", (result) => {
+                    if (result.responses && result.responses.length > 0) {
+                        const response = result.responses[0];
+                        
+                        if (response.status === "incomplete") {
+                            // Show partial response while streaming
+                            claudeContent.innerHTML = marked.parse(response.content);
+                        } else if (response.status === "complete") {
+                            // Show complete response
+                            claudeLoading.classList.add('hidden');
+                            claudeContent.innerHTML = marked.parse(response.content);
+                        } else if (response.status === "error") {
+                            // Show error
+                            claudeLoading.classList.add('hidden');
+                            claudeContent.innerHTML = `<p class="text-red-500">Error: ${response.statusText || 'An error occurred while analyzing your data.'}</p>`;
+                        }
+                    }
+                });
+                
+                // Send request to Claude
+                await window.Poe.sendUserMessage(
+                    "@Claude-3.7-Sonnet " + 
+                    `You are a forensic email surveillance analyst. Analyze this email tracking data and answer the user's question.
+                    
+                    DATA SUMMARY:
+                    ${JSON.stringify(summary, null, 2)}
+                    
+                    USER QUESTION: "${prompt}"
+                    
+                    Provide a detailed analysis that helps the user understand patterns and significance in this email surveillance data. Focus on:
+                    1. Direct answers to their specific question
+                    2. Identifying notable patterns or anomalies
+                    3. Explaining the significance and implications of what you find
+                    4. Potential next steps or recommendations based on the data
+                    
+                    Format your response using markdown for readability. Be thorough but concise.`,
+                    {
+                        handler: "claude-analysis-handler",
+                        stream: true,
+                        openChat: false
+                    }
+                );
+            } catch (error) {
+                console.error('Error asking Claude:', error);
+                claudeLoading.classList.add('hidden');
+                claudeContent.innerHTML = `<p class="text-red-500">Error: Could not connect to Claude. Please try again later.</p>`;
+            }
+        }
+        
+        // Prepare a summary of the data for Claude
+        function prepareDataSummaryForClaude() {
+            // General statistics
+            const totalEmails = emailData.length;
+            const totalOpens = emailData.reduce((sum, email) => sum + email.OpensCount, 0);
+            const avgOpens = totalOpens / totalEmails;
+            
+            // High surveillance emails
+            const highSurveillance = emailData
+                .filter(email => email.OpensCount >= 10)
+                .sort((a, b) => b.OpensCount - a.OpensCount)
+                .slice(0, 15)
+                .map(email => ({
+                    subject: email.Subject,
+                    recipient: email.Recipient,
+                    sent: formatDate(email.SentDate),
+                    opens: email.OpensCount,
+                    domain: email.Domain
+                }));
+            
+            // Domain statistics
+            const domainStats = {};
+            emailData.forEach(email => {
+                if (!email.Domain) return;
+                
+                if (!domainStats[email.Domain]) {
+                    domainStats[email.Domain] = {
+                        domain: email.Domain,
+                        totalEmails: 0,
+                        totalOpens: 0,
+                        highSurveillanceCount: 0
+                    };
+                }
+                
+                domainStats[email.Domain].totalEmails++;
+                domainStats[email.Domain].totalOpens += email.OpensCount;
+                
+                if (email.OpensCount >= 10) {
+                    domainStats[email.Domain].highSurveillanceCount++;
+                }
+            });
+            
+            // Get top domains by average opens
+            const topDomains = Object.values(domainStats)
+                .filter(d => d.totalEmails >= 3)
+                .sort((a, b) => (b.totalOpens / b.totalEmails) - (a.totalOpens / a.totalEmails))
+                .slice(0, 10)
+                .map(d => ({
+                    domain: d.domain,
+                    emails: d.totalEmails,
+                    totalOpens: d.totalOpens,
+                    avgOpens: d.totalOpens / d.totalEmails,
+                    highSurveillanceCount: d.highSurveillanceCount
+                }));
+            
+            // Subject matter categories
+            const legalTerms = ['court', 'legal', 'justice', 'law', 'case', 'complaint', 'judge', 'hearing', 'eviction', 'notice', 'urgent attention', 'appeal', 'tribunal'];
+            const governmentTerms = ['council', 'government', 'official', 'department', 'ministry', 'authority', 'parliament', 'mp', 'dwp', 'nhs', 'police'];
+            
+            const legalEmails = emailData.filter(email => {
+                const subject = email.Subject ? email.Subject.toLowerCase() : '';
+                return legalTerms.some(term => subject.includes(term));
+            });
+            
+            const governmentEmails = emailData.filter(email => {
+                const subject = email.Subject ? email.Subject.toLowerCase() : '';
+                return governmentTerms.some(term => subject.includes(term));
+            });
+            
+            // Create summary object
+            return {
+                overview: {
+                    totalEmails,
+                    totalOpens,
+                    avgOpens,
+                    highSurveillanceCount: emailData.filter(e => e.OpensCount >= 10).length,
+                    extremeSurveillanceCount: emailData.filter(e => e.OpensCount >= 20).length,
+                    unreadCount: emailData.filter(e => !e.LastOpenedDate).length
+                },
+                topSurveillanceEmails: highSurveillance,
+                domainAnalysis: {
+                    uniqueDomains: Object.keys(domainStats).length,
+                    topDomains
+                },
+                contentCategories: {
+                    legalMatters: {
+                        count: legalEmails.length,
+                        totalOpens: legalEmails.reduce((sum, e) => sum + e.OpensCount, 0),
+                        avgOpens: legalEmails.length > 0 ? legalEmails.reduce((sum, e) => sum + e.OpensCount, 0) / legalEmails.length : 0
+                    },
+                    governmentMatters: {
+                        count: governmentEmails.length,
+                        totalOpens: governmentEmails.reduce((sum, e) => sum + e.OpensCount, 0),
+                        avgOpens: governmentEmails.length > 0 ? governmentEmails.reduce((sum, e) => sum + e.OpensCount, 0) / governmentEmails.length : 0
+                    }
+                },
+                datePeriod: {
+                    earliest: formatDate(emailData.reduce((min, e) => e.SentDate && (!min || e.SentDate < min) ? e.SentDate : min, null)),
+                    latest: formatDate(emailData.reduce((max, e) => e.SentDate && (!max || e.SentDate > max) ? e.SentDate : max, null))
+                }
+            };
+        }
+        
+        // Initialize the application
+        function init() {
+            initListeners();
+        }
+        
+        // Start the application
+        init();
+    </script>
+</body>
+</html>
