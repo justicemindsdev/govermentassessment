@@ -1,0 +1,2630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Enhanced Evidence Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/marked@4.2.12/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://apis.google.com/js/api.js"></script>
+  <script src="https://apis.google.com/js/platform.js" async defer></script>
+  <style>
+    .page-break-before {
+      page-break-before: always;
+    }
+    .evidence-card {
+      transition: transform 0.2s;
+    }
+    .evidence-card:hover {
+      transform: scale(1.02);
+    }
+    .delete-btn {
+      position: absolute;
+      top: 0.25rem;
+      right: 0.25rem;
+      background-color: rgba(239, 68, 68, 0.8);
+      color: white;
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 10;
+    }
+    .evidence-card:hover .delete-btn {
+      opacity: 1;
+    }
+    .reference-dropdown {
+      position: absolute;
+      background-color: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.375rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      z-index: 50;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .dark .reference-dropdown {
+      background-color: #374151;
+      border-color: #4b5563;
+    }
+    .loading-spinner {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(59, 130, 246, 0.3);
+      border-radius: 50%;
+      border-top-color: #3B82F6;
+      animation: spin 1s ease-in-out infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .summary-container {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
+    }
+    .summary-container.open {
+      max-height: 1000px;
+    }
+    /* Google Button Styles */
+    .google-btn {
+      background-color: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.375rem;
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .google-btn:hover {
+      background-color: #f3f4f6;
+    }
+    @media print {
+      .page-break-before {
+        page-break-before: always;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+  <!-- Login Container (shown before authentication) -->
+  <div id="loginContainer" class="fixed inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-900 z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 max-w-md w-full">
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold mb-2">AI Enhanced Evidence Manager</h1>
+        <p class="text-gray-600 dark:text-gray-400">Sign in to access your evidence dashboard</p>
+      </div>
+      
+      <div class="space-y-4">
+        <button id="googleSignInBtn" class="google-btn w-full">
+          <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo" class="h-6 w-6 mr-3">
+          <span class="text-gray-800 dark:text-gray-200 font-medium">Sign in with Google</span>
+        </button>
+        
+        <div class="relative flex items-center justify-center">
+          <div class="border-t border-gray-300 dark:border-gray-700 w-full"></div>
+          <div class="px-3 bg-white dark:bg-gray-800 text-sm text-gray-500 dark:text-gray-400">OR</div>
+          <div class="border-t border-gray-300 dark:border-gray-700 w-full"></div>
+        </div>
+        
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+          <input type="email" id="emailInput" class="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your email">
+        </div>
+        
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+          <input type="password" id="passwordInput" class="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your password">
+        </div>
+        
+        <button id="regularSignInBtn" class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-opacity-90 transition">Sign In</button>
+        
+        <div class="text-center text-sm text-gray-600 dark:text-gray-400">
+          <p>Don't have an account? <button id="toggleRegisterBtn" class="text-blue-600 dark:text-blue-400 hover:underline">Register</button></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Registration Form (initially hidden) -->
+  <div id="registerContainer" class="fixed inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-900 z-50 hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 max-w-md w-full">
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold mb-2">Create Account</h1>
+        <p class="text-gray-600 dark:text-gray-400">Set up your evidence manager account</p>
+      </div>
+      
+      <div class="space-y-4">
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
+          <input type="text" id="nameInput" class="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your full name">
+        </div>
+        
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+          <input type="email" id="registerEmailInput" class="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your email">
+        </div>
+        
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+          <input type="password" id="registerPasswordInput" class="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Create a password">
+        </div>
+        
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Confirm Password</label>
+          <input type="password" id="confirmPasswordInput" class="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Confirm your password">
+        </div>
+        
+        <button id="registerBtn" class="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-opacity-90 transition">Create Account</button>
+        
+        <div class="text-center text-sm text-gray-600 dark:text-gray-400">
+          <p>Already have an account? <button id="toggleLoginBtn" class="text-blue-600 dark:text-blue-400 hover:underline">Sign In</button></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App Container (hidden until authenticated) -->
+  <div id="appContainer" class="container mx-auto px-4 py-8 hidden">
+    <!-- App Header with User Info -->
+    <div class="flex flex-wrap justify-between items-center mb-6">
+      <h1 class="text-3xl font-bold">AI Enhanced Evidence Manager</h1>
+      
+      <div class="flex items-center space-x-4">
+        <div class="relative" id="userMenuContainer">
+          <button id="userMenuBtn" class="flex items-center space-x-2 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800">
+            <img id="userAvatar" src="https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y" alt="User" class="w-8 h-8 rounded-full">
+            <span id="userName" class="hidden sm:inline-block">User Name</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </button>
+          
+          <div id="userMenu" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 hidden z-10">
+            <a href="#" id="profileBtn" class="block px-4 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Your Profile</a>
+            <a href="#" id="googleDriveBtn" class="block px-4 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+              Google Drive
+              <span class="text-xs text-gray-500 dark:text-gray-400 block">Manage evidence files</span>
+            </a>
+            <a href="#" id="googleSheetsBtn" class="block px-4 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+              Google Sheets
+              <span class="text-xs text-gray-500 dark:text-gray-400 block">Export evidence lists</span>
+            </a>
+            <a href="#" id="googleDocsBtn" class="block px-4 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+              Google Docs
+              <span class="text-xs text-gray-500 dark:text-gray-400 block">Create reports</span>
+            </a>
+            <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+            <a href="#" id="signOutBtn" class="block px-4 py-2 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700">Sign Out</a>
+          </div>
+        </div>
+        
+        <button id="syncBtn" class="flex items-center px-3 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded hover:bg-blue-200 dark:hover:bg-blue-800">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Sync
+        </button>
+      </div>
+    </div>
+    
+    <!-- Upload Section -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
+      <h2 class="text-xl font-semibold mb-4">Upload Evidence</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:border-blue-500 dark:hover:border-blue-400 transition-colors cursor-pointer" id="dropZone">
+          <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <p class="mt-2">Drag & drop PDFs, images, or other evidence documents</p>
+          <label class="mt-2 inline-block px-4 py-2 bg-blue-600 text-white rounded-md cursor-pointer hover:bg-opacity-90 transition">
+            Browse Files
+            <input type="file" class="hidden" id="fileInput" accept="application/pdf,.pdf,image/*,.jpg,.jpeg,.png,.doc,.docx,.txt">
+          </label>
+        </div>
+        
+        <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:border-blue-500 dark:hover:border-blue-400 transition-colors cursor-pointer" id="googleDrivePickerZone">
+          <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" viewBox="0 0 87.3 78" fill="none">
+            <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5l5.4 9.35z" fill="#0066da"/>
+            <path d="M43.65 25L29.9 1.2c-1.35.8-2.5 1.9-3.3 3.3l-20.4 35.3 13.8 23.85L43.65 25z" fill="#00ac47"/>
+            <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.5l5.85 10.15L73.55 76.8z" fill="#ea4335"/>
+            <path d="M43.65 25L57.4 1.2c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2L43.65 25z" fill="#00832d"/>
+            <path d="M59.8 63.15L43.65 25 29.9 63.15h29.9z" fill="#2684fc"/>
+            <path d="M73.55 76.8l-13.75-23.65H29.9L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.4 4.5-1.2z" fill="#ffba00"/>
+          </svg>
+          <p class="mt-2">Import from Google Drive</p>
+          <button id="googleDrivePickerBtn" class="mt-2 inline-block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-opacity-90 transition">
+            Select from Drive
+          </button>
+        </div>
+      </div>
+      <div class="mt-4 flex justify-between items-center">
+        <p class="text-sm text-gray-600 dark:text-gray-400"><span id="uploadCount">0</span> evidence items uploaded</p>
+        <div class="flex space-x-2 items-center">
+          <label class="text-sm text-gray-700 dark:text-gray-300">AI Model:</label>
+          <select id="modelSelector" class="text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 px-2 py-1">
+            <option value="deepseek/deepseek-v3-base:free">Deepseek (Default)</option>
+            <option value="openai/o3-mini">OpenAI o3-mini</option>
+            <option value="anthropic/claude-3.7-sonnet:thinking">Claude 3.7 Sonnet (Thinking)</option>
+            <option value="anthropic/claude-3.7-sonnet:beta">Claude 3.7 Sonnet (Beta)</option>
+            <option value="deepseek/deepseek-r1-zero:free">Deepseek R1 Zero</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Main Two-Column Layout -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Left Column - Claims -->
+      <div class="space-y-6">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+          <h2 class="text-xl font-semibold mb-4">Claims</h2>
+          <div class="mb-4">
+            <textarea id="claimEditor" rows="6" class="w-full px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y" placeholder="Enter or paste Ben's claims here..."></textarea>
+          </div>
+          <div class="flex flex-wrap justify-between items-center gap-2">
+            <div class="flex space-x-2">
+              <button id="analyzeClaimsBtn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-opacity-90 transition flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Analyze Claims
+              </button>
+              <button id="saveToDocsBtn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-opacity-90 transition flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                </svg>
+                Save to Docs
+              </button>
+            </div>
+            <button id="clearClaimsBtn" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition">Clear</button>
+          </div>
+          
+          <!-- Claims Analysis Results -->
+          <div id="claimsAnalysisContainer" class="mt-4 hidden">
+            <h3 class="font-semibold text-lg mb-2">Claims Analysis</h3>
+            <div id="claimsAnalysisResults" class="border border-gray-200 dark:border-gray-700 rounded-md p-3 bg-gray-50 dark:bg-gray-800"></div>
+          </div>
+        </div>
+        
+        <!-- Questions Section -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+          <h2 class="text-xl font-semibold mb-4">Ask Questions</h2>
+          <div class="mb-4">
+            <textarea id="questionInput" rows="3" class="w-full px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y" placeholder="Ask a question about the evidence or claims..."></textarea>
+          </div>
+          <div class="flex justify-between">
+            <button id="askQuestionBtn" class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-opacity-90 transition">Ask Question</button>
+            <select id="questionTarget" class="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm">
+              <option value="all">Consider All Evidence</option>
+              <option value="selected">Only Selected Evidence</option>
+            </select>
+          </div>
+          
+          <!-- Question Answers -->
+          <div id="questionAnswersContainer" class="mt-4 space-y-3">
+            <!-- Answers will be added here -->
+          </div>
+        </div>
+      </div>
+      
+      <!-- Right Column - Evidence Grid -->
+      <div class="space-y-6">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+          <div class="flex flex-wrap items-center justify-between mb-4">
+            <h2 class="text-xl font-semibold">Evidence Grid</h2>
+            <div class="flex space-x-2 mt-2 sm:mt-0">
+              <button id="exportToSheetsBtn" class="flex items-center px-2 py-1 bg-green-600 text-white rounded-md hover:bg-opacity-90 transition text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Export to Sheets
+              </button>
+              <select id="gridSize" class="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1 text-sm">
+                <option value="2">2×2 Grid</option>
+                <option value="3">3×3 Grid</option>
+                <option value="1">1×1 Grid</option>
+              </select>
+              <button id="prevGridPage" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition disabled:opacity-50" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+              </button>
+              <span id="gridPageInfo" class="px-2 py-1">Page 0 of 0</span>
+              <button id="nextGridPage" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition disabled:opacity-50" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <div id="gridContainer" class="grid grid-cols-2 gap-4 mb-4">
+            <p class="text-gray-500 dark:text-gray-400 text-center py-12 col-span-2">No evidence uploaded yet</p>
+          </div>
+        </div>
+        
+        <!-- Evidence Detail List -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+          <h2 class="text-xl font-semibold mb-4">Evidence Details</h2>
+          <div class="space-y-4" id="evidenceListContainer">
+            <p class="text-gray-500 dark:text-gray-400 text-center py-6">No evidence uploaded yet</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Document Viewer Modal -->
+    <div id="documentModal" class="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center hidden">
+      <div class="max-w-screen-lg w-full max-h-screen overflow-hidden flex flex-col">
+        <div class="px-6 py-4 flex justify-between items-center">
+          <h3 class="text-xl font-semibold text-white" id="documentTitle">Evidence Document</h3>
+          <button id="closeDocumentBtn" class="text-white hover:text-gray-300">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="flex flex-col bg-white dark:bg-gray-800 p-4 rounded-lg w-full max-h-[80vh] overflow-auto">
+          <div id="documentContent" class="flex-grow overflow-auto">
+            <!-- Document content will be inserted here -->
+          </div>
+          <div id="documentAnalysis" class="border-t border-gray-200 dark:border-gray-700 mt-4 pt-4">
+            <h4 class="font-semibold text-lg mb-2">AI Analysis</h4>
+            <div id="documentAnalysisContent">
+              <!-- AI analysis will be inserted here -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Title Input Modal -->
+    <div id="titleModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <h3 class="text-xl font-semibold">Evidence Title</h3>
+        </div>
+        <div class="p-6 space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Title</label>
+            <input type="text" id="evidenceTitleInput" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Enter a descriptive title for this evidence">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Evidence Type</label>
+            <select id="evidenceTypeInput" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+              <option value="document">Document</option>
+              <option value="image">Image</option>
+              <option value="statement">Witness Statement</option>
+              <option value="report">Report</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Notes (Optional)</label>
+            <textarea id="evidenceNotesInput" rows="2" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Add any additional notes about this evidence"></textarea>
+          </div>
+        </div>
+        <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-2">
+          <button id="cancelTitleBtn" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition">Cancel</button>
+          <button id="saveTitleBtn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-opacity-90 transition">Save & Analyze</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Google Drive Picker Modal -->
+    <div id="drivePickerModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-4xl w-full h-[600px] overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+          <h3 class="text-xl font-semibold">Select Files from Google Drive</h3>
+          <button id="closeDrivePickerBtn" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div id="drivePickerContainer" class="w-full h-[calc(600px-64px)]">
+          <!-- Drive Picker will be loaded here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Set up PDF.js worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+    
+    // Check for dark mode preference
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.documentElement.classList.add('dark');
+    }
+
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+      if (event.matches) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    });
+
+    // Google API Configuration
+    const googleConfig = {
+      apiKey: 'YOUR_API_KEY', // Replace with your Google API key
+      clientId: 'YOUR_CLIENT_ID', // Replace with your Google Client ID
+      scopes: [
+        'https://www.googleapis.com/auth/userinfo.profile',
+        'https://www.googleapis.com/auth/userinfo.email',
+        'https://www.googleapis.com/auth/drive.file',
+        'https://www.googleapis.com/auth/drive.readonly',
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/documents'
+      ],
+      discoveryDocs: [
+        'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest',
+        'https://sheets.googleapis.com/$discovery/rest?version=v4',
+        'https://docs.googleapis.com/$discovery/rest?version=v1'
+      ]
+    };
+
+    // App state
+    const state = {
+      user: null,
+      isAuthenticated: false,
+      evidenceItems: [],
+      currentGridPage: 0,
+      gridSize: 2, // Default grid size (2×2)
+      pendingEvidence: null, // Temporary storage for evidence pending title input
+      openRouter: {
+        apiKey: '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',
+        defaultModel: 'deepseek/deepseek-v3-base:free'
+      },
+      questions: [], // Store question history
+      googleAuth: null,
+      driveReady: false,
+      sheetsReady: false,
+      docsReady: false
+    };
+
+    // DOM Elements - Login/Register
+    const loginContainer = document.getElementById('loginContainer');
+    const registerContainer = document.getElementById('registerContainer');
+    const appContainer = document.getElementById('appContainer');
+    const googleSignInBtn = document.getElementById('googleSignInBtn');
+    const regularSignInBtn = document.getElementById('regularSignInBtn');
+    const toggleRegisterBtn = document.getElementById('toggleRegisterBtn');
+    const toggleLoginBtn = document.getElementById('toggleLoginBtn');
+    const registerBtn = document.getElementById('registerBtn');
+    
+    // DOM Elements - User Menu
+    const userMenuBtn = document.getElementById('userMenuBtn');
+    const userMenu = document.getElementById('userMenu');
+    const userName = document.getElementById('userName');
+    const userAvatar = document.getElementById('userAvatar');
+    const signOutBtn = document.getElementById('signOutBtn');
+    const profileBtn = document.getElementById('profileBtn');
+    const googleDriveBtn = document.getElementById('googleDriveBtn');
+    const googleSheetsBtn = document.getElementById('googleSheetsBtn');
+    const googleDocsBtn = document.getElementById('googleDocsBtn');
+    const syncBtn = document.getElementById('syncBtn');
+    
+    // DOM Elements - Google Drive Integration
+    const googleDrivePickerBtn = document.getElementById('googleDrivePickerBtn');
+    const drivePickerModal = document.getElementById('drivePickerModal');
+    const closeDrivePickerBtn = document.getElementById('closeDrivePickerBtn');
+    const drivePickerContainer = document.getElementById('drivePickerContainer');
+    
+    // DOM Elements - Main App
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const uploadCount = document.getElementById('uploadCount');
+    const modelSelector = document.getElementById('modelSelector');
+    const gridContainer = document.getElementById('gridContainer');
+    const gridSize = document.getElementById('gridSize');
+    const prevGridPage = document.getElementById('prevGridPage');
+    const nextGridPage = document.getElementById('nextGridPage');
+    const gridPageInfo = document.getElementById('gridPageInfo');
+    const evidenceListContainer = document.getElementById('evidenceListContainer');
+    const exportToSheetsBtn = document.getElementById('exportToSheetsBtn');
+    
+    const claimEditor = document.getElementById('claimEditor');
+    const analyzeClaimsBtn = document.getElementById('analyzeClaimsBtn');
+    const saveToDocsBtn = document.getElementById('saveToDocsBtn');
+    const clearClaimsBtn = document.getElementById('clearClaimsBtn');
+    const claimsAnalysisContainer = document.getElementById('claimsAnalysisContainer');
+    const claimsAnalysisResults = document.getElementById('claimsAnalysisResults');
+    
+    const questionInput = document.getElementById('questionInput');
+    const askQuestionBtn = document.getElementById('askQuestionBtn');
+    const questionTarget = document.getElementById('questionTarget');
+    const questionAnswersContainer = document.getElementById('questionAnswersContainer');
+    
+    const documentModal = document.getElementById('documentModal');
+    const closeDocumentBtn = document.getElementById('closeDocumentBtn');
+    const documentTitle = document.getElementById('documentTitle');
+    const documentContent = document.getElementById('documentContent');
+    const documentAnalysis = document.getElementById('documentAnalysis');
+    const documentAnalysisContent = document.getElementById('documentAnalysisContent');
+    
+    const titleModal = document.getElementById('titleModal');
+    const evidenceTitleInput = document.getElementById('evidenceTitleInput');
+    const evidenceTypeInput = document.getElementById('evidenceTypeInput');
+    const evidenceNotesInput = document.getElementById('evidenceNotesInput');
+    const saveTitleBtn = document.getElementById('saveTitleBtn');
+    const cancelTitleBtn = document.getElementById('cancelTitleBtn');
+
+    // =========================================================
+    // AUTHENTICATION & GOOGLE API SETUP
+    // =========================================================
+
+    // Initialize Google API Client
+    function initGoogleAPI() {
+      gapi.load('client:auth2', () => {
+        gapi.client.init({
+          apiKey: googleConfig.apiKey,
+          clientId: googleConfig.clientId,
+          discoveryDocs: googleConfig.discoveryDocs,
+          scope: googleConfig.scopes.join(' ')
+        }).then(() => {
+          // Save auth instance
+          state.googleAuth = gapi.auth2.getAuthInstance();
+          
+          // Check if user is already signed in
+          if (state.googleAuth.isSignedIn.get()) {
+            onGoogleSignIn(state.googleAuth.currentUser.get());
+          }
+          
+          // Listen for sign-in state changes
+          state.googleAuth.isSignedIn.listen(updateSignInStatus);
+          
+          // Attach sign-in handler
+          googleSignInBtn.addEventListener('click', () => {
+            state.googleAuth.signIn();
+          });
+          
+        }).catch(error => {
+          console.error('Error initializing Google API client:', error);
+        });
+      });
+    }
+    
+    // Handle Google Sign-in
+    function onGoogleSignIn(googleUser) {
+      const profile = googleUser.getBasicProfile();
+      
+      // Create user object
+      state.user = {
+        id: profile.getId(),
+        name: profile.getName(),
+        email: profile.getEmail(),
+        avatar: profile.getImageUrl(),
+        token: googleUser.getAuthResponse().id_token,
+        isGoogle: true
+      };
+      
+      // Mark as authenticated
+      state.isAuthenticated = true;
+      
+      // Update UI for logged in user
+      updateUserInterface();
+      
+      // Initialize Drive, Sheets, Docs APIs
+      initializeDriveAPI();
+      initializeSheetsAPI();
+      initializeDocsAPI();
+      
+      // Load user data
+      loadUserData();
+    }
+    
+    // Update Sign-in Status
+    function updateSignInStatus(isSignedIn) {
+      if (isSignedIn) {
+        // User signed in
+        onGoogleSignIn(state.googleAuth.currentUser.get());
+      } else {
+        // User signed out
+        state.isAuthenticated = false;
+        state.user = null;
+        
+        // Show login screen
+        appContainer.classList.add('hidden');
+        loginContainer.classList.remove('hidden');
+        registerContainer.classList.add('hidden');
+      }
+    }
+    
+    // Sign out handler
+    function handleSignOut() {
+      if (state.user && state.user.isGoogle) {
+        // Sign out from Google
+        state.googleAuth.signOut();
+      } else {
+        // Regular sign out
+        state.isAuthenticated = false;
+        state.user = null;
+        
+        // Show login screen
+        appContainer.classList.add('hidden');
+        loginContainer.classList.remove('hidden');
+        registerContainer.classList.add('hidden');
+      }
+    }
+    
+    // Initialize Drive API
+    function initializeDriveAPI() {
+      gapi.client.load('drive', 'v3').then(() => {
+        state.driveReady = true;
+        console.log('Google Drive API initialized');
+      }).catch(error => {
+        console.error('Error initializing Drive API:', error);
+      });
+    }
+    
+    // Initialize Sheets API
+    function initializeSheetsAPI() {
+      gapi.client.load('sheets', 'v4').then(() => {
+        state.sheetsReady = true;
+        console.log('Google Sheets API initialized');
+      }).catch(error => {
+        console.error('Error initializing Sheets API:', error);
+      });
+    }
+    
+    // Initialize Docs API
+    function initializeDocsAPI() {
+      gapi.client.load('docs', 'v1').then(() => {
+        state.docsReady = true;
+        console.log('Google Docs API initialized');
+      }).catch(error => {
+        console.error('Error initializing Docs API:', error);
+      });
+    }
+    
+    // Google Drive Picker
+    function createDrivePicker() {
+      if (!state.driveReady) {
+        alert('Google Drive API is not yet initialized. Please try again in a moment.');
+        return;
+      }
+      
+      // For demo purposes, show a placeholder instead of actual picker
+      drivePickerModal.classList.remove('hidden');
+      drivePickerContainer.innerHTML = `
+        <div class="flex flex-col items-center justify-center h-full">
+          <div class="bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20 p-8 rounded-lg text-center max-w-md">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 87.3 78" class="w-20 h-20 mx-auto mb-4">
+              <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5l5.4 9.35z" fill="#0066da"/>
+              <path d="M43.65 25L29.9 1.2c-1.35.8-2.5 1.9-3.3 3.3l-20.4 35.3 13.8 23.85L43.65 25z" fill="#00ac47"/>
+              <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.5l5.85 10.15L73.55 76.8z" fill="#ea4335"/>
+              <path d="M43.65 25L57.4 1.2c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2L43.65 25z" fill="#00832d"/>
+              <path d="M59.8 63.15L43.65 25 29.9 63.15h29.9z" fill="#2684fc"/>
+              <path d="M73.55 76.8l-13.75-23.65H29.9L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.4 4.5-1.2z" fill="#ffba00"/>
+            </svg>
+            <h3 class="text-xl font-semibold mb-4">Google Drive Integration</h3>
+            <p class="mb-4">In a real implementation, this would show the Google Drive Picker UI to select files.</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">For this demo, we'll simulate selecting a sample document.</p>
+            <div class="flex justify-center">
+              <button id="simulateSelectBtn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-opacity-90 transition">
+                Select Sample Document
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Handle simulated selection
+      document.getElementById('simulateSelectBtn').addEventListener('click', () => {
+        // Create a sample document from Google Drive
+        simulateDriveFileSelection();
+        drivePickerModal.classList.add('hidden');
+      });
+    }
+    
+    // Simulate selecting a file from Google Drive
+    function simulateDriveFileSelection() {
+      const id = Date.now() + Math.random().toString(36).substring(2, 10);
+      const ref = `E${state.evidenceItems.length + 1}`;
+      
+      // Create a canvas for the document thumbnail
+      const canvas = document.createElement('canvas');
+      canvas.width = 800;
+      canvas.height = 600;
+      const ctx = canvas.getContext('2d');
+      
+      // Sample Google Document appearance
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Add Google Docs icon
+      ctx.fillStyle = '#4285f4';
+      ctx.fillRect(350, 100, 100, 140);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(370, 150, 60, 8);
+      ctx.fillRect(370, 170, 60, 8);
+      ctx.fillRect(370, 190, 60, 8);
+      
+      // Add document title
+      ctx.fillStyle = '#000000';
+      ctx.font = 'bold 28px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('Witness Statement', canvas.width/2, 300);
+      
+      // Add Google Drive indicator
+      ctx.fillStyle = '#4285f4';
+      ctx.font = '16px Arial';
+      ctx.fillText('Google Drive Document', canvas.width/2, 340);
+      
+      // Reference number
+      ctx.fillStyle = '#4285f4';
+      ctx.font = 'bold 48px Arial';
+      ctx.fillText(ref, canvas.width/2, canvas.height - 100);
+      
+      // Sample content text
+      const sampleText = `WITNESS STATEMENT
+
+I, John Smith, of 123 Main Street, London, do solemnly declare that:
+
+1. On the evening of 15th March 2023, at approximately 8:30 PM, I was walking my dog in Victoria Park.
+
+2. I witnessed an altercation between two individuals near the east entrance of the park. One individual, who I now know to be Ben, appeared to be defending himself from the other person.
+
+3. The other individual was acting aggressively and appeared to be under the influence of alcohol or drugs. They made several threatening gestures and lunged at Ben multiple times.
+
+4. Ben repeatedly asked the individual to back away and stated "Please stay away from me, I don't want any trouble."
+
+5. When the individual continued to approach aggressively, Ben used what appeared to be reasonable force to push them away in self-defense.
+
+6. At no point did I observe Ben initiating any aggressive behavior. His actions appeared to be solely defensive in nature.
+
+7. I am willing to testify to these facts in court if required.
+
+Signed: John Smith
+Date: 17th March 2023`;
+      
+      state.pendingEvidence = {
+        id,
+        ref,
+        title: 'Witness Statement - John Smith.gdoc',
+        type: 'document',
+        fileType: 'application/vnd.google-apps.document',
+        content: canvas.toDataURL('image/png'),
+        fullContent: sampleText,
+        isGoogleDoc: true,
+        googleFileId: 'sample_' + id, // Simulated Google Drive file ID
+        date: new Date().toISOString(),
+        selected: false,
+        notes: 'Imported from Google Drive'
+      };
+      
+      // Pre-fill the modal
+      evidenceTitleInput.value = 'Witness Statement - John Smith';
+      evidenceTypeInput.value = 'statement';
+      evidenceNotesInput.value = 'Imported from Google Drive';
+      
+      // Show the modal
+      titleModal.classList.remove('hidden');
+    }
+    
+    // Export evidence to Google Sheets
+    function exportToSheets() {
+      if (!state.sheetsReady) {
+        alert('Google Sheets API is not yet initialized. Please try again in a moment.');
+        return;
+      }
+      
+      // Show loading indicator
+      const loadingIndicator = document.createElement('div');
+      loadingIndicator.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+      loadingIndicator.innerHTML = `
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg text-center">
+          <div class="loading-spinner mx-auto mb-4"></div>
+          <p class="text-lg font-medium">Exporting to Google Sheets...</p>
+        </div>
+      `;
+      document.body.appendChild(loadingIndicator);
+      
+      // For demo purposes, simulate creating a sheet
+      setTimeout(() => {
+        document.body.removeChild(loadingIndicator);
+        
+        // Show success notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed bottom-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md z-50';
+        notification.innerHTML = `
+          <div class="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <div>
+              <p class="font-bold">Export Successful</p>
+              <p>Evidence list exported to Google Sheets: "Ben's Case - Evidence Inventory"</p>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(notification);
+        
+        // Remove after 5 seconds
+        setTimeout(() => {
+          document.body.removeChild(notification);
+        }, 5000);
+      }, 2000);
+    }
+    
+    // Save claims to Google Docs
+    function saveClaimsToDocs() {
+      if (!state.docsReady) {
+        alert('Google Docs API is not yet initialized. Please try again in a moment.');
+        return;
+      }
+      
+      const claims = claimEditor.value.trim();
+      if (!claims) {
+        alert('Please enter claims to save to Google Docs.');
+        return;
+      }
+      
+      // Show loading indicator
+      const loadingIndicator = document.createElement('div');
+      loadingIndicator.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+      loadingIndicator.innerHTML = `
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg text-center">
+          <div class="loading-spinner mx-auto mb-4"></div>
+          <p class="text-lg font-medium">Creating Google Doc...</p>
+        </div>
+      `;
+      document.body.appendChild(loadingIndicator);
+      
+      // For demo purposes, simulate creating a doc
+      setTimeout(() => {
+        document.body.removeChild(loadingIndicator);
+        
+        // Show success notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed bottom-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md z-50';
+        notification.innerHTML = `
+          <div class="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <div>
+              <p class="font-bold">Document Created</p>
+              <p>Claims saved to Google Docs: "Ben's Case - Claims Analysis"</p>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(notification);
+        
+        // Remove after 5 seconds
+        setTimeout(() => {
+          document.body.removeChild(notification);
+        }, 5000);
+      }, 2000);
+    }
+    
+    // Load user data from Google Drive
+    function loadUserData() {
+      if (!state.driveReady) {
+        console.log('Drive API not ready yet, will sync later');
+        return;
+      }
+      
+      // For demo purposes, just simulate loading data
+      // In a real implementation, you would query Drive for a specific app folder
+      // or look for metadata files that store the user's evidence data
+      console.log('Loading user data from Google Drive...');
+      
+      // Add some sample evidence for demo purposes
+      addSampleEvidence();
+    }
+    
+    // Update UI for logged in user
+    function updateUserInterface() {
+      if (state.isAuthenticated && state.user) {
+        // Hide login, show app
+        loginContainer.classList.add('hidden');
+        registerContainer.classList.add('hidden');
+        appContainer.classList.remove('hidden');
+        
+        // Update user info
+        userName.textContent = state.user.name;
+        if (state.user.avatar) {
+          userAvatar.src = state.user.avatar;
+        }
+        
+        // Update UI elements
+        updateEvidenceCount();
+        updateGrid();
+        updateEvidenceList();
+      } else {
+        // Show login form
+        appContainer.classList.add('hidden');
+        loginContainer.classList.remove('hidden');
+      }
+    }
+    
+    // Simple email/password authentication (for demo)
+    function handleRegularSignIn() {
+      const email = document.getElementById('emailInput').value.trim();
+      const password = document.getElementById('passwordInput').value;
+      
+      // Simple validation
+      if (!email || !password) {
+        alert('Please enter both email and password');
+        return;
+      }
+      
+      // In a real app, you would validate against a backend
+      // For demo, we'll accept any credentials
+      state.user = {
+        id: 'user_' + Date.now(),
+        name: email.split('@')[0],
+        email: email,
+        avatar: 'https://www.gravatar.com/avatar/' + Math.random().toString(36).substring(2, 10) + '?d=identicon',
+        isGoogle: false
+      };
+      
+      state.isAuthenticated = true;
+      
+      // Update UI
+      updateUserInterface();
+      
+      // Add sample evidence for demo
+      addSampleEvidence();
+    }
+    
+    // Handle registration
+    function handleRegistration() {
+      const name = document.getElementById('nameInput').value.trim();
+      const email = document.getElementById('registerEmailInput').value.trim();
+      const password = document.getElementById('registerPasswordInput').value;
+      const confirmPassword = document.getElementById('confirmPasswordInput').value;
+      
+      // Simple validation
+      if (!name || !email || !password) {
+        alert('Please fill in all fields');
+        return;
+      }
+      
+      if (password !== confirmPassword) {
+        alert('Passwords do not match');
+        return;
+      }
+      
+      // In a real app, you would send this to a backend
+      // For demo, we'll just simulate registration success
+      state.user = {
+        id: 'user_' + Date.now(),
+        name: name,
+        email: email,
+        avatar: 'https://www.gravatar.com/avatar/' + Math.random().toString(36).substring(2, 10) + '?d=identicon',
+        isGoogle: false
+      };
+      
+      state.isAuthenticated = true;
+      
+      // Update UI
+      updateUserInterface();
+      
+      // Add sample evidence for demo
+      addSampleEvidence();
+    }
+    
+    // =========================================================
+    // EVIDENCE HANDLING FUNCTIONS
+    // =========================================================
+
+    // Event Listeners
+    dropZone.addEventListener('click', () => fileInput.click());
+    
+    // File upload handling
+    fileInput.addEventListener('change', handleFileUpload);
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('border-blue-500');
+    });
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('border-blue-500');
+    });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('border-blue-500');
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        handleFiles(files);
+      }
+    });
+
+    // Grid controls
+    gridSize.addEventListener('change', () => {
+      state.gridSize = parseInt(gridSize.value);
+      state.currentGridPage = 0;
+      updateGrid();
+    });
+
+    prevGridPage.addEventListener('click', () => {
+      if (state.currentGridPage > 0) {
+        state.currentGridPage--;
+        updateGrid();
+      }
+    });
+
+    nextGridPage.addEventListener('click', () => {
+      const totalPages = Math.ceil(state.evidenceItems.length / (state.gridSize * state.gridSize));
+      if (state.currentGridPage < totalPages - 1) {
+        state.currentGridPage++;
+        updateGrid();
+      }
+    });
+    
+    // Claims Analysis
+    analyzeClaimsBtn.addEventListener('click', async () => {
+      const claims = claimEditor.value.trim();
+      if (!claims) {
+        alert('Please enter claims to analyze.');
+        return;
+      }
+      
+      // Show loading state
+      analyzeClaimsBtn.disabled = true;
+      analyzeClaimsBtn.innerHTML = '<div class="loading-spinner mr-2 h-5 w-5"></div> Analyzing...';
+      
+      try {
+        const analysis = await analyzeClaimsWithAI(claims);
+        claimsAnalysisResults.innerHTML = analysis;
+        claimsAnalysisContainer.classList.remove('hidden');
+      } catch (error) {
+        console.error('Error analyzing claims:', error);
+        claimsAnalysisResults.innerHTML = `<p class="text-red-500">Error analyzing claims: ${error.message}</p>`;
+        claimsAnalysisContainer.classList.remove('hidden');
+      } finally {
+        // Reset button
+        analyzeClaimsBtn.disabled = false;
+        analyzeClaimsBtn.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          Analyze Claims
+        `;
+      }
+    });
+    
+    // Save to Google Docs
+    saveToDocsBtn.addEventListener('click', saveClaimsToDocs);
+    
+    // Export to Google Sheets
+    exportToSheetsBtn.addEventListener('click', exportToSheets);
+    
+    // Clear claims
+    clearClaimsBtn.addEventListener('click', () => {
+      if (confirm('Are you sure you want to clear the claims?')) {
+        claimEditor.value = '';
+        claimsAnalysisContainer.classList.add('hidden');
+      }
+    });
+    
+    // Question handling
+    askQuestionBtn.addEventListener('click', async () => {
+      const question = questionInput.value.trim();
+      if (!question) {
+        alert('Please enter a question.');
+        return;
+      }
+      
+      // Determine which evidence to consider
+      const targetType = questionTarget.value;
+      let targetEvidence = [];
+      
+      if (targetType === 'all') {
+        targetEvidence = state.evidenceItems;
+      } else {
+        targetEvidence = state.evidenceItems.filter(item => item.selected);
+        if (targetEvidence.length === 0) {
+          alert('Please select at least one piece of evidence to analyze.');
+          return;
+        }
+      }
+      
+      // Show loading state
+      askQuestionBtn.disabled = true;
+      askQuestionBtn.innerHTML = '<div class="loading-spinner mr-2 h-5 w-5"></div> Processing...';
+      
+      try {
+        const answer = await askQuestionAboutEvidence(question, targetEvidence);
+        
+        // Create answer card
+        const answerCard = document.createElement('div');
+        answerCard.className = 'border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-800 shadow-sm';
+        answerCard.innerHTML = `
+          <div class="flex items-start">
+            <div class="bg-purple-100 dark:bg-purple-900 p-2 rounded-lg mr-3">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-600 dark:text-purple-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div class="flex-grow">
+              <div class="font-medium mb-1">${question}</div>
+              <div class="text-sm text-gray-700 dark:text-gray-300">${answer}</div>
+            </div>
+          </div>
+        `;
+        
+        // Add to question history
+        state.questions.push({
+          question,
+          answer,
+          timestamp: new Date()
+        });
+        
+        // Add to UI
+        questionAnswersContainer.prepend(answerCard);
+        questionInput.value = '';
+      } catch (error) {
+        console.error('Error processing question:', error);
+        alert('Error processing your question. Please try again.');
+      } finally {
+        // Reset button
+        askQuestionBtn.disabled = false;
+        askQuestionBtn.textContent = 'Ask Question';
+      }
+    });
+    
+    // Document modal controls
+    closeDocumentBtn.addEventListener('click', () => {
+      documentModal.classList.add('hidden');
+    });
+    
+    // Title modal controls
+    saveTitleBtn.addEventListener('click', async () => {
+      const title = evidenceTitleInput.value.trim();
+      if (title && state.pendingEvidence) {
+        // Update the evidence with form values
+        state.pendingEvidence.title = title;
+        state.pendingEvidence.type = evidenceTypeInput.value;
+        state.pendingEvidence.notes = evidenceNotesInput.value;
+        
+        // Hide the modal
+        titleModal.classList.add('hidden');
+        
+        // Show loading indicator
+        const loadingIndicator = document.createElement('div');
+        loadingIndicator.id = 'aiAnalysisLoading';
+        loadingIndicator.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+        loadingIndicator.innerHTML = `
+          <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg text-center">
+            <div class="loading-spinner mx-auto mb-4"></div>
+            <p class="text-lg font-medium">Analyzing evidence...</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Using ${modelSelector.options[modelSelector.selectedIndex].text}</p>
+          </div>
+        `;
+        document.body.appendChild(loadingIndicator);
+        
+        try {
+          // Analyze evidence with AI
+          const analysis = await analyzeEvidenceWithAI(state.pendingEvidence);
+          
+          // Update evidence with analysis
+          state.pendingEvidence.analysis = analysis;
+          
+          // Add to evidence items
+          state.evidenceItems.push(state.pendingEvidence);
+          state.pendingEvidence = null;
+          
+          // Clear form
+          evidenceTitleInput.value = '';
+          evidenceNotesInput.value = '';
+          
+          // Update UI
+          updateEvidenceCount();
+          updateGrid();
+          updateEvidenceList();
+        } catch (error) {
+          console.error('Error analyzing evidence:', error);
+          alert('Error analyzing evidence. Please try again.');
+          
+          // Add without analysis
+          state.pendingEvidence.analysis = {
+            error: error.message,
+            violation: 'Analysis failed',
+            harm: 'Unable to determine',
+            action: 'Unable to determine',
+            caseLaw: 'Unable to retrieve',
+            legislation: 'Unable to retrieve',
+            connection: 'Analysis failed due to technical error'
+          };
+          
+          state.evidenceItems.push(state.pendingEvidence);
+          state.pendingEvidence = null;
+          
+          // Update UI
+          updateEvidenceCount();
+          updateGrid();
+          updateEvidenceList();
+        } finally {
+          // Remove loading indicator
+          document.body.removeChild(document.getElementById('aiAnalysisLoading'));
+        }
+      }
+    });
+    
+    cancelTitleBtn.addEventListener('click', () => {
+      state.pendingEvidence = null;
+      titleModal.classList.add('hidden');
+      evidenceTitleInput.value = '';
+      evidenceNotesInput.value = '';
+    });
+
+    // Google Drive Picker
+    googleDrivePickerBtn.addEventListener('click', createDrivePicker);
+    closeDrivePickerBtn.addEventListener('click', () => {
+      drivePickerModal.classList.add('hidden');
+    });
+    
+    // User Menu
+    userMenuBtn.addEventListener('click', () => {
+      userMenu.classList.toggle('hidden');
+    });
+    
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!userMenuBtn.contains(e.target) && !userMenu.contains(e.target)) {
+        userMenu.classList.add('hidden');
+      }
+    });
+    
+    // Sign Out
+    signOutBtn.addEventListener('click', handleSignOut);
+    
+    // Toggle between login and register
+    toggleRegisterBtn.addEventListener('click', () => {
+      loginContainer.classList.add('hidden');
+      registerContainer.classList.remove('hidden');
+    });
+    
+    toggleLoginBtn.addEventListener('click', () => {
+      registerContainer.classList.add('hidden');
+      loginContainer.classList.remove('hidden');
+    });
+    
+    // Register button
+    registerBtn.addEventListener('click', handleRegistration);
+    
+    // Regular sign in
+    regularSignInBtn.addEventListener('click', handleRegularSignIn);
+    
+    // Google Drive/Sheets/Docs buttons
+    googleDriveBtn.addEventListener('click', () => {
+      userMenu.classList.add('hidden');
+      if (state.driveReady) {
+        createDrivePicker();
+      } else {
+        alert('Google Drive API is not yet initialized. Please try again in a moment.');
+      }
+    });
+    
+    googleSheetsBtn.addEventListener('click', () => {
+      userMenu.classList.add('hidden');
+      exportToSheets();
+    });
+    
+    googleDocsBtn.addEventListener('click', () => {
+      userMenu.classList.add('hidden');
+      saveClaimsToDocs();
+    });
+    
+    // Sync button
+    syncBtn.addEventListener('click', () => {
+      // Show sync animation
+      syncBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        Syncing...
+      `;
+      
+      // Simulate sync
+      setTimeout(() => {
+        syncBtn.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Sync
+        `;
+        
+        // Show notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed bottom-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md z-50';
+        notification.innerHTML = `
+          <div class="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <div>
+              <p class="font-bold">Sync Complete</p>
+              <p>All evidence and analysis synced to Google Drive</p>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(notification);
+        
+        // Remove after 5 seconds
+        setTimeout(() => {
+          document.body.removeChild(notification);
+        }, 5000);
+      }, 2000);
+    });
+
+    function handleFileUpload(e) {
+      const files = e.target.files;
+      if (files.length > 0) {
+        handleFiles(files);
+      }
+      fileInput.value = '';
+    }
+    
+    function handleFiles(files) {
+      // Show loading interface for files
+      const loadingIndicator = document.createElement('div');
+      loadingIndicator.id = 'loadingIndicator';
+      loadingIndicator.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex flex-col items-center justify-center';
+      loadingIndicator.innerHTML = `
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full text-center">
+          <div class="loading-spinner mx-auto mb-4"></div>
+          <h3 class="text-lg font-semibold mb-2">Processing Files</h3>
+          <p class="text-gray-600 dark:text-gray-400" id="loadingStatus">Please wait...</p>
+        </div>
+      `;
+      document.body.appendChild(loadingIndicator);
+      
+      let filesProcessed = 0;
+      const totalFiles = files.length;
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        processFile(file, () => {
+          filesProcessed++;
+          if (filesProcessed >= totalFiles) {
+            document.body.removeChild(loadingIndicator);
+          }
+        });
+      }
+    }
+    
+    function processFile(file, callback) {
+      // Update loading status
+      const loadingStatus = document.getElementById('loadingStatus');
+      if (loadingStatus) {
+        loadingStatus.textContent = `Processing: ${file.name}...`;
+      }
+      
+      if (file.type.startsWith('image/')) {
+        // Process image file
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const id = Date.now() + Math.random().toString(36).substring(2, 10);
+          const ref = `E${state.evidenceItems.length + 1}`;
+          
+          state.pendingEvidence = {
+            id,
+            ref,
+            title: file.name,
+            type: 'image',
+            fileType: file.type,
+            content: e.target.result,
+            notes: '',
+            date: new Date().toISOString(),
+            selected: false
+          };
+          
+          // Pre-fill the modal
+          evidenceTitleInput.value = file.name;
+          evidenceTypeInput.value = 'image';
+          evidenceNotesInput.value = '';
+          
+          // Show the modal after loading is done
+          if (callback) callback();
+          titleModal.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+      } else if (file.type === 'application/pdf') {
+        // Process PDF file
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          try {
+            // Create typed array from the PDF data
+            const typedArray = new Uint8Array(e.target.result);
+            
+            // Load the PDF document
+            let loadingTask = pdfjsLib.getDocument({data: typedArray});
+            const pdf = await loadingTask.promise;
+            
+            // Store text content from PDF
+            let textContent = '';
+            let pdfThumbnail = null;
+            
+            // Extract text from first few pages for analysis
+            for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) {
+              const page = await pdf.getPage(i);
+              const textContent_i = await page.getTextContent();
+              const textItems = textContent_i.items.map(item => item.str).join(' ');
+              textContent += textItems + '\n\n';
+              
+              // Get first page as thumbnail
+              if (i === 1 && !pdfThumbnail) {
+                const scale = 1.5;
+                const viewport = page.getViewport({scale});
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                
+                await page.render({
+                  canvasContext: ctx,
+                  viewport: viewport
+                }).promise;
+                
+                pdfThumbnail = canvas.toDataURL('image/png');
+              }
+            }
+            
+            // Create evidence item
+            const id = Date.now() + Math.random().toString(36).substring(2, 10);
+            const ref = `E${state.evidenceItems.length + 1}`;
+            
+            state.pendingEvidence = {
+              id,
+              ref,
+              title: file.name,
+              type: 'document',
+              fileType: file.type,
+              content: pdfThumbnail,
+              fullContent: textContent,
+              pdfData: typedArray,
+              numPages: pdf.numPages,
+              notes: '',
+              date: new Date().toISOString(),
+              selected: false
+            };
+            
+            // Pre-fill the modal
+            evidenceTitleInput.value = file.name;
+            evidenceTypeInput.value = 'document';
+            evidenceNotesInput.value = '';
+            
+            // Show the modal after loading is done
+            if (callback) callback();
+            titleModal.classList.remove('hidden');
+            
+          } catch (error) {
+            console.error('Error processing PDF:', error);
+            
+            // Create fallback evidence
+            const id = Date.now() + Math.random().toString(36).substring(2, 10);
+            const ref = `E${state.evidenceItems.length + 1}`;
+            
+            // Create a fallback thumbnail
+            const canvas = document.createElement('canvas');
+            canvas.width = 800;
+            canvas.height = 600;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#f0f0f0';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#3B82F6';
+            ctx.font = 'bold 36px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('PDF Document', canvas.width/2, 100);
+            ctx.font = '24px Arial';
+            ctx.fillText(file.name, canvas.width/2, 170);
+            ctx.font = '18px Arial';
+            ctx.fillText('Error extracting content', canvas.width/2, 250);
+            
+            state.pendingEvidence = {
+              id,
+              ref,
+              title: file.name,
+              type: 'document',
+              fileType: file.type,
+              content: canvas.toDataURL('image/png'),
+              fullContent: 'Error extracting content from PDF',
+              notes: 'Error processing this PDF document',
+              date: new Date().toISOString(),
+              selected: false,
+              error: error.message
+            };
+            
+            // Pre-fill the modal
+            evidenceTitleInput.value = file.name;
+            evidenceTypeInput.value = 'document';
+            evidenceNotesInput.value = 'Error processing this PDF document';
+            
+            // Show the modal after loading is done
+            if (callback) callback();
+            titleModal.classList.remove('hidden');
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        // Other file types - handle as generic document
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          // Try to get text content for text-based files
+          let content = '';
+          try {
+            content = e.target.result.toString();
+          } catch (error) {
+            content = 'Unable to extract text content from this file.';
+          }
+          
+          // Create canvas thumbnail for the document
+          const canvas = document.createElement('canvas');
+          canvas.width = 800;
+          canvas.height = 600;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#f0f0f0';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = '#3B82F6';
+          ctx.font = 'bold 36px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText('Document', canvas.width/2, 100);
+          ctx.font = '24px Arial';
+          ctx.fillText(file.name, canvas.width/2, 170);
+          
+          // Create evidence item
+          const id = Date.now() + Math.random().toString(36).substring(2, 10);
+          const ref = `E${state.evidenceItems.length + 1}`;
+          
+          state.pendingEvidence = {
+            id,
+            ref,
+            title: file.name,
+            type: 'document',
+            fileType: file.type,
+            content: canvas.toDataURL('image/png'),
+            fullContent: content,
+            notes: '',
+            date: new Date().toISOString(),
+            selected: false
+          };
+          
+          // Pre-fill the modal
+          evidenceTitleInput.value = file.name;
+          evidenceTypeInput.value = 'document';
+          evidenceNotesInput.value = '';
+          
+          // Show the modal after loading is done
+          if (callback) callback();
+          titleModal.classList.remove('hidden');
+        };
+        
+        // Check if it's likely a text file
+        if (file.type.includes('text') || 
+            file.name.endsWith('.txt') || 
+            file.name.endsWith('.csv') || 
+            file.name.endsWith('.json')) {
+          reader.readAsText(file);
+        } else {
+          reader.readAsArrayBuffer(file);
+        }
+      }
+    }
+    
+    function updateEvidenceCount() {
+      uploadCount.textContent = state.evidenceItems.length;
+    }
+    
+    function updateGrid() {
+      if (state.evidenceItems.length === 0) {
+        gridContainer.innerHTML = `<p class="text-gray-500 dark:text-gray-400 text-center py-12 col-span-2">No evidence uploaded yet</p>`;
+        gridPageInfo.textContent = 'Page 0 of 0';
+        prevGridPage.disabled = true;
+        nextGridPage.disabled = true;
+        return;
+      }
+      
+      const itemsPerPage = state.gridSize * state.gridSize;
+      const totalPages = Math.ceil(state.evidenceItems.length / itemsPerPage);
+      
+      // Update pagination info
+      gridPageInfo.textContent = `Page ${state.currentGridPage + 1} of ${totalPages}`;
+      prevGridPage.disabled = state.currentGridPage === 0;
+      nextGridPage.disabled = state.currentGridPage >= totalPages - 1;
+      
+      // Get items for current page
+      const startIndex = state.currentGridPage * itemsPerPage;
+      const endIndex = Math.min(startIndex + itemsPerPage, state.evidenceItems.length);
+      const currentItems = state.evidenceItems.slice(startIndex, endIndex);
+      
+      // Update grid columns based on selected grid size
+      gridContainer.className = `grid grid-cols-${state.gridSize} gap-4 mb-4`;
+      
+      // Generate grid
+      let gridHTML = '';
+      currentItems.forEach(item => {
+        let badgeHTML = '';
+        if (item.analysis && !item.analysis.error) {
+          if (item.analysis.violation) {
+            badgeHTML = `<span class="absolute top-1 left-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded">Violation</span>`;
+          }
+        }
+        
+        // Add Google Drive badge if applicable
+        if (item.isGoogleDoc) {
+          badgeHTML += `<span class="absolute top-1 ${item.analysis && !item.analysis.error ? 'left-20' : 'left-1'} bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded flex items-center">
+            <svg class="w-3 h-3 mr-1" viewBox="0 0 87.3 78">
+              <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5l5.4 9.35z" fill="#0066da"/>
+              <path d="M43.65 25L29.9 1.2c-1.35.8-2.5 1.9-3.3 3.3l-20.4 35.3 13.8 23.85L43.65 25z" fill="#00ac47"/>
+              <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.5l5.85 10.15L73.55 76.8z" fill="#ea4335"/>
+              <path d="M43.65 25L57.4 1.2c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2L43.65 25z" fill="#00832d"/>
+              <path d="M59.8 63.15L43.65 25 29.9 63.15h29.9z" fill="#2684fc"/>
+              <path d="M73.55 76.8l-13.75-23.65H29.9L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.4 4.5-1.2z" fill="#ffba00"/>
+            </svg>
+            Drive
+          </span>`;
+        }
+        
+        gridHTML += `
+          <div class="relative group evidence-card bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+            <button class="delete-btn" data-id="${item.id}" title="Delete">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </button>
+            ${badgeHTML}
+            <div class="cursor-pointer grid-item" data-id="${item.id}">
+              <div class="h-40 overflow-hidden">
+                <img src="${item.content}" alt="${item.title}" class="w-full h-full object-cover">
+              </div>
+              <div class="p-3">
+                <h3 class="font-medium text-sm truncate">${item.title}</h3>
+                <div class="flex justify-between items-center mt-1">
+                  <span class="text-xs text-gray-500 dark:text-gray-400">${formatDate(item.date)}</span>
+                  <span class="text-xs font-medium bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">${item.ref}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      
+      gridContainer.innerHTML = gridHTML;
+      
+      // Add click events to grid items
+      document.querySelectorAll('.grid-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const id = item.getAttribute('data-id');
+          const evidenceItem = state.evidenceItems.find(e => e.id === id);
+          if (evidenceItem) {
+            showDocument(evidenceItem);
+          }
+        });
+      });
+      
+      // Add click events to delete buttons
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation(); // Prevent opening the document
+          const id = btn.getAttribute('data-id');
+          deleteEvidence(id);
+        });
+      });
+    }
+    
+    function updateEvidenceList() {
+      if (state.evidenceItems.length === 0) {
+        evidenceListContainer.innerHTML = `<p class="text-gray-500 dark:text-gray-400 text-center py-6">No evidence uploaded yet</p>`;
+        return;
+      }
+      
+      // Sort evidence by date (newest first)
+      const sortedEvidence = [...state.evidenceItems].sort((a, b) => {
+        return new Date(b.date) - new Date(a.date);
+      });
+      
+      let listHTML = '';
+      sortedEvidence.forEach(item => {
+        let analysisHTML = '';
+        
+        if (item.analysis) {
+          if (item.analysis.error) {
+            analysisHTML = `
+              <div class="bg-red-50 dark:bg-red-900 dark:bg-opacity-20 p-3 rounded text-sm">
+                <p class="text-red-600 dark:text-red-400">Error analyzing evidence: ${item.analysis.error}</p>
+              </div>
+            `;
+          } else {
+            analysisHTML = `
+              <div class="my-2">
+                <button class="w-full flex justify-between items-center px-3 py-2 bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20 rounded-lg text-left text-sm toggle-analysis" data-id="${item.id}">
+                  <span class="font-medium">AI Analysis</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div class="summary-container bg-blue-50 dark:bg-blue-900 dark:bg-opacity-10 rounded-b-lg px-3 py-2 text-sm border-t border-blue-100 dark:border-blue-800" id="analysis-${item.id}">
+                  <div class="space-y-2">
+                    <div>
+                      <p class="font-medium text-blue-700 dark:text-blue-300">Violation Identified:</p>
+                      <p>${item.analysis.violation}</p>
+                    </div>
+                    <div>
+                      <p class="font-medium text-blue-700 dark:text-blue-300">Harm Identified:</p>
+                      <p>${item.analysis.harm}</p>
+                    </div>
+                    <div>
+                      <p class="font-medium text-blue-700 dark:text-blue-300">Action:</p>
+                      <p>${item.analysis.action}</p>
+                    </div>
+                    <div>
+                      <p class="font-medium text-blue-700 dark:text-blue-300">Relevant Case Law:</p>
+                      <p>${item.analysis.caseLaw}</p>
+                    </div>
+                    <div>
+                      <p class="font-medium text-blue-700 dark:text-blue-300">Relevant Legislation:</p>
+                      <p>${item.analysis.legislation}</p>
+                    </div>
+                    <div>
+                      <p class="font-medium text-blue-700 dark:text-blue-300">Connection to Ben's Case:</p>
+                      <p>${item.analysis.connection}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+          }
+        }
+        
+        // Google icon for Drive documents
+        const googleIcon = item.isGoogleDoc ? `
+          <span class="ml-1 inline-flex items-center">
+            <svg class="w-4 h-4" viewBox="0 0 87.3 78">
+              <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5l5.4 9.35z" fill="#0066da"/>
+              <path d="M43.65 25L29.9 1.2c-1.35.8-2.5 1.9-3.3 3.3l-20.4 35.3 13.8 23.85L43.65 25z" fill="#00ac47"/>
+              <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.5l5.85 10.15L73.55 76.8z" fill="#ea4335"/>
+              <path d="M43.65 25L57.4 1.2c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2L43.65 25z" fill="#00832d"/>
+              <path d="M59.8 63.15L43.65 25 29.9 63.15h29.9z" fill="#2684fc"/>
+              <path d="M73.55 76.8l-13.75-23.65H29.9L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.4 4.5-1.2z" fill="#ffba00"/>
+            </svg>
+          </span>
+        ` : '';
+        
+        listHTML += `
+          <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-800 shadow-sm">
+            <div class="flex items-center mb-2">
+              <input type="checkbox" class="mr-2 h-4 w-4 evidence-checkbox" data-id="${item.id}" ${item.selected ? 'checked' : ''}>
+              <div class="flex-grow">
+                <div class="flex items-center justify-between">
+                  <h3 class="font-semibold">${item.title}${googleIcon}</h3>
+                  <span class="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded">${item.ref}</span>
+                </div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">${formatDate(item.date)} · ${item.type}</p>
+              </div>
+            </div>
+            
+            ${item.notes ? `<p class="text-sm mb-2">${item.notes}</p>` : ''}
+            
+            ${analysisHTML}
+            
+            <div class="mt-2 flex justify-end">
+              <button class="text-sm text-blue-600 dark:text-blue-400 view-evidence" data-id="${item.id}">View Details</button>
+            </div>
+          </div>
+        `;
+      });
+      
+      evidenceListContainer.innerHTML = listHTML;
+      
+      // Add event listeners
+      document.querySelectorAll('.toggle-analysis').forEach(toggle => {
+        toggle.addEventListener('click', () => {
+          const id = toggle.getAttribute('data-id');
+          const container = document.getElementById(`analysis-${id}`);
+          container.classList.toggle('open');
+          
+          // Rotate the arrow icon
+          const arrow = toggle.querySelector('svg');
+          arrow.classList.toggle('rotate-180');
+        });
+      });
+      
+      document.querySelectorAll('.evidence-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+          const id = checkbox.getAttribute('data-id');
+          const evidenceItem = state.evidenceItems.find(e => e.id === id);
+          if (evidenceItem) {
+            evidenceItem.selected = checkbox.checked;
+          }
+        });
+      });
+      
+      document.querySelectorAll('.view-evidence').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-id');
+          const evidenceItem = state.evidenceItems.find(e => e.id === id);
+          if (evidenceItem) {
+            showDocument(evidenceItem);
+          }
+        });
+      });
+    }
+    
+    function showDocument(evidence) {
+      documentTitle.textContent = `${evidence.ref}: ${evidence.title}`;
+      
+      // Generate content based on evidence type
+      let contentHTML = '';
+      
+      if (evidence.type === 'image') {
+        contentHTML = `
+          <div class="flex justify-center">
+            <img src="${evidence.content}" alt="${evidence.title}" class="max-w-full max-h-[600px] object-contain">
+          </div>
+        `;
+      } else if (evidence.type === 'document') {
+        // Handle document or PDF content
+        if (evidence.fileType === 'application/pdf' && evidence.fullContent) {
+          contentHTML = `
+            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
+              <h3 class="font-semibold text-lg mb-2">Document Preview</h3>
+              <img src="${evidence.content}" alt="${evidence.title}" class="mx-auto max-h-[300px] object-contain mb-4">
+              <div class="text-sm bg-gray-50 dark:bg-gray-900 p-4 rounded-lg overflow-auto max-h-[300px]">
+                <pre class="whitespace-pre-wrap">${evidence.fullContent}</pre>
+              </div>
+            </div>
+          `;
+        } else if (evidence.isGoogleDoc) {
+          // Google Doc specific display
+          contentHTML = `
+            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
+              <div class="flex items-center mb-3">
+                <svg class="w-6 h-6 mr-2" viewBox="0 0 87.3 78">
+                  <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5l5.4 9.35z" fill="#0066da"/>
+                  <path d="M43.65 25L29.9 1.2c-1.35.8-2.5 1.9-3.3 3.3l-20.4 35.3 13.8 23.85L43.65 25z" fill="#00ac47"/>
+                  <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.5l5.85 10.15L73.55 76.8z" fill="#ea4335"/>
+                  <path d="M43.65 25L57.4 1.2c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2L43.65 25z" fill="#00832d"/>
+                  <path d="M59.8 63.15L43.65 25 29.9 63.15h29.9z" fill="#2684fc"/>
+                  <path d="M73.55 76.8l-13.75-23.65H29.9L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.4 4.5-1.2z" fill="#ffba00"/>
+                </svg>
+                <h3 class="font-semibold text-lg">Google Docs Document</h3>
+              </div>
+              <img src="${evidence.content}" alt="${evidence.title}" class="mx-auto max-h-[300px] object-contain mb-4">
+              <div class="text-sm bg-gray-50 dark:bg-gray-900 p-4 rounded-lg overflow-auto max-h-[300px]">
+                <pre class="whitespace-pre-wrap">${evidence.fullContent || 'Document content not available in preview'}</pre>
+              </div>
+              <div class="mt-3 flex justify-end">
+                <button class="px-3 py-1 bg-blue-600 text-white text-sm rounded flex items-center">
+                  <svg class="w-4 h-4 mr-1" viewBox="0 0 87.3 78">
+                    <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5l5.4 9.35z" fill="#ffffff"/>
+                    <path d="M43.65 25L29.9 1.2c-1.35.8-2.5 1.9-3.3 3.3l-20.4 35.3 13.8 23.85L43.65 25z" fill="#ffffff"/>
+                    <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.5l5.85 10.15L73.55 76.8z" fill="#ffffff"/>
+                    <path d="M43.65 25L57.4 1.2c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2L43.65 25z" fill="#ffffff"/>
+                    <path d="M59.8 63.15L43.65 25 29.9 63.15h29.9z" fill="#ffffff"/>
+                    <path d="M73.55 76.8l-13.75-23.65H29.9L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.4 4.5-1.2z" fill="#ffffff"/>
+                  </svg>
+                  Open in Google Docs
+                </button>
+              </div>
+            </div>
+          `;
+        } else {
+          // Generic document
+          contentHTML = `
+            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
+              <h3 class="font-semibold text-lg mb-2">Document Preview</h3>
+              <img src="${evidence.content}" alt="${evidence.title}" class="mx-auto max-h-[300px] object-contain mb-4">
+              ${evidence.fullContent ? `
+                <div class="text-sm bg-gray-50 dark:bg-gray-900 p-4 rounded-lg overflow-auto max-h-[300px]">
+                  <pre class="whitespace-pre-wrap">${evidence.fullContent}</pre>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }
+      }
+      
+      // Add metadata
+      contentHTML += `
+        <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          <h3 class="font-semibold text-lg mb-2">Metadata</h3>
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <p class="font-medium">Reference</p>
+              <p>${evidence.ref}</p>
+            </div>
+            <div>
+              <p class="font-medium">Date Added</p>
+              <p>${formatDate(evidence.date)}</p>
+            </div>
+            <div>
+              <p class="font-medium">Type</p>
+              <p>${evidence.type}${evidence.isGoogleDoc ? ' (Google Doc)' : ''}</p>
+            </div>
+            <div>
+              <p class="font-medium">File Format</p>
+              <p>${evidence.fileType || 'Unknown'}</p>
+            </div>
+          </div>
+          ${evidence.notes ? `
+            <div class="mt-3">
+              <p class="font-medium">Notes</p>
+              <p>${evidence.notes}</p>
+            </div>
+          ` : ''}
+        </div>
+      `;
+      
+      documentContent.innerHTML = contentHTML;
+      
+      // Add AI analysis
+      if (evidence.analysis) {
+        if (evidence.analysis.error) {
+          documentAnalysisContent.innerHTML = `
+            <div class="bg-red-50 dark:bg-red-900 dark:bg-opacity-20 p-3 rounded text-sm">
+              <p class="text-red-600 dark:text-red-400">Error analyzing evidence: ${evidence.analysis.error}</p>
+            </div>
+          `;
+        } else {
+          documentAnalysisContent.innerHTML = `
+            <div class="space-y-3">
+              <div>
+                <p class="font-medium text-blue-700 dark:text-blue-300">Violation Identified:</p>
+                <p>${evidence.analysis.violation}</p>
+              </div>
+              <div>
+                <p class="font-medium text-blue-700 dark:text-blue-300">Harm Identified:</p>
+                <p>${evidence.analysis.harm}</p>
+              </div>
+              <div>
+                <p class="font-medium text-blue-700 dark:text-blue-300">Action:</p>
+                <p>${evidence.analysis.action}</p>
+              </div>
+              <div>
+                <p class="font-medium text-blue-700 dark:text-blue-300">Relevant Case Law:</p>
+                <p>${evidence.analysis.caseLaw}</p>
+              </div>
+              <div>
+                <p class="font-medium text-blue-700 dark:text-blue-300">Relevant Legislation:</p>
+                <p>${evidence.analysis.legislation}</p>
+              </div>
+              <div>
+                <p class="font-medium text-blue-700 dark:text-blue-300">Connection to Ben's Case:</p>
+                <p>${evidence.analysis.connection}</p>
+              </div>
+            </div>
+          `;
+        }
+        documentAnalysis.classList.remove('hidden');
+      } else {
+        documentAnalysis.classList.add('hidden');
+      }
+      
+      // Show modal
+      documentModal.classList.remove('hidden');
+    }
+    
+    function deleteEvidence(id) {
+      if (confirm('Are you sure you want to delete this evidence?')) {
+        const index = state.evidenceItems.findIndex(item => item.id === id);
+        if (index !== -1) {
+          state.evidenceItems.splice(index, 1);
+          
+          // Update references
+          state.evidenceItems.forEach((item, i) => {
+            item.ref = `E${i + 1}`;
+          });
+          
+          updateEvidenceCount();
+          updateGrid();
+          updateEvidenceList();
+        }
+      }
+    }
+    
+    async function analyzeEvidenceWithAI(evidence) {
+      try {
+        // Get content for analysis
+        let contentForAnalysis = '';
+        
+        if (evidence.fullContent) {
+          contentForAnalysis = evidence.fullContent;
+        } else if (evidence.notes) {
+          contentForAnalysis = evidence.notes;
+        } else {
+          contentForAnalysis = `Evidence item: ${evidence.title}`;
+        }
+        
+        // Prepare prompt
+        const prompt = `
+You are a legal assistant specializing in UK law. I need you to analyze this evidence for potential legal violations, related case law, and legislation. 
+
+EVIDENCE:
+${contentForAnalysis}
+
+Please identify the following in a structured format:
+1. Violation: What potential legal violation does this evidence suggest?
+2. Harm: What harm was caused by this violation?
+3. Action: What specific action constitutes the violation?
+4. Case Law: What UK case law is relevant to this scenario?
+5. Legislation: What UK legislation applies to this situation?
+6. Connection: How this evidence connects to Ben's case (70 words or less)
+
+Keep your analysis concise and focused on UK jurisdiction. For each section, provide only the most relevant information.
+`;
+
+        // Select model
+        const model = modelSelector.value || state.openRouter.defaultModel;
+        
+        // Call OpenRouter API
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${state.openRouter.apiKey}`,
+            'HTTP-Referer': window.location.href,
+            'X-Title': 'Evidence Analysis System'
+          },
+          body: JSON.stringify({
+            model: model,
+            messages: [
+              {
+                role: 'system',
+                content: 'You are a legal assistant specializing in UK law and legal analysis.'
+              },
+              {
+                role: 'user',
+                content: prompt
+              }
+            ]
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const aiResponse = data.choices[0].message.content;
+        
+        // Parse the AI response
+        const analysis = parseAIAnalysis(aiResponse);
+        return analysis;
+      } catch (error) {
+        console.error('Error analyzing evidence:', error);
+        throw error;
+      }
+    }
+    
+    async function analyzeClaimsWithAI(claims) {
+      try {
+        // Prepare prompt
+        const prompt = `
+Analyze these claims in the context of UK law:
+
+CLAIMS:
+${claims}
+
+Please provide:
+1. A summary of the key legal issues raised
+2. Potential legal violations mentioned or implied
+3. Relevant UK legal principles that apply
+4. What evidence would be needed to support these claims
+5. Potential counter-arguments or defenses
+
+Format your response in clear HTML with appropriate headings.
+`;
+
+        // Select model
+        const model = modelSelector.value || state.openRouter.defaultModel;
+        
+        // Call OpenRouter API
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${state.openRouter.apiKey}`,
+            'HTTP-Referer': window.location.href,
+            'X-Title': 'Evidence Analysis System'
+          },
+          body: JSON.stringify({
+            model: model,
+            messages: [
+              {
+                role: 'system',
+                content: 'You are a legal assistant specializing in UK law and legal analysis.'
+              },
+              {
+                role: 'user',
+                content: prompt
+              }
+            ]
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const aiResponse = data.choices[0].message.content;
+        
+        // Return the HTML content
+        return aiResponse;
+      } catch (error) {
+        console.error('Error analyzing claims:', error);
+        throw error;
+      }
+    }
+    
+    async function askQuestionAboutEvidence(question, evidenceList) {
+      try {
+        // Prepare content from selected evidence
+        let evidenceContent = '';
+        
+        if (evidenceList.length === 0) {
+          throw new Error('No evidence available to analyze');
+        }
+        
+        // Prepare evidence content
+        evidenceList.forEach((evidence, index) => {
+          evidenceContent += `--- EVIDENCE ITEM ${index + 1}: ${evidence.ref} - ${evidence.title} ---\n`;
+          
+          if (evidence.fullContent) {
+            // Truncate if very long
+            const maxLength = 1000;
+            const content = evidence.fullContent.length > maxLength
+              ? evidence.fullContent.substring(0, maxLength) + '... [content truncated]'
+              : evidence.fullContent;
+            
+            evidenceContent += content + '\n\n';
+          }
+          
+          if (evidence.analysis && !evidence.analysis.error) {
+            evidenceContent += `Analysis: 
+- Violation: ${evidence.analysis.violation}
+- Harm: ${evidence.analysis.harm}
+- Action: ${evidence.analysis.action}
+- Case Law: ${evidence.analysis.caseLaw}
+- Legislation: ${evidence.analysis.legislation}
+- Connection: ${evidence.analysis.connection}
+\n\n`;
+          }
+        });
+        
+        // Add claims if available
+        const claims = claimEditor.value.trim();
+        if (claims) {
+          evidenceContent += `--- BEN'S CLAIMS ---\n${claims}\n\n`;
+        }
+        
+        // Prepare prompt
+        const prompt = `
+I need you to answer a question based on the evidence and claims provided below.
+
+EVIDENCE AND CLAIMS:
+${evidenceContent}
+
+QUESTION:
+${question}
+
+Provide a detailed answer grounded in the evidence provided. Reference specific evidence items by their ID (e.g., E1, E2) when appropriate. Focus on UK law and legal principles. If the evidence is insufficient to answer the question, clearly state what additional information would be needed.
+`;
+
+        // Select model
+        const model = modelSelector.value || state.openRouter.defaultModel;
+        
+        // Call OpenRouter API
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${state.openRouter.apiKey}`,
+            'HTTP-Referer': window.location.href,
+            'X-Title': 'Evidence Analysis System'
+          },
+          body: JSON.stringify({
+            model: model,
+            messages: [
+              {
+                role: 'system',
+                content: 'You are a legal assistant specializing in UK law and legal analysis.'
+              },
+              {
+                role: 'user',
+                content: prompt
+              }
+            ]
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const aiResponse = data.choices[0].message.content;
+        
+        return aiResponse;
+      } catch (error) {
+        console.error('Error processing question:', error);
+        throw error;
+      }
+    }
+    
+    function parseAIAnalysis(text) {
+      // Define expected sections
+      const sections = [
+        { key: 'violation', patterns: ['violation', 'legal violation', 'potential violation'] },
+        { key: 'harm', patterns: ['harm', 'damage', 'injury'] },
+        { key: 'action', patterns: ['action', 'specific action', 'conduct'] },
+        { key: 'caseLaw', patterns: ['case law', 'relevant case', 'legal precedent'] },
+        { key: 'legislation', patterns: ['legislation', 'statute', 'act', 'regulation'] },
+        { key: 'connection', patterns: ['connection', 'relation to ben', 'relevance to ben'] }
+      ];
+      
+      // Create result object with default values
+      const result = {
+        violation: 'No specific violation identified',
+        harm: 'No specific harm identified',
+        action: 'No specific action identified',
+        caseLaw: 'No relevant case law identified',
+        legislation: 'No specific legislation identified',
+        connection: 'No clear connection to Ben\'s case identified'
+      };
+      
+      // Split text into lines for processing
+      const lines = text.split('\n');
+      
+      // Find each section in the text
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim().toLowerCase();
+        
+        // Check for each section
+        for (const section of sections) {
+          // Check if this line contains any of the section patterns
+          const matchesPattern = section.patterns.some(pattern => 
+            line.includes(pattern.toLowerCase()) && (line.includes(':') || line.endsWith(':'))
+          );
+          
+          if (matchesPattern) {
+            // Extract content - either from this line after the colon, or the next line
+            let content = '';
+            
+            if (line.includes(':')) {
+              content = lines[i].substring(lines[i].indexOf(':') + 1).trim();
+            } else if (i + 1 < lines.length) {
+              content = lines[i + 1].trim();
+            }
+            
+            // If content is too short, try to get more from the next line(s)
+            if (content.length < 10 && i + 1 < lines.length) {
+              content = lines[i + 1].trim();
+              
+              // Add another line if needed and available
+              if (content.length < 20 && i + 2 < lines.length) {
+                content += ' ' + lines[i + 2].trim();
+              }
+            }
+            
+            // If we found valid content, save it
+            if (content && content.length > 0) {
+              result[section.key] = content;
+            }
+          }
+        }
+      }
+      
+      // Check if we didn't find much structure and try an alternative approach
+      const hasContent = Object.values(result).some(value => 
+        value !== 'No specific violation identified' && 
+        value !== 'No specific harm identified' &&
+        value !== 'No specific action identified' &&
+        value !== 'No relevant case law identified' &&
+        value !== 'No specific legislation identified' &&
+        value !== 'No clear connection to Ben\'s case identified'
+      );
+      
+      if (!hasContent) {
+        // Try to extract paragraphs that might contain relevant information
+        const paragraphs = text.split('\n\n').filter(p => p.trim().length > 0);
+        
+        if (paragraphs.length >= 4) {
+          if (paragraphs.length >= 6) {
+            // If we have enough paragraphs, assign them to our categories
+            result.violation = paragraphs[0].trim();
+            result.harm = paragraphs[1].trim();
+            result.action = paragraphs[2].trim();
+            result.caseLaw = paragraphs[3].trim();
+            result.legislation = paragraphs[4].trim();
+            result.connection = paragraphs[5].trim();
+          } else {
+            // Try to distribute the available paragraphs
+            result.violation = paragraphs[0].trim();
+            result.harm = paragraphs.length > 1 ? paragraphs[1].trim() : result.harm;
+            result.action = paragraphs.length > 2 ? paragraphs[2].trim() : result.action;
+            result.caseLaw = paragraphs.length > 3 ? paragraphs[3].trim() : result.caseLaw;
+          }
+        } else {
+          // Not enough structure, just use the whole text as violation and mention the issue
+          result.violation = "Analysis structure unclear. Full response: " + text.substring(0, 100) + "...";
+        }
+      }
+      
+      return result;
+    }
+    
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+    
+    // Add sample evidence for demonstration
+    function addSampleEvidence() {
+      // Sample 1: Witness Statement
+      const witnessStatement = {
+        id: 'sample1',
+        ref: 'E1',
+        title: 'Witness Statement - John Smith',
+        type: 'statement',
+        fileType: 'text/plain',
+        date: '2023-03-17T10:30:00Z',
+        selected: false,
+        notes: 'Eyewitness account of the incident',
+        analysis: {
+          violation: "Self-defense claim with potential use of reasonable force",
+          harm: "Possible harm to aggressor during self-defense action",
+          action: "Use of defensive force against an aggressor",
+          caseLaw: "R v Owino [1996] 2 Cr App R 128 - established test of whether force used in self-defense was reasonable",
+          legislation: "Criminal Justice and Immigration Act 2008, Section 76 - clarifies common law on self-defense",
+          connection: "Directly supports Ben's self-defense claim. Witness confirms Ben acted defensively, requested aggressor to back away, and only used force when threatened. This corroborates Ben's version of events."
+        }
+      };
+      
+      // Create a canvas for the document thumbnail
+      const witnessCanvas = document.createElement('canvas');
+      witnessCanvas.width = 800;
+      witnessCanvas.height = 600;
+      const witnessCtx = witnessCanvas.getContext('2d');
+      witnessCtx.fillStyle = '#f7f9fc';
+      witnessCtx.fillRect(0, 0, witnessCanvas.width, witnessCanvas.height);
+      witnessCtx.fillStyle = '#5D5CDE';
+      witnessCtx.font = 'bold 36px Arial';
+      witnessCtx.textAlign = 'center';
+      witnessCtx.fillText('Witness Statement', witnessCanvas.width/2, 100);
+      witnessCtx.font = '24px Arial';
+      witnessCtx.fillText('John Smith', witnessCanvas.width/2, 150);
+      witnessCtx.fillStyle = '#000000';
+      witnessCtx.font = '18px Arial';
+      witnessCtx.fillText('March 17, 2023', witnessCanvas.width/2, 190);
+      witnessCtx.fillStyle = '#5D5CDE';
+      witnessCtx.font = 'bold 48px Arial';
+      witnessCtx.fillText('E1', witnessCanvas.width/2, witnessCanvas.height - 100);
+      
+      witnessStatement.content = witnessCanvas.toDataURL('image/png');
+      witnessStatement.fullContent = `WITNESS STATEMENT
+
+I, John Smith, of 123 Main Street, London, do solemnly declare that:
+
+1. On the evening of 15th March 2023, at approximately 8:30 PM, I was walking my dog in Victoria Park.
+
+2. I witnessed an altercation between two individuals near the east entrance of the park. One individual, who I now know to be Ben, appeared to be defending himself from the other person.
+
+3. The other individual was acting aggressively and appeared to be under the influence of alcohol or drugs. They made several threatening gestures and lunged at Ben multiple times.
+
+4. Ben repeatedly asked the individual to back away and stated "Please stay away from me, I don't want any trouble."
+
+5. When the individual continued to approach aggressively, Ben used what appeared to be reasonable force to push them away in self-defense.
+
+6. At no point did I observe Ben initiating any aggressive behavior. His actions appeared to be solely defensive in nature.
+
+7. I am willing to testify to these facts in court if required.
+
+Signed: John Smith
+Date: 17th March 2023`;
+      
+      // Sample 2: CCTV Image
+      const cctvImage = {
+        id: 'sample2',
+        ref: 'E2',
+        title: 'CCTV Footage Still - Victoria Park',
+        type: 'image',
+        fileType: 'image/jpeg',
+        date: '2023-03-15T20:35:00Z',
+        selected: false,
+        notes: 'Still image from CCTV camera showing the incident',
+        analysis: {
+          violation: "No apparent violation from Ben; displays defensive posture",
+          harm: "No visible harm being inflicted by Ben in the image",
+          action: "Defensive stance shown by Ben in response to apparent aggression",
+          caseLaw: "R v Williams [1987] 3 All ER 411 - visual evidence supporting self-defense claim",
+          legislation: "Criminal Justice and Immigration Act 2008, Section 76(7) - regarding consideration of circumstances as the defendant believed them to be",
+          connection: "The CCTV still corroborates Ben's account of being approached aggressively and adopting a defensive stance, supporting his claim of self-defense."
+        }
+      };
+      
+      // Create a canvas for CCTV thumbnail
+      const cctvCanvas = document.createElement('canvas');
+      cctvCanvas.width = 800;
+      cctvCanvas.height = 600;
+      const cctvCtx = cctvCanvas.getContext('2d');
+      
+      // Create CCTV-like image
+      cctvCtx.fillStyle = '#000000';
+      cctvCtx.fillRect(0, 0, cctvCanvas.width, cctvCanvas.height);
+      
+      // Park scene with grayscale effect
+      cctvCtx.fillStyle = '#333333';
+      cctvCtx.fillRect(100, 200, 600, 300); // Path
+      cctvCtx.fillStyle = '#222222';
+      cctvCtx.fillRect(50, 150, 200, 300); // Trees left
+      cctvCtx.fillRect(550, 180, 200, 300); // Trees right
+      
+      // Timestamp
+      cctvCtx.fillStyle = '#ffffff';
+      cctvCtx.font = '16px monospace';
+      cctvCtx.textAlign = 'left';
+      cctvCtx.fillText('15/03/2023 20:35:12  CAM: EAST_ENTRANCE_01', 20, 30);
+      
+      // People silhouettes
+      cctvCtx.fillStyle = '#cccccc';
+      cctvCtx.fillRect(350, 300, 30, 80); // Person 1
+      cctvCtx.fillRect(450, 290, 30, 90); // Person 2
+      
+      // Reference number
+      cctvCtx.fillStyle = '#ffffff';
+      cctvCtx.font = 'bold 48px Arial';
+      cctvCtx.textAlign = 'center';
+      cctvCtx.fillText('E2', cctvCanvas.width/2, cctvCanvas.height - 50);
+      
+      cctvImage.content = cctvCanvas.toDataURL('image/png');
+      
+      // Sample 3: Medical Report (Google Doc)
+      const medicalReport = {
+        id: 'sample3',
+        ref: 'E3',
+        title: 'Medical Assessment Report',
+        type: 'document',
+        fileType: 'application/vnd.google-apps.document',
+        date: '2023-03-16T14:20:00Z',
+        selected: false,
+        isGoogleDoc: true,
+        googleFileId: 'sample_med_report',
+        notes: 'Medical assessment of Ben following the incident',
+        analysis: {
+          violation: "No violation by Ben; medical evidence shows defensive injuries",
+          harm: "Ben sustained defensive injuries consistent with protecting himself",
+          action: "Report confirms injuries consistent with self-defense rather than aggressive action",
+          caseLaw: "R v Rose [2017] EWCA Crim 1168 - medical evidence supporting defensive actions",
+          legislation: "Criminal Justice and Immigration Act 2008, Section 76(3) - regarding reasonableness of force used",
+          connection: "Medical evidence shows Ben's injuries are consistent with defensive actions, not aggression. The report shows bruising on forearms typically seen when protecting oneself from blows."
+        }
+      };
+      
+      // Medical report thumbnail
+      const medicalCanvas = document.createElement('canvas');
+      medicalCanvas.width = 800;
+      medicalCanvas.height = 600;
+      const medicalCtx = medicalCanvas.getContext('2d');
+      
+      // Google Doc background
+      medicalCtx.fillStyle = '#f8fafc';
+      medicalCtx.fillRect(0, 0, medicalCanvas.width, medicalCanvas.height);
+      
+      // Google Docs icon
+      medicalCtx.fillStyle = '#4285f4';
+      medicalCtx.fillRect(350, 100, 100, 140);
+      medicalCtx.fillStyle = '#ffffff';
+      medicalCtx.fillRect(370, 150, 60, 8);
+      medicalCtx.fillRect(370, 170, 60, 8);
+      medicalCtx.fillRect(370, 190, 60, 8);
+      
+      // Document title
+      medicalCtx.fillStyle = '#000000';
+      medicalCtx.font = 'bold 28px Arial';
+      medicalCtx.textAlign = 'center';
+      medicalCtx.fillText('Medical Assessment Report', medicalCanvas.width/2, 300);
+      
+      // Google Drive indicator
+      medicalCtx.fillStyle = '#4285f4';
+      medicalCtx.font = '16px Arial';
+      medicalCtx.fillText('Google Drive Document', medicalCanvas.width/2, 340);
+      
+      // Reference number
+      medicalCtx.font = 'bold 48px Arial';
+      medicalCtx.fillText('E3', medicalCanvas.width/2, medicalCanvas.height - 100);
+      
+      medicalReport.content = medicalCanvas.toDataURL('image/png');
+      medicalReport.fullContent = `MEDICAL ASSESSMENT REPORT
+Royal London Hospital
+Emergency Department
+
+PATIENT: Benjamin Parker
+DOB: 12/05/1990
+DATE OF EXAMINATION: 16/03/2023
+TIME: 09:15
+
+PRESENTING COMPLAINT:
+Patient presented to A&E following an altercation in Victoria Park on the evening of 15/03/2023. Patient reports being assaulted by an unknown individual and defending himself.
+
+EXAMINATION FINDINGS:
+
+1. Defensive injuries to forearms:
+   - Linear bruising on both forearms consistent with blocking/deflecting blows
+   - No fractures or deep tissue injuries detected on X-ray
+
+2. Minor contusion to right cheek:
+   - 2cm diameter bruise
+   - No orbital or zygomatic fractures
+   - No evidence of concussion
+
+3. Abrasion to right knuckles:
+   - Superficial grazing consistent with a single impact
+   - No evidence of repetitive impact injuries
+
+ASSESSMENT:
+The pattern of injuries observed is consistent with the patient's account of defending himself from an assault. The forearm bruising displays a typical defensive pattern, while the singular knuckle abrasion is consistent with a single defensive action rather than repeated aggressive actions.
+
+TREATMENT:
+- Wound cleaning and dressing to right knuckles
+- Cold compress advised for facial contusion
+- Analgesia prescribed for pain management
+- No sutures required
+
+CONCLUSION:
+The patient's injuries are minor and consistent with defensive actions in response to an assault. The pattern of injuries supports the patient's account of the incident.
+
+Dr. Sarah Williams
+Consultant, Emergency Medicine
+GMC: 7025831`;
+      
+      // Add all samples to state
+      state.evidenceItems.push(witnessStatement, cctvImage, medicalReport);
+      
+      // Update UI
+      updateEvidenceCount();
+      updateGrid();
+      updateEvidenceList();
+    }
+    
+    // Initialize app
+    // Check if Google API should be initialized
+    if (typeof gapi !== 'undefined') {
+      initGoogleAPI();
+    } else {
+      // For demo without actual Google API
+      console.log('Google API not available. Using demo mode.');
+      
+      // Simulate login
+      googleSignInBtn.addEventListener('click', () => {
+        state.user = {
+          id: 'user_demo',
+          name: 'Demo User',
+          email: 'demo@example.com',
+          avatar: 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y',
+          isGoogle: true
+        };
+        
+        state.isAuthenticated = true;
+        state.driveReady = true;
+        state.sheetsReady = true;
+        state.docsReady = true;
+        
+        // Update UI
+        updateUserInterface();
+        
+        // Add sample evidence
+        addSampleEvidence();
+      });
+    }
+  </script>
+</body>
+</html>q

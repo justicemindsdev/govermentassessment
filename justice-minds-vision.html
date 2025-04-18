@@ -185,6 +185,48 @@
             background-color: #000;
             position: relative;
             aspect-ratio: 16 / 9;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .video-loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 1.2rem;
+            z-index: 5;
+        }
+        
+        .video-error {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            z-index: 6;
+        }
+        
+        .video-error-icon {
+            font-size: 3rem;
+            color: var(--accent-color);
+            margin-bottom: 15px;
         }
         
         .main-video {
@@ -674,6 +716,16 @@
             <div class="content">
                 <div class="main-video-container">
                     <video id="main-video" class="main-video" controls></video>
+                    <div class="video-loading" id="video-loading">
+                        <i class="fas fa-spinner fa-spin fa-2x"></i> Loading video...
+                    </div>
+                    <div class="video-error" id="video-error">
+                        <div class="video-error-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <h3>Video Unavailable</h3>
+                        <p>The video could not be loaded. Please try again later.</p>
+                    </div>
                     <div class="video-controls">
                         <div class="video-title">Understanding of Professional Roles and Responsibilities</div>
                         <div class="video-timestamp">10:09 - 10:45</div>
@@ -693,9 +745,15 @@
                         </div>
                     </div>
                     
-                    <div class="thumbnails-grid">
-                        <div class="thumbnail-card" data-time="10:09" data-end-time="10:45" data-title="Professional Boundaries Discussion">
-                            <img src="https://via.placeholder.com/320x180/0c2340/ffffff?text=10:09" alt="Segment at 10:09" class="thumbnail-image">
+                    <div class="thumbnails-grid" id="segments-grid">
+                        <div class="thumbnail-card" 
+                             data-time="10:09" 
+                             data-end-time="10:45" 
+                             data-title="Professional Boundaries Discussion"
+                             data-video-src="https://customer-e5m1en7nnf9e7or4.cloudflarestream.com/4eb277917d1f8d96cbd31c18aafd7cd8/manifest/video.m3u8">
+                            <img src="https://via.placeholder.com/320x180/0c2340/ffffff?text=10:09" 
+                                 alt="Segment at 10:09" 
+                                 class="thumbnail-image">
                             <div class="thumbnail-info">
                                 <div class="thumbnail-title">Professional Boundaries Discussion</div>
                                 <div class="thumbnail-timestamp">
@@ -704,8 +762,14 @@
                             </div>
                         </div>
                         
-                        <div class="thumbnail-card" data-time="10:58" data-end-time="11:30" data-title="Organizational Response">
-                            <img src="https://via.placeholder.com/320x180/0c2340/ffffff?text=10:58" alt="Segment at 10:58" class="thumbnail-image">
+                        <div class="thumbnail-card" 
+                             data-time="10:58" 
+                             data-end-time="11:30" 
+                             data-title="Organizational Response"
+                             data-video-src="https://customer-e5m1en7nnf9e7or4.cloudflarestream.com/4eb277917d1f8d96cbd31c18aafd7cd8/manifest/video.m3u8">
+                            <img src="https://via.placeholder.com/320x180/0c2340/ffffff?text=10:58" 
+                                 alt="Segment at 10:58" 
+                                 class="thumbnail-image">
                             <div class="thumbnail-info">
                                 <div class="thumbnail-title">Organizational Response</div>
                                 <div class="thumbnail-timestamp">
@@ -714,8 +778,14 @@
                             </div>
                         </div>
                         
-                        <div class="thumbnail-card" data-time="13:21" data-end-time="13:55" data-title="Assessment Framework Critique">
-                            <img src="https://via.placeholder.com/320x180/0c2340/ffffff?text=13:21" alt="Segment at 13:21" class="thumbnail-image">
+                        <div class="thumbnail-card" 
+                             data-time="13:21" 
+                             data-end-time="13:55" 
+                             data-title="Assessment Framework Critique"
+                             data-video-src="https://customer-e5m1en7nnf9e7or4.cloudflarestream.com/4eb277917d1f8d96cbd31c18aafd7cd8/manifest/video.m3u8">
+                            <img src="https://via.placeholder.com/320x180/0c2340/ffffff?text=13:21" 
+                                 alt="Segment at 13:21" 
+                                 class="thumbnail-image">
                             <div class="thumbnail-info">
                                 <div class="thumbnail-title">Assessment Framework Critique</div>
                                 <div class="thumbnail-timestamp">
@@ -724,8 +794,14 @@
                             </div>
                         </div>
                         
-                        <div class="thumbnail-card" data-time="12:36" data-end-time="13:10" data-title="Linguistic Context">
-                            <img src="https://via.placeholder.com/320x180/0c2340/ffffff?text=12:36" alt="Segment at 12:36" class="thumbnail-image">
+                        <div class="thumbnail-card" 
+                             data-time="12:36" 
+                             data-end-time="13:10" 
+                             data-title="Linguistic Context"
+                             data-video-src="https://customer-e5m1en7nnf9e7or4.cloudflarestream.com/4eb277917d1f8d96cbd31c18aafd7cd8/manifest/video.m3u8">
+                            <img src="https://via.placeholder.com/320x180/0c2340/ffffff?text=12:36" 
+                                 alt="Segment at 12:36" 
+                                 class="thumbnail-image">
                             <div class="thumbnail-info">
                                 <div class="thumbnail-title">Linguistic Context</div>
                                 <div class="thumbnail-timestamp">
@@ -832,3 +908,239 @@
                             <ul>
                                 <li>Understanding the distinction between personal and professional communication channels</li>
                                 <li>Recognizing organizational liability concerns</li>
+                                <li>Identifying proper professional processes and protocols</li>
+                                <li>Raising concerns constructively rather than punitively</li>
+                                <li>Advocating for systemic improvements while protecting individuals</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="modal-button" id="download-evidence-btn">
+                        <i class="fas fa-download"></i> Download Evidence
+                    </button>
+                    <button class="modal-button" id="share-evidence-btn">
+                        <i class="fas fa-share-alt"></i> Share Evidence
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <div class="footer-content">
+                <div>
+                    <img src="LOGO TRANS.png" alt="Justice Minds Logo" class="footer-logo">
+                </div>
+                <div class="footer-text">
+                    <p>Justice Minds Forensic Intelligence © 2025</p>
+                    <p>Comprehensive evidence analysis with surgical precision</p>
+                </div>
+                <div class="footer-links">
+                    <a href="#" class="footer-link">About</a>
+                    <a href="#" class="footer-link">Privacy Policy</a>
+                    <a href="#" class="footer-link">Terms of Service</a>
+                    <a href="#" class="footer-link">Contact</a>
+                </div>
+            </div>
+        </footer>
+        
+        <!-- JavaScript Implementation -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // DOM Elements
+                const mainVideo = document.getElementById('main-video');
+                const modalVideo = document.getElementById('modal-video');
+                const videoTitle = document.querySelector('.video-title');
+                const videoTimestamp = document.querySelector('.video-timestamp');
+                const segmentsGrid = document.getElementById('segments-grid');
+                const gridViewBtn = document.getElementById('grid-view-btn');
+                const listViewBtn = document.getElementById('list-view-btn');
+                const expertiseModal = document.getElementById('expertise-modal');
+                const modalTitle = document.querySelector('.modal-title');
+                const modalSegments = document.querySelectorAll('.modal-segment');
+                const closeBtn = document.querySelector('.close-btn');
+                
+                // Loading and error elements
+                const videoLoading = document.getElementById('video-loading');
+                const videoError = document.getElementById('video-error');
+                
+                // Initialize HLS.js for main video
+                if (Hls.isSupported()) {
+                    const mainHls = new Hls({
+                        debug: false,
+                        enableWorker: true,
+                        lowLatencyMode: true,
+                        backBufferLength: 90
+                    });
+                    
+                    // Error handling for main video
+                    mainHls.on(Hls.Events.ERROR, function(event, data) {
+                        console.error('HLS Error:', data);
+                        if (data.fatal) {
+                            switch(data.type) {
+                                case Hls.ErrorTypes.NETWORK_ERROR:
+                                    console.error('Network error loading video');
+                                    videoLoading.style.display = 'none';
+                                    videoError.style.display = 'flex';
+                                    break;
+                                case Hls.ErrorTypes.MEDIA_ERROR:
+                                    console.error('Media error loading video');
+                                    mainHls.recoverMediaError();
+                                    break;
+                                default:
+                                    console.error('Unrecoverable HLS error');
+                                    videoLoading.style.display = 'none';
+                                    videoError.style.display = 'flex';
+                                    break;
+                            }
+                        }
+                    });
+                    
+                    // Loading events
+                    mainHls.on(Hls.Events.MANIFEST_PARSED, function() {
+                        videoLoading.style.display = 'none';
+                    });
+                    
+                    mainHls.attachMedia(mainVideo);
+                    
+                    // Initialize HLS.js for modal video
+                    const modalHls = new Hls({
+                        debug: false,
+                        enableWorker: true,
+                        lowLatencyMode: true,
+                        backBufferLength: 90
+                    });
+                    
+                    // Error handling for modal video
+                    modalHls.on(Hls.Events.ERROR, function(event, data) {
+                        console.error('Modal HLS Error:', data);
+                        if (data.fatal) {
+                            modalHls.destroy();
+                        }
+                    });
+                    
+                    modalHls.attachMedia(modalVideo);
+                    
+                    // Handle thumbnail clicks to play video in main player
+                    segmentsGrid.addEventListener('click', function(e) {
+                        const thumbnail = e.target.closest('.thumbnail-card');
+                        if (thumbnail) {
+                            const startTime = parseTimeToSeconds(thumbnail.dataset.time);
+                            const endTime = parseTimeToSeconds(thumbnail.dataset.endTime);
+                            const videoSrc = thumbnail.dataset.videoSrc;
+                            
+                            // Update video info
+                            videoTitle.textContent = thumbnail.dataset.title;
+                            videoTimestamp.textContent = `${thumbnail.dataset.time} - ${thumbnail.dataset.endTime}`;
+                            
+                            // Load and play video
+                            mainHls.loadSource(videoSrc);
+                            mainHls.on(Hls.Events.MANIFEST_PARSED, function() {
+                                mainVideo.currentTime = startTime;
+                                mainVideo.play();
+                            });
+                        }
+                    });
+                    
+                    // Handle modal segment clicks
+                    document.querySelectorAll('.modal-segment').forEach(segment => {
+                        segment.addEventListener('click', function() {
+                            const startTime = parseTimeToSeconds(this.dataset.time);
+                            const endTime = parseTimeToSeconds(this.dataset.endTime);
+                            
+                            modalVideo.currentTime = startTime;
+                            modalVideo.play();
+                        });
+                    });
+                    
+                    // Open expertise modal when clicking on a claim
+                    document.querySelectorAll('.claim').forEach(claim => {
+                        claim.style.cursor = 'pointer';
+                        claim.addEventListener('click', function(e) {
+                            // Prevent default behavior
+                            e.preventDefault();
+                            const claimTitle = this.querySelector('.claim-title').textContent;
+                            modalTitle.textContent = claimTitle;
+                            
+                            // Find the first thumbnail with matching title
+                            const thumbnails = document.querySelectorAll('.thumbnail-card');
+                            let matchingThumbnail = null;
+                            
+                            for (let thumbnail of thumbnails) {
+                                if (thumbnail.dataset.title.includes(claimTitle) || 
+                                    claimTitle.includes(thumbnail.dataset.title)) {
+                                    matchingThumbnail = thumbnail;
+                                    break;
+                                }
+                            }
+                            
+                            if (matchingThumbnail) {
+                                const videoSrc = matchingThumbnail.dataset.videoSrc;
+                                const startTime = parseTimeToSeconds(matchingThumbnail.dataset.time);
+                                
+                                // Load video in modal
+                                modalHls.loadSource(videoSrc);
+                                modalHls.on(Hls.Events.MANIFEST_PARSED, function() {
+                                    modalVideo.currentTime = startTime;
+                                });
+                            }
+                            
+                            // Show modal
+                            expertiseModal.style.display = 'block';
+                        });
+                    });
+                } else if (mainVideo.canPlayType('application/vnd.apple.mpegurl')) {
+                    // For Safari which has built-in HLS support
+                    segmentsGrid.addEventListener('click', function(e) {
+                        const thumbnail = e.target.closest('.thumbnail-card');
+                        if (thumbnail) {
+                            mainVideo.src = thumbnail.dataset.videoSrc;
+                            mainVideo.currentTime = parseTimeToSeconds(thumbnail.dataset.time);
+                            mainVideo.play();
+                            
+                            // Update video info
+                            videoTitle.textContent = thumbnail.dataset.title;
+                            videoTimestamp.textContent = `${thumbnail.dataset.time} - ${thumbnail.dataset.endTime}`;
+                        }
+                    });
+                }
+                
+                // Toggle view (grid/list)
+                gridViewBtn.addEventListener('click', function() {
+                    if (!this.classList.contains('active')) {
+                        this.classList.add('active');
+                        listViewBtn.classList.remove('active');
+                        segmentsGrid.style.display = 'grid';
+                    }
+                });
+                
+                listViewBtn.addEventListener('click', function() {
+                    if (!this.classList.contains('active')) {
+                        this.classList.add('active');
+                        gridViewBtn.classList.remove('active');
+                        segmentsGrid.style.display = 'flex';
+                        segmentsGrid.style.flexDirection = 'column';
+                    }
+                });
+                
+                // Close modal
+                closeBtn.addEventListener('click', function() {
+                    expertiseModal.style.display = 'none';
+                    modalVideo.pause();
+                });
+                
+                // Close modal when clicking outside
+                window.addEventListener('click', function(e) {
+                    if (e.target === expertiseModal) {
+                        expertiseModal.style.display = 'none';
+                        modalVideo.pause();
+                    }
+                });
+                
+                // Helper function to parse time string (MM:SS) to seconds
+                function parseTimeToSeconds(timeString) {
+                    const [minutes, seconds] = timeString.split(':').map(Number);
+                    return minutes * 60 + seconds;
+                }
+            });
+        </script>

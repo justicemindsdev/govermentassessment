@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unified Substantiation Tool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        :root {
+            --primary-color: #0f2a4a;
+            --secondary-color: #2a4a6d;
+            --accent-color: #4a6da7;
+            --light-color: #f0f4f8;
+            --dark-color: #0a1525;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --glass-bg: rgba(10, 21, 37, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.5;
+            color: var(--light-color);
+            background-color: var(--dark-color);
+            padding: 20px;
+            background-image: linear-gradient(135deg, var(--dark-color) 0%, #1e293b 100%);
+            font-size: 0.95rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: var(--glass-bg);
+            border-radius: 12px;
+            box-shadow: var(--glass-shadow);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            overflow: hidden;
+        }
+        
+        header {
+            background-color: rgba(15, 42, 74, 0.9);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            border-bottom: 1px solid var(--glass-border);
+            position: relative;
+        }
+        
+        .share-button {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .share-button:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+        
+        h1 {
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+            letter-spacing: 0.5px;
+        }
+        
+        h2 {
+            color: var(--light-color);
+            margin: 20px 0 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--glass-border);
+            letter-spacing: 0.5px;
+            font-size: 1.4rem;
+        }
+        
+        h3 {
+            color: var(--light-color);
+            margin: 15px 0 10px;
+            letter-spacing: 0.5px;
+            font-size: 1.2rem;
+        }
+        
+        .intro {
+            padding: 20px;
+            background-color: rgba(42, 74, 109, 0.4);
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .main-content {
+            display: flex;
+            min-height: 600px;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: rgba(15, 42, 74, 0.6);
+            padding: 20px;
+            border-right: 1px solid var(--glass-border);
+        }
+        
+        .content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .nav-list {
+            list-style: none;
+        }
+        
+        .nav-list li {
+            margin-bottom: 10px;
+        }
+        
+        .nav-list a {
+            color: var(--light-color);
+            text-decoration: none;
+            display: block;
+            padding: 10px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-list a:hover {
+            background-color: rgba(74, 109, 167, 0.2);
+            transform: translateX(5px);
+        }
+        
+        .nav-list a.active {
+            background-color: var(--accent-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(74, 109, 167, 0.3);
+        }
+        
+        .category {
+            margin-bottom: 30px;
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .category-header {
+            background-color: rgba(15, 42, 74, 0.8);
+            color: white;
+            padding: 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 6px 6px 0 0;
+            border: 1px solid var(--glass-border);
+            border-bottom: none;
+        }
+        
+        .category-content {
+            padding: 15px;
+            display: none;
+        }
+        
+        .category.active .category-content {
+            display: block;
+        }
+        
+        .category-video-container {
+            width: 100%;
+            margin-bottom: 20px;
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            aspect-ratio: 16 / 9;
+            display: none;
+        }
+        
+        .category.active .category-video-container {
+            display: block;
+        }
+        
+        .claim {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: rgba(10, 21, 37, 0.6);
+            border-radius: 6px;
+            border-left: 4px solid var(--accent-color);
+            box-shadow:
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unified Substantiation Tool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        :root {
+            --primary-color: #0f2a4a;
+            --secondary-color: #2a4a6d;
+            --accent-color: #4a6da7;
+            --light-color: #f0f4f8;
+            --dark-color: #0a1525;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --glass-bg: rgba(10, 21, 37, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.5;
+            color: var(--light-color);
+            background-color: var(--dark-color);
+            padding: 20px;
+            background-image: linear-gradient(135deg, var(--dark-color) 0%, #1e293b 100%);
+            font-size: 0.95rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: var(--glass-bg);
+            border-radius: 12px;
+            box-shadow: var(--glass-shadow);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            overflow: hidden;
+        }
+        
+        header {
+            background-color: rgba(15, 42, 74, 0.9);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            border-bottom: 1px solid var(--glass-border);
+            position: relative;
+        }
+        
+        .share-button {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .share-button:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+        
+        h1 {
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+            letter-spacing: 0.5px;
+        }
+        
+        h2 {
+            color: var(--light-color);
+            margin: 20px 0 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--glass-border);
+            letter-spacing: 0.5px;
+            font-size: 1.4rem;
+        }
+        
+        h3 {
+            color: var(--light-color);
+            margin: 15px 0 10px;
+            letter-spacing: 0.5px;
+            font-size: 1.2rem;
+        }
+        
+        .intro {
+            padding: 20px;
+            background-color: rgba(42, 74, 109, 0.4);
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .main-content {
+            display: flex;
+            min-height: 600px;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: rgba(15, 42, 74, 0.6);
+            padding: 20px;
+            border-right: 1px solid var(--glass-border);
+        }
+        
+        .content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .nav-list {
+            list-style: none;
+        }
+        
+        .nav-list li {
+            margin-bottom: 10px;
+        }
+        
+        .nav-list a {
+            color: var(--light-color);
+            text-decoration: none;
+            display: block;
+            padding: 10px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-list a:hover {
+            background-color: rgba(74, 109, 167, 0.2);
+            transform: translateX(5px);
+        }
+        
+        .nav-list a.active {
+            background-color: var(--accent-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(74, 109, 167, 0.3);
+        }
+        
+        .category {
+            margin-bottom: 30px;
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .category-header {
+            background-color: rgba(15, 42, 74, 0.8);
+            color: white;
+            padding: 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 6px 6px 0 0;
+            border: 1px solid var(--glass-border);
+            border-bottom: none;
+        }
+        
+        .category-content {
+            padding: 15px;
+            display: none;
+        }
+        
+        .category.active .category-content {
+            display: block;
+        }
+        
+        .category-video-container {
+            width: 100%;
+            margin-bottom: 20px;
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            aspect-ratio: 16 / 9;
+            display: none;
+        }
+        
+        .category.active .category-video-container {
+            display: block;
+        }
